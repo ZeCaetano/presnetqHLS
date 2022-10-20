@@ -5,10 +5,11 @@
 #include "conv_parameters.h"
 
 
+typedef ap_int<BIAS_WIDTH> bias_data_type;
+typedef ap_int<8> fm_data_type;
 
 typedef ap_int<itersPerStream*WWidth> filterDataType;
 typedef ap_int<itersPerStream*AWidth> actDataType;
-typedef ap_int<biasPerStream*BWidth> biasStreamDataType;
 typedef ap_int<accumBitWidth> accDataType;
 typedef ap_int<BWidth> biasDataType;
 typedef ap_uint<AWidth> PEAct;
@@ -16,22 +17,20 @@ typedef ap_int<AWidth+1> PESignedAct;
 typedef ap_int<WWidth> PEWeight;
 typedef ap_int<WWidth+AWidth> PEWAccum;
 typedef ap_uint<AWidth+1> addAct;
-typedef ap_axis<64, 0, 0, 0> axisStream;
+typedef ap_axis<DMA_WIDTH, 0, 0, 0> strmio_t;
 
-void readBias(biasStreamDataType bias[256],unsigned int totalbias, hls::stream<axisStream> &strm_in){
+void read_bias(bias_data_type bias[BIAS_MEM_SIZE], hls::stream<strmio_t> &strm_in){
 
-	//printf("totalBias is %d\n",totalbias);
-	SaveBiasLOOP:for(int i=0;i<totalbias;i++){
-			#pragma HLS loop_tripcount min=2 max=2
-			#pragma HLS pipeline II=1
-			axisStream tmp = strm_in.read(); //Save Bias
-			bias[i]=tmp.data.range(DMAWidth-1,BRemainder);
+	save_bias_loop:for(int i = 0; i < BIAS_MEM_SIZE/BIAS_PER_STREAM; i++){
+			strmio_t tmp = strm_in.read(); //Save Bias
+			((ap_int<DMA_WIDTH>*)bias)[i] = tmp.data;
 			//printf("bias %d\n",(int)bias[i]);
+			if(tmp.last == 1) break;
 		}
 
 }
 
-void readWeights(filterDataType filter[4096], unsigned int address, hls::stream<axisStream> &strm_in)
+void read_weights(filterDataType filter[4096], unsigned int address, hls::stream<axisStream> &strm_in)
 {
 	axisStream tmp = strm_in.read();
 	filter[address]=tmp.data.range(DMAWidth-1,WRemainder);
@@ -39,7 +38,7 @@ void readWeights(filterDataType filter[4096], unsigned int address, hls::stream<
 
 }
 
-void readInitialWeights(filterDataType filter[numPEs][4096],unsigned int totalWeights, unsigned int filterSize, hls::stream<axisStream> &strm_in){
+void readInitialWeights(filterDataType filter[layer][4096],unsigned int totalWeights, unsigned int filterSize, hls::stream<axisStream> &strm_in){
 
 
 	unsigned int arrayIndex=0;
@@ -64,36 +63,20 @@ void readInitialWeights(filterDataType filter[numPEs][4096],unsigned int totalWe
 	}
 }
 
-void readActs(actDataType featureMap[9728], unsigned int address, hls::stream<axisStream> &strm_in){
-	axisStream tmp = strm_in.read(); //Save Bias
-	featureMap[address]=tmp.data.range(DMAWidth-1,ARemainder);
-}
+void read_input_fm(fm_data_type feature_map[FM_MEM_SIZE], hls::stream<strmio_t> &strm_in){
 
-void readInitialFeatureMap(actDataType featureMap[9728], unsigned int lineN,unsigned int paddingN, unsigned int padding,int mapSizeY,  hls::stream<axisStream> &strm_in){
+	save_map_loop:for(int i = 0; i < FM_MEM_SIZE/PXL_PER_STREAM; i++){
+			axisStream tmp = strm_in.read(); //Save map
+			((ap_int<DMA_WIDTH>*)feature_map)[i] = tmp.data;
+			if(tmp.last == 1) break;
+		}
 
-	int xnIters=0;
-	int yIters=0;
-	int padXUpperBound=lineN-paddingN;
-	//printf("lower bound is %d upper bound is %d\n",paddingN,padXUpperBound);
-
-	SaveMapLOOP:for(int i=0;i<(mapSizeY>=3 ? 3 : mapSizeY)*lineN;i++){
-		#pragma HLS loop_tripcount min=(3*5*3) max=(3*5*3)
-		#pragma HLS PIPELINE II=1
-		if(xnIters<paddingN || xnIters >= padXUpperBound || yIters < padding) featureMap[i]=0;
-		else readActs(featureMap,i,strm_in);
-		//if(xnIters<paddingN || xnIters >= padXUpperBound || yIters < padding)printf("PADDING to index %d xnIters %d yIters %d \n",i,xnIters,yIters);
-		//else printf("reading value to index %d xnIters %d yIters %d\n",i,xnIters,yIters);
-
-		xnIters++;
-		yIters = xnIters == lineN ? yIters+1: yIters;
-		xnIters = xnIters == lineN ? 0 : xnIters;
-	}
 }
 
 void PE( actDataType featureMapValue,filterDataType filterValue, accDataType *accum, int isMapSigned){
 
 	//printf("NEW SIMD\n");
-	PELOOP:for(int w=0;w<itersPerStream;w++){
+	pe_loop:for(int w=0;w<itersPerStream;w++){
 		#pragma HLS inline
 		#pragma HLS unroll
 		PESignedAct fmValue=0;
@@ -254,7 +237,7 @@ void conv(hls::stream<axisStream> &strm_in,
 										}
 										else{
 											filterAddressMaxSuplement+=filterAddressMax;
-											biasSupplement+=	;
+											biasSupplement+=0;
 										}
 									}
 									filterAddress=filterAddressMaxSuplement;
@@ -269,6 +252,8 @@ void conv(hls::stream<axisStream> &strm_in,
 								if(f==0 && kn==0) featureMapSaveAdddress=yLine[(y+3)&0x03]+featureMapAddressSuplement0;//x*(commonDiv+1);
 								featureMapPacked = featureMap[featureMapAddress++]; //(((y+ky)&0x03)*mapSizeX*(kernelN/actsPerStream+1))+(kx+x)*(kernelN/actsPerStream+1)+kn/actsPerStream
 								filterAddress_=filterAddress++;
+								//Address Generation end
+
 								//filterPacked = filter[filterAddress++];
 								//printf("filter address is %d\n",filterAddress);
 								//printf("Map address is %d\n",featureMapAddress-1);

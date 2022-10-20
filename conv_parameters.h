@@ -1,9 +1,13 @@
 //-// MEMORY DEFINES //-//
-#define DMAWidth 64
+#define DMA_WIDTH 64
 #define WWidth 4 //Bit width of weights
-#define AWidth 4 //Bit width of activations/bias
-#define BWidth 8 //must be bigger than previous bit widths
+#define AWidth 4 //Bit width of activations
+#define BIAS_WIDTH 8 //Bit width of bias. Must be bigger than previous bit widths
+#define MAP_WIDTH 8 //Bit width of input feature map
 #define accumBitWidth 23 // log2(NumAdds * (2^(AWidth+WWidth)-1)+1  // Num adds = 9*2048+1
+
+#define BIAS_MEM_SIZE 16 //Every dataset's closest multiple of 8 is 16 for the number of classes
+#define FM_MEM_SIZE 21060 //Maximum number of pixels possible in all layers
 
 #define numPEs 16 //Num of PE's (Has to be multiple eg. for AWidth == 16 && DMAWidth==64 numPEs = 4,8,12,16 etc)
 
@@ -17,8 +21,8 @@
 
 #define weightsPerStream (DMAWidth/WWidth)
 #define actsPerStream (DMAWidth/AWidth)
-#define biasPerStream (DMAWidth/BWidth)
-
+#define BIAS_PER_STREAM (DMAWidth/BIAS_WIDTH)
+#define PXL_PER_STREAM (DMAWidth/MAP_WIDTH)
 #define biasJump 2
 
 #if weightsPerStream>actsPerStream
@@ -52,6 +56,7 @@
 
 #define PRAGMA_SUB(x) _Pragma (#x)
 #define PRAGMA_HLS(x) PRAGMA_SUB(x)
+
 
 
 
