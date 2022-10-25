@@ -37,60 +37,73 @@ void sw_convolution_3D(quant_t *image_in, const quant_t *weights, float*image_ou
 
 }
 
-int main() {
-//    printf("Input Image\n\r");
-    for(int k = 0; k < N_BANDS; k++) {
+void init_weights_fm(){
+
+	int npixels = 0;
+
+	printf("Input Image\n\r");
+	for(int k = 0; k < N_BANDS; k++) {
 		for (int i = 0; i < FM_HEIGHT; i++) {
 			for (int j = 0; j < FM_WIDTH; j++) {
 				image_in[(k*FM_HEIGHT*FM_WIDTH)+(i * FM_WIDTH + j)] = (i + 1) * 10 + (j + 1)*(k+1);
-//				printf("%f ", (float)image_in[(k*FM_HEIGHT*FM_WIDTH)+(i * FM_WIDTH + j)]);
+				npixels++;
+//				printf("i%d %f ", npixels-1, image_in[(k*FM_HEIGHT*FM_WIDTH)+(i * FM_WIDTH + j)]);
 			}
 //			printf("\n\r");
 		}
-    }
-
-//    printf("Weights\n\r");
-    for(int k = 0; k < N_BANDS; k++) {
-    	for(int i = 0; i < N_FILTERS; i++) {
-    		for(int j = 0; j < KERNEL_SIZE; j++) {
-    			for(int l = 0; l < KERNEL_SIZE; l++) {
-    				kernel[(k*N_FILTERS*KERNEL_SIZE*KERNEL_SIZE)+(i * KERNEL_SIZE*KERNEL_SIZE + (j * KERNEL_SIZE) + l)] = (i + 1) * 0.01 + (j + 1)*(k+1)*(l+1)*0.1;
+	}
+	printf("Weights\n\r");
+	for(int k = 0; k < N_BANDS; k++) {
+		for(int i = 0; i < N_FILTERS; i++) {
+			for(int j = 0; j < KERNEL_SIZE; j++) {
+				for(int l = 0; l < KERNEL_SIZE; l++) {
+					kernel[(k*N_FILTERS*KERNEL_SIZE*KERNEL_SIZE)+(i * KERNEL_SIZE*KERNEL_SIZE + (j * KERNEL_SIZE) + l)] = (i + 1) * 0.01 + (j + 1)*(k+1)*(l+1)*0.1;
 //					printf("%f ", (float)kernel[(k*N_FILTERS*KERNEL_SIZE*KERNEL_SIZE)+(i * KERNEL_SIZE*KERNEL_SIZE + (j * KERNEL_SIZE) + l)]);
-    			}
-    		}
-    	}
+				}
+			}
+		}
 //    	printf("\n\r");
-    }
+	}
+
+}
+
+
+int main() {
 
     hls::stream<strmio_t> sin,so;
-
     strmio_t vin;
     strmio_t vout;
 
-	for (int t=0 ; t<WEIGHTS_MEM_SIZE; t++) {
+    init_weights_fm();
+
+    printf("Sending weights\n");
+    for (int t=0 ; t<WEIGHTS_MEM_SIZE; t++) {
 		vin.data = kernel[t];
 		if(t == WEIGHTS_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
 		else vin.last = (ap_int<1>)0;
 		sin.write(vin);
 //		printf("weight sent: %f\n",vin.data);
 	}
-	for (int t=0 ; t<FM_MEM_SIZE/4; t++) {
+    printf("Sending fm\n");
+	for (int t=0 ; t<INPUT_MEM_SIZE; t++) {
 		vin.data = image_in[t];
-		if(t == FM_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
+		if(t == INPUT_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
 		else vin.last = (ap_int<1>)0;
 		sin.write(vin);
-//		printf("pixel sent: %f\n",vin.data);
+//		printf("pixel sent: %f count: %d last: %d\n",image_in[t], t, vin.last);
 	}
-
+	printf("finish sending weights and fm\n");
+//	exit(0);
 	//Hardware computation
     simple_conv(sin, so);
 
+
     //Read image_out
-	for(int t=0 ; t < FM_WIDTH * FM_HEIGHT * N_FILTERS ; t++){
+	for(int t=0 ; t < OUT_FM_MEM_SIZE ; t++){
 		vout = so.read();
 		hw_image_out[t] = vout.data;
-		printf("%f ", vout.data);
-		if (vout.last == 1) break ;
+//		printf("%f ", vout.data);
+		if (vout.last == 1) {printf("last: %d\n", t); break ;}
 	}
 
 	for(int i = 0; i < N_FILTERS; i++){

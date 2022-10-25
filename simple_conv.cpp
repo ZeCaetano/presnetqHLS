@@ -4,7 +4,14 @@
 
 #include "simple_conv.h"
 
+
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
+	layer<FM_WIDTH,FM_HEIGHT,N_BANDS,N_FILTERS,KERNEL_SIZE> (strm_in, strm_out);
+}
+
+
+template<params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t kernel_size>
+void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 
 	#pragma HLS INTERFACE ap_ctrl_none port=return
 	#pragma HLS INTERFACE axis port=strm_in
@@ -12,43 +19,44 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 
 	strmio_t tmpin, tmpout;
-	static quant_t in_feature_map[FM_MEM_SIZE], out_feature_map[FM_MEM_SIZE], weights[WEIGHTS_MEM_SIZE];
-	int i, nfilters = N_FILTERS, kernel_size = KERNEL_SIZE, nbands = N_BANDS, fm_dim = FM_WIDTH;
+	static quant_t in_feature_map[INPUT_MEM_SIZE], out_feature_map[OUT_FM_MEM_SIZE], weights[WEIGHTS_MEM_SIZE];
+	count_t i;
 
 	//Read weights
 	for(i = 0; i < WEIGHTS_MEM_SIZE; i++) {
 		tmpin = strm_in.read();
-		((float*)weights)[i] = tmpin.data;
+		weights[i] = tmpin.data;
+//		printf("%d  %f-%d\n",i, weights[i], tmpin.last);
 		if(tmpin.last == 1) break;
 	}
-
 	//Read input fm
-	for(i = 0; i < FM_MEM_SIZE; i++) {
+	for(i = 0; i < INPUT_MEM_SIZE; i++) {
 		tmpin = strm_in.read();
-		((float*)in_feature_map)[i] = tmpin.data;
+		in_feature_map[i] = tmpin.data;
+//		printf("%d  %f-%d\n",i, tmpin.data, tmpin.last);
 		if(tmpin.last == 1) break;
 	}
+//	printf("Received all weights and pixels\n");
 
 
 	//Convolution
 	float acc = 0;
-
 	loop_filters:
-	for(int z = 0; z < nfilters; i++) {
+	for(count_t z = 0; z < nfilters; z++) {
 		loop_inputx:
-		for(int i = 0; i < fm_dim; i++) {
+		for(count_t i = 0; i < fm_width; i++) {
 			loop_inputy:
-			for(int j = 0; j < fm_dim; i++) {
+			for(count_t j = 0; j < fm_height; j++) {
 				acc = 0;
 				loop_bands:
-				for(int k = 0; k < nbands; i++) {
+				for(count_t k = 0; k < nbands; k++) {
 					loop_kernelx:
-					for(int x = 0; x < kernel_size; x++) {
+					for(count_t x = 0; x < kernel_size; x++) {
 						loop_kernely:
-						for(int y = 0; y < kernel_size; y++) {
-
+						for(count_t y = 0; y < kernel_size; y++) {
+#pragma HLS PIPELINE
 							/* Kernel index */
-							int kernel_idx =
+							count_t kernel_idx =
 									(z*kernel_size*kernel_size*nbands) +         /* nfilter */
 									(k * (kernel_size * kernel_size) + 		     /* band*/
 									(x * kernel_size +                           /* kernel row */
@@ -56,8 +64,8 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 //							printf("%d ", kernel_1d_idx);
 							/* Input matrix index */
-							int input_idx =
-									k * (fm_dim * fm_dim) + ((i + x) * fm_dim +  /* input row */
+							count_t input_idx =
+									k * (fm_width * fm_height) + ((i + x) * fm_height +  /* input row */
 									j + y);                                      /* input column */
 
 							//normalize pixel
@@ -65,13 +73,24 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 						}
 					}
 				}
-				if(j == FM_WIDTH -1 && i == FM_HEIGHT - 1 && z == N_FILTERS - 1) tmpout.last = 1;
-				else tmpout.last = 0;
-				tmpout.data = acc;
-				tmpout.keep = 0xF;
-				tmpout.strb = 0xF;
-				strm_out.write(tmpout);
+				out_feature_map[z*fm_width*fm_height + i*fm_height + j] = acc;
+//				if(j == FM_WIDTH -1 && i == FM_HEIGHT - 1 && z == N_FILTERS - 1) tmpout.last = 1;
+//				else tmpout.last = 0;
+//				tmpout.data = acc;
+//				tmpout.keep = 0xF;
+//				tmpout.strb = 0xF;
+//				strm_out.write(tmpout);
 			}
 		}
 	}
+
+	for(count_t i = 0; i < OUT_FM_MEM_SIZE; i++){
+		if(i == OUT_FM_MEM_SIZE - 1) tmpout.last = 1;
+		else tmpout.last = 0;
+		tmpout.data = out_feature_map[i];
+		tmpout.keep = 0xF;
+		tmpout.strb = 0xF;
+		strm_out.write(tmpout);
+	}
+	return;
 }
