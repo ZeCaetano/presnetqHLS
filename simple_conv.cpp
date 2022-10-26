@@ -1,43 +1,58 @@
+//-------LAYER 1--------//
 //Input: 9,9,32
 //Number of filters: 43
 //Kernel size: 1
+//-------LAYER 2--------//
+//Input: 9,9,43
+//Number of filters: 43
+//Kernel size: 1
+
 
 #include "simple_conv.h"
 
 
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
-	layer<FM_WIDTH,FM_HEIGHT,N_BANDS,N_FILTERS,KERNEL_SIZE> (strm_in, strm_out);
-}
-
-
-template<params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t kernel_size>
-void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 
 	#pragma HLS INTERFACE ap_ctrl_none port=return
 	#pragma HLS INTERFACE axis port=strm_in
 	#pragma HLS INTERFACE axis port=strm_out
 
+	hls::stream<strmio_t> m0, m1, m2; //output of layer1 and layer2
+
+	#pragma HLS stream variable=m0 type=fifo
+	#pragma HLS stream variable=m1 type=fifo
+	#pragma HLS stream variable=m2 type=fifo
+	printf("Starting layer1\n");
+	layer<0,X1,Y1,Z1,NF1,K1,0> (strm_in, m1);
+	printf("Layer1 done, starting layer2\n");
+	layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m1, strm_out);
+	printf("Layer2 done\n");
+
+}
+
+
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t kernel_size, params_t weights_start>
+void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 
 	strmio_t tmpin, tmpout;
-	static quant_t in_feature_map[INPUT_MEM_SIZE], out_feature_map[OUT_FM_MEM_SIZE], weights[WEIGHTS_MEM_SIZE];
+	static quant_t in_feature_map[fm_width*fm_height*nbands], out_feature_map[fm_width*fm_height*nfilters], weights[WEIGHTS_MEM_SIZE];
 	count_t i;
 
 	//Read weights
 	for(i = 0; i < WEIGHTS_MEM_SIZE; i++) {
 		tmpin = strm_in.read();
 		weights[i] = tmpin.data;
-//		printf("%d  %f-%d\n",i, weights[i], tmpin.last);
+//		if(layer_id == 1) printf("%d  %f-%d\n",i, weights[i], tmpin.last);
 		if(tmpin.last == 1) break;
 	}
 	//Read input fm
-	for(i = 0; i < INPUT_MEM_SIZE; i++) {
+	for(i = 0; i < fm_width*fm_height*nbands; i++) {
 		tmpin = strm_in.read();
 		in_feature_map[i] = tmpin.data;
-//		printf("%d  %f-%d\n",i, tmpin.data, tmpin.last);
+//		if(layer_id == 1) printf("%d  %f-%d\n",i, tmpin.data, tmpin.last);
 		if(tmpin.last == 1) break;
 	}
 //	printf("Received all weights and pixels\n");
-
 
 	//Convolution
 	float acc = 0;
@@ -57,12 +72,13 @@ void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 #pragma HLS PIPELINE
 							/* Kernel index */
 							count_t kernel_idx =
-									(z*kernel_size*kernel_size*nbands) +         /* nfilter */
-									(k * (kernel_size * kernel_size) + 		     /* band*/
-									(x * kernel_size +                           /* kernel row */
-									y));                                         /* kernel column */
+									weights_start +                                        /* layer */
+									(z*kernel_size*kernel_size*nbands) +                   /* nfilter */
+									(k * (kernel_size * kernel_size) + 		               /* band*/
+									(x * kernel_size +                                     /* kernel row */
+									y));                                                   /* kernel column */
 
-//							printf("%d ", kernel_1d_idx);
+							if(layer_id == 1) printf("IP weight %f  - %d\n", weights[kernel_idx], kernel_idx);
 							/* Input matrix index */
 							count_t input_idx =
 									k * (fm_width * fm_height) + ((i + x) * fm_height +  /* input row */
@@ -83,14 +99,36 @@ void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 			}
 		}
 	}
-
-	for(count_t i = 0; i < OUT_FM_MEM_SIZE; i++){
-		if(i == OUT_FM_MEM_SIZE - 1) tmpout.last = 1;
+	if(layer_id < NLAYERS-1){  //only send weights if it's not the last layer
+		printf("Layer %d is sending weights again\n", layer_id);
+		for (int i = 0 ; i < WEIGHTS_MEM_SIZE; i++) {
+			if(i == WEIGHTS_MEM_SIZE - 1) tmpout.last = 1;
+			else tmpout.last = 0;
+//			printf("weights sent inside ip %f  - %d\n", weights[i], i);
+			tmpout.data = weights[i];
+			tmpout.keep = 0xF;
+			tmpout.strb = 0xF;
+			strm_out.write(tmpout);
+		}
+	}
+	for(count_t i = 0; i < fm_width*fm_height*nfilters; i++){
+		if(i == fm_width*fm_height*nfilters - 1) tmpout.last = 1;
 		else tmpout.last = 0;
 		tmpout.data = out_feature_map[i];
 		tmpout.keep = 0xF;
 		tmpout.strb = 0xF;
 		strm_out.write(tmpout);
 	}
+//	if(layer_id == 1){
+//		printf("HARDWARE Output Image 1\n\r");
+//		for(int k = 0; k < N_FILTERS; k++) {
+//			for (int x = 0; x < FM_HEIGHT; x++) {
+//				for (int j = 0; j < FM_WIDTH; j++) {
+//					printf("%f ", out_feature_map[(k+1)*x * FM_WIDTH + j]);
+//				}
+//				printf("\n\r");
+//			}
+//		}
+//	}
 	return;
 }
