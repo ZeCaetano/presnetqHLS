@@ -17,19 +17,19 @@
 //Input: 9,9,32
 //Number of filters: 43
 //Kernel size: 1
-#define X1 3
-#define Y1 3
-#define Z1 3
-#define NF1 2
+#define X1 9
+#define Y1 9
+#define Z1 32
+#define NF1 43
 #define K1 1
 //-------LAYER 2--------//
 //Input: 9,9,43
 //Number of filters: 43
 //Kernel size: 1
-#define X2 3
-#define Y2 3
-#define Z2 3
-#define NF2 2
+#define X2 9
+#define Y2 9
+#define Z2 43
+#define NF2 43
 #define K2 1
 
 

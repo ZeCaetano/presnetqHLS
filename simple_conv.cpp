@@ -17,16 +17,14 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 	#pragma HLS INTERFACE axis port=strm_in
 	#pragma HLS INTERFACE axis port=strm_out
 
-	hls::stream<strmio_t> m0, m1, m2; //output of layer1 and layer2
+	hls::stream<strmio_t> m0, m1, m2;
 
 	#pragma HLS stream variable=m0 type=fifo
 	#pragma HLS stream variable=m1 type=fifo
 	#pragma HLS stream variable=m2 type=fifo
-	printf("Starting layer1\n");
+
 	layer<0,X1,Y1,Z1,NF1,K1,0> (strm_in, m1);
-	printf("Layer1 done, starting layer2\n");
 	layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m1, strm_out);
-	printf("Layer2 done\n");
 
 }
 
@@ -49,7 +47,7 @@ void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 	for(i = 0; i < fm_width*fm_height*nbands; i++) {
 		tmpin = strm_in.read();
 		in_feature_map[i] = tmpin.data;
-//		if(layer_id == 1) printf("%d  %f-%d\n",i, tmpin.data, tmpin.last);
+//		if(layer_id == 1) printf("%f-%d\n", tmpin.data, i);
 		if(tmpin.last == 1) break;
 	}
 //	printf("Received all weights and pixels\n");
@@ -78,12 +76,15 @@ void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 									(x * kernel_size +                                     /* kernel row */
 									y));                                                   /* kernel column */
 
-							if(layer_id == 1) printf("IP weight %f  - %d\n", weights[kernel_idx], kernel_idx);
+
 							/* Input matrix index */
 							count_t input_idx =
 									k * (fm_width * fm_height) + ((i + x) * fm_height +  /* input row */
 									j + y);                                      /* input column */
-
+//							if(layer_id == 1) {
+//								printf("IP weight %f  - %d\n", weights[kernel_idx], kernel_idx);
+//								printf("IP pixel %f  - %d\n",in_feature_map[input_idx], input_idx);
+//							}
 							//normalize pixel
 							acc += weights[kernel_idx] * ((float) in_feature_map[input_idx] / 255 - 0.5F) / 0.5F;
 						}
