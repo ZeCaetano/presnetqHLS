@@ -18,33 +18,56 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 	#pragma HLS INTERFACE axis port=strm_out
 
 	hls::stream<strmio_t> m0, m1, m2;
+	static quant_t weights[WEIGHTS_MEM_SIZE];
 
 	#pragma HLS stream variable=m0 type=fifo
 	#pragma HLS stream variable=m1 type=fifo
 	#pragma HLS stream variable=m2 type=fifo
 
+#ifdef CONST
+	read_weights(strm_in, weights);
+
+	#pragma HLS DATAFLOW
+	layer<0,X1,Y1,Z1,NF1,K1,0> (strm_in, m1, weights);
+	layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m1, strm_out, weights);
+#else
+	#pragma HLS DATAFLOW
 	layer<0,X1,Y1,Z1,NF1,K1,0> (strm_in, m1);
 	layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m1, strm_out);
-
+#endif
 }
 
 
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t kernel_size, params_t weights_start>
-void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
-
-	strmio_t tmpin, tmpout;
-	static quant_t in_feature_map[fm_width*fm_height*nbands], out_feature_map[fm_width*fm_height*nfilters], weights[WEIGHTS_MEM_SIZE];
-	count_t i;
+void read_weights(hls::stream<strmio_t> &strm_in, quant_t *weights) {
+	strmio_t tmpin;
 
 	//Read weights
-	for(i = 0; i < WEIGHTS_MEM_SIZE; i++) {
+	for(int i = 0; i < WEIGHTS_MEM_SIZE; i++) {
 		tmpin = strm_in.read();
 		weights[i] = tmpin.data;
 //		if(layer_id == 1) printf("%d  %f-%d\n",i, weights[i], tmpin.last);
 		if(tmpin.last == 1) break;
 	}
+}
+
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t kernel_size, params_t weights_start>
+#ifdef CONST
+void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out, quant_t const *weights) {
+#else
+void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
+#endif
+
+
+	strmio_t tmpin, tmpout;
+	static quant_t in_feature_map[fm_width*fm_height*nbands], out_feature_map[fm_width*fm_height*nfilters];
+#ifndef CONST
+	static quant_t weights[WEIGHTS_MEM_SIZE];
+
+	read_weights(strm_in, weights);
+#endif
+
 	//Read input fm
-	for(i = 0; i < fm_width*fm_height*nbands; i++) {
+	for(count_t i = 0; i < fm_width*fm_height*nbands; i++) {
 		tmpin = strm_in.read();
 		in_feature_map[i] = tmpin.data;
 //		if(layer_id == 1) printf("%f-%d\n", tmpin.data, i);
@@ -100,6 +123,7 @@ void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 			}
 		}
 	}
+#ifndef CONST
 	if(layer_id < NLAYERS-1){  //only send weights if it's not the last layer
 		printf("Layer %d is sending weights again\n", layer_id);
 		for (int i = 0 ; i < WEIGHTS_MEM_SIZE; i++) {
@@ -112,6 +136,7 @@ void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 			strm_out.write(tmpout);
 		}
 	}
+#endif
 	for(count_t i = 0; i < fm_width*fm_height*nfilters; i++){
 		if(i == fm_width*fm_height*nfilters - 1) tmpout.last = 1;
 		else tmpout.last = 0;
@@ -120,6 +145,7 @@ void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 		tmpout.strb = 0xF;
 		strm_out.write(tmpout);
 	}
+
 //	if(layer_id == 1){
 //		printf("HARDWARE Output Image 1\n\r");
 //		for(int k = 0; k < N_FILTERS; k++) {

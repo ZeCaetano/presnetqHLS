@@ -39,16 +39,25 @@ void sw_convolution_3D(quant_t *image_in, const quant_t *weights, float*image_ou
 	}
 
 }
+
 //void init_weights_from_file(){
-//	 FILE *fweights;
+//	FILE *fweights;
+//	char tmp[(3440)/2];
 //
-//	  // Open weights file
-//	  if ((fweights = fopen("simple_weights.bin", "rb")) == NULL) {
-//	    fprintf(stderr, "unable to open file <simple_weights.bin>\n");
-//	    exit(1);
-//	  }
-//	  // read weights
-//	  fread(kernel, WEIGHTS_MEM_SIZE, 4, fweights);
+//	// Open weights file
+//	if ((fweights = fopen("simple_weights.bin", "rb")) == NULL) {
+//		fprintf(stderr, "unable to open file <simple_weights.bin>\n");
+//		exit(1);
+//	}
+//	// read weights
+////	fread((char *)kernel, 1,(3440)/2, fweights);
+//	fread(tmp, 1,(3440)/2, fweights);
+//	for(int i = 0; i < WEIGHTS_MEM_SIZE; i+=2) {
+//		kernel[i] = tmp[i] >> 4;
+//		kernel[i+1] = tmp[i] & 0b00001111;
+//	}
+//
+//
 //}
 
 void init_fm(){
@@ -99,6 +108,11 @@ int main() {
     strmio_t vout;
 
     init_fm();
+//    init_weights_from_file();
+//    for(int i = 0; i < WEIGHTS_MEM_SIZE; i++) {
+//    	printf("%d\n", (int)kernel[i]);
+//    }
+//    return 1;
 
 	//--------------------------------------------------------------------------------------------------//
 	//-----------------------------------------HARDWARE CONV--------------------------------------------//
