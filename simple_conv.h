@@ -2,8 +2,6 @@
 #include <hls_stream.h>
 #include <ap_axi_sdata.h>
 
-//#define CONST
-
 #define DMA_WIDTH 64
 #define INPUT1_MEM_SIZE (X1*Y1*Z1)
 #define OUT1_FM_MEM_SIZE (X1*Y1*NF1)
@@ -36,23 +34,16 @@
 
 
 //typedef ap_int<4> quant_t;
-//typedef ap_int<4> quant_t;
 typedef float quant_t;
 typedef ap_uint<12> count_t;
 typedef short params_t;
 typedef hls::axis<float, 0, 0, 0> strmio_t;
 
-typedef ap_uint<9> test_t;
 
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out);
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t kernel_size, params_t weights_start>
-#ifdef CONST
-void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out, quant_t const *weights);
-#else
 void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out);
-#endif
-
 
 void read_weights(hls::stream<strmio_t> &strm_in, quant_t *weights);
 

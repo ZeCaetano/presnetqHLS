@@ -10,6 +10,11 @@
 
 #include "simple_conv.h"
 
+//#define CONST
+
+#ifdef CONST
+static quant_t weights[WEIGHTS_MEM_SIZE];
+#endif
 
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 
@@ -17,24 +22,17 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 	#pragma HLS INTERFACE axis port=strm_in
 	#pragma HLS INTERFACE axis port=strm_out
 
-	hls::stream<strmio_t> m0, m1, m2;
-	static quant_t weights[WEIGHTS_MEM_SIZE];
+	hls::stream<strmio_t> m1;
 
-	#pragma HLS stream variable=m0 type=fifo
 	#pragma HLS stream variable=m1 type=fifo
-	#pragma HLS stream variable=m2 type=fifo
 
 #ifdef CONST
 	read_weights(strm_in, weights);
+#endif
 
-	#pragma HLS DATAFLOW
-	layer<0,X1,Y1,Z1,NF1,K1,0> (strm_in, m1, weights);
-	layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m1, strm_out, weights);
-#else
 	#pragma HLS DATAFLOW
 	layer<0,X1,Y1,Z1,NF1,K1,0> (strm_in, m1);
 	layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m1, strm_out);
-#endif
 }
 
 
@@ -51,18 +49,14 @@ void read_weights(hls::stream<strmio_t> &strm_in, quant_t *weights) {
 }
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t kernel_size, params_t weights_start>
-#ifdef CONST
-void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out, quant_t const *weights) {
-#else
 void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
-#endif
 
 
 	strmio_t tmpin, tmpout;
 	static quant_t in_feature_map[fm_width*fm_height*nbands], out_feature_map[fm_width*fm_height*nfilters];
+
 #ifndef CONST
 	static quant_t weights[WEIGHTS_MEM_SIZE];
-
 	read_weights(strm_in, weights);
 #endif
 
@@ -86,6 +80,7 @@ void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 				acc = 0;
 				loop_bands:
 				for(count_t k = 0; k < nbands; k++) {
+//Fazer leitura px=strm
 					loop_kernelx:
 					for(count_t x = 0; x < kernel_size; x++) {
 						loop_kernely:
