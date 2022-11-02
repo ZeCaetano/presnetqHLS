@@ -94,16 +94,17 @@ void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 
 	//Convolution
 	float acc = 0;
-	loop_filters:
-	for(count_t z = 0; z < nfilters; z++) {
-		loop_inputx:
-		for(count_t i = 0; i < fm_width; i++) {
-			loop_inputy:
-			for(count_t j = 0; j < fm_height; j++) {
-				acc = 0;
-				loop_bands:
-				for(count_t k = 0; k < nbands; k++) {
+
+	loop_inputx:
+	for(count_t i = 0; i < fm_width; i++) {
+		loop_inputy:
+		for(count_t j = 0; j < fm_height; j++) {
+			loop_bands:
+			for(count_t k = 0; k < nbands; k++) {
+				loop_filters:
+				for(count_t z = 0; z < nfilters; z++) {
 //Fazer leitura px=strm
+					acc = 0;
 					loop_kernelx:
 					for(count_t x = 0; x < kernel_size; x++) {
 						loop_kernely:
@@ -130,8 +131,9 @@ void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 							acc += weights[kernel_idx] * ((float) in_feature_map[input_idx] / 255 - 0.5F) / 0.5F;
 						}
 					}
+					out_feature_map[z*fm_width*fm_height + i*fm_height + j] += acc;
 				}
-				out_feature_map[z*fm_width*fm_height + i*fm_height + j] = acc;
+//				out_feature_map[z*fm_width*fm_height + i*fm_height + j] = acc;
 //				if(j == fm_width -1 && i == fm_height - 1 && z == nfilters - 1) tmpout.last = 1;
 //				else tmpout.last = 0;
 //				tmpout.data = acc;
