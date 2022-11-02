@@ -10,7 +10,7 @@
 
 #include "simple_conv.h"
 
-//#define CONST
+#define CONST
 
 #ifdef CONST
 static quant_t weights[WEIGHTS_MEM_SIZE];
@@ -108,13 +108,13 @@ void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 						}
 					}
 				}
-				out_feature_map[z*fm_width*fm_height + i*fm_height + j] = acc;
-//				if(j == FM_WIDTH -1 && i == FM_HEIGHT - 1 && z == N_FILTERS - 1) tmpout.last = 1;
-//				else tmpout.last = 0;
-//				tmpout.data = acc;
-//				tmpout.keep = 0xF;
-//				tmpout.strb = 0xF;
-//				strm_out.write(tmpout);
+//				out_feature_map[z*fm_width*fm_height + i*fm_height + j] = acc;
+				if(j == fm_width -1 && i == fm_height - 1 && z == nfilters - 1) tmpout.last = 1;
+				else tmpout.last = 0;
+				tmpout.data = acc;
+				tmpout.keep = 0xF;
+				tmpout.strb = 0xF;
+				strm_out.write(tmpout);
 			}
 		}
 	}
@@ -132,14 +132,14 @@ void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 		}
 	}
 #endif
-	for(count_t i = 0; i < fm_width*fm_height*nfilters; i++){
-		if(i == fm_width*fm_height*nfilters - 1) tmpout.last = 1;
-		else tmpout.last = 0;
-		tmpout.data = out_feature_map[i];
-		tmpout.keep = 0xF;
-		tmpout.strb = 0xF;
-		strm_out.write(tmpout);
-	}
+//	for(count_t i = 0; i < fm_width*fm_height*nfilters; i++){
+//		if(i == fm_width*fm_height*nfilters - 1) tmpout.last = 1;
+//		else tmpout.last = 0;
+//		tmpout.data = out_feature_map[i];
+//		tmpout.keep = 0xF;
+//		tmpout.strb = 0xF;
+//		strm_out.write(tmpout);
+//	}
 
 //	if(layer_id == 1){
 //		printf("HARDWARE Output Image 1\n\r");
