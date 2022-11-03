@@ -2,7 +2,7 @@
 #include <hls_stream.h>
 #include <ap_axi_sdata.h>
 
-#define ARRAYS
+//#define ARRAYS
 
 #define DMA_WIDTH 64
 #define INPUT1_MEM_SIZE (X1*Y1*Z1)
@@ -48,8 +48,8 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t kernel_size, params_t weights_start>
 #ifdef ARRAYS
 void layer(quant_t *in_feature_map, quant_t *out_feature_map, quant_t *weights);
-#elif
-void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out);
+#else
+void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out, quant_t *weights);
 #endif
 
 void read_stream(hls::stream<strmio_t> &strm_in, quant_t *ifm, count_t n_pixels);

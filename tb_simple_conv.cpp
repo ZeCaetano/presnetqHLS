@@ -140,7 +140,7 @@ int main() {
 	//Hardware computation
     simple_conv(sin, so);
 
-
+#ifdef ARRAYS
     //Read image_out
 	for(int t=0 ; t < OUT2_FM_MEM_SIZE ; t++){
 		vout = so.read();
@@ -148,6 +148,16 @@ int main() {
 //		printf("%f ", vout.data);
 		if (vout.last == 1) break;
 	}
+#else
+	for(int i = 0; i < X2*Y2; i++) {
+		for(int j = 0; j < Z2; j++) {
+			vout = so.read();
+			hw_image_out[j*X2*Y2+ i] = vout.data;
+	//		if(layer_id == 1) printf("%f-%d\n", tmpin.data, i);
+			if(vout.last == 1) break;
+		}
+	}
+#endif
 
 	//--------------------------------------------------------------------------------------------------//
 	//-----------------------------------------SOFTWARE CONV--------------------------------------------//
