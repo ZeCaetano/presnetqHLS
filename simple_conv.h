@@ -24,6 +24,7 @@
 #define Z1 32
 #define NF1 43
 #define K1 1
+#define WEIGHTS1 (Z1*NF1*K1*K1)
 //-------LAYER 2--------//
 //Input: 9,9,43
 //Number of filters: 43
@@ -33,7 +34,7 @@
 #define Z2 43
 #define NF2 43
 #define K2 1
-
+#define WEIGHTS2 (Z2*NF2*K2*K2)
 
 //typedef ap_int<4> quant_t;
 typedef float quant_t;
@@ -46,12 +47,10 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t kernel_size, params_t weights_start>
 #ifdef ARRAYS
-void layer(quant_t *in_feature_map, quant_t *out_feature_map);
+void layer(quant_t *in_feature_map, quant_t *out_feature_map, quant_t *weights);
 #elif
 void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out);
 #endif
 
-
-void read_weights(hls::stream<strmio_t> &strm_in, quant_t *weights);
-void read_ifm(hls::stream<strmio_t> &strm_in, quant_t *ifm, count_t n_pixels);
+void read_stream(hls::stream<strmio_t> &strm_in, quant_t *ifm, count_t n_pixels);
 void write_ofm(quant_t *ofm, hls::stream<strmio_t> &strm_out, count_t n_pixels);
