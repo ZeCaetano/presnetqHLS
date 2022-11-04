@@ -49,8 +49,14 @@ template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nban
 #ifdef ARRAYS
 void layer(quant_t *in_feature_map, quant_t *out_feature_map, quant_t *weights);
 #else
-void layer(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out, quant_t *weights);
+void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_t *weights);
 #endif
 
+#ifdef ARRAYS
 void read_stream(hls::stream<strmio_t> &strm_in, quant_t *ifm, count_t n_pixels);
 void write_ofm(quant_t *ofm, hls::stream<strmio_t> &strm_out, count_t n_pixels);
+#else
+void read_stream(hls::stream<strmio_t> &strm_in, hls::stream<quant_t> &ifm, count_t n_pixels);
+void write_ofm(hls::stream<quant_t> &ofm, hls::stream<strmio_t> &strm_out, count_t n_pixels);
+#endif
+

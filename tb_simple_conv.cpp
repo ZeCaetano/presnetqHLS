@@ -127,6 +127,7 @@ int main() {
 //		printf("weight sent: %f\n",vin.data);
 	}
 //    printf("Sending fm\n");
+#ifdef ARRAYS
 	for (int t=0 ; t<INPUT1_MEM_SIZE; t++) {
 		vin.data = image_in[t];
 		if(t == INPUT1_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
@@ -134,7 +135,17 @@ int main() {
 		sin.write(vin);
 //		printf("pixel sent: %f count: %d last: %d\n",image_in[t], t, vin.last);
 	}
-	printf("finish sending weights and fm\n");
+#else
+	for (int t=0 ; t<X1*Y1; t++) {
+		for(int j = 0; j < Z1; j++) {
+			vin.data = image_in[(j*X1*Y1) + t];
+			if(t == INPUT1_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
+			else vin.last = (ap_int<1>)0;
+			sin.write(vin);
+	//		printf("pixel sent: %f count: %d last: %d\n",image_in[t], t, vin.last);
+		}
+	}
+#endif
 //	exit(0);
 
 	//Hardware computation
@@ -153,7 +164,6 @@ int main() {
 		for(int j = 0; j < Z2; j++) {
 			vout = so.read();
 			hw_image_out[j*X2*Y2+ i] = vout.data;
-	//		if(layer_id == 1) printf("%f-%d\n", tmpin.data, i);
 			if(vout.last == 1) break;
 		}
 	}
