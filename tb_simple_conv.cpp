@@ -5,15 +5,15 @@
 static quant_t image_in[INPUT1_MEM_SIZE];
 static quant_t kernel[WEIGHTS_MEM_SIZE];
 
-float hw_image_out[OUT2_FM_MEM_SIZE];
-float sw_image_out_1[OUT1_FM_MEM_SIZE];
-float sw_image_out_2[OUT2_FM_MEM_SIZE];
+quant_t hw_image_out[OUT2_FM_MEM_SIZE];
+quant_t sw_image_out_1[OUT1_FM_MEM_SIZE];
+quant_t sw_image_out_2[OUT2_FM_MEM_SIZE];
 
 //Performs software-only matrix convolution.
 void sw_convolution_3D(quant_t *image_in, const quant_t *weights, float*image_out, int nbands, int fm_size, int kernel_size) {
 	for (int i = 0; i < fm_size; i++) {
 		for (int j = 0; j < fm_size; j++) {
-			float accum = 0;
+			quant_t accum = 0;
 			for (int k = 0; k < nbands; k++) {
 				for (int x = 0; x < kernel_size; x++) {
 					for (int y = 0; y < kernel_size; y++) {
@@ -29,7 +29,7 @@ void sw_convolution_3D(quant_t *image_in, const quant_t *weights, float*image_ou
 //						printf("SW weight %f - %d\n", weights[weight_1d_idx], weight_1d_idx);
 //						printf("SW pixel %f - %d\n", image_in[image_1d_idx], image_1d_idx);
 
-						accum += weights[weight_1d_idx] * ((float) image_in[image_1d_idx] / 255 - 0.5F) / 0.5F;
+						accum += weights[weight_1d_idx] * image_in[image_1d_idx];
 					}
 				}
 			}
@@ -51,6 +51,7 @@ void sw_convolution_3D(quant_t *image_in, const quant_t *weights, float*image_ou
 //	}
 //	// read weights
 ////	fread((char *)kernel, 1,(3440)/2, fweights);
+
 //	fread(tmp, 1,(3440)/2, fweights);
 //	for(int i = 0; i < WEIGHTS_MEM_SIZE; i+=2) {
 //		kernel[i] = tmp[i] >> 4;
@@ -68,9 +69,9 @@ void init_fm(){
 	for(int k = 0; k < Z1; k++) {
 		for (int i = 0; i < X1; i++) {
 			for (int j = 0; j < Y1; j++) {
-				image_in[(k*X1*Y1)+(i*Y1+j)] = (i + 1) * 10 + (j + 1)*(k+1);
+				image_in[(k*X1*Y1)+(i*Y1+j)] = (i+j+k + 1) * 0.01 + ((j + 1)*(k+1))*0.01;
 				npixels++;
-//				printf("i%d %f ", npixels-1, image_in[(k*FM_HEIGHT*FM_WIDTH)+(i * FM_WIDTH + j)]);
+//				printf("i%d %f ", npixels-1, (float)image_in[(k*X1*Y1)+(i * Y1 + j)]);
 			}
 //			printf("\n\r");
 		}
@@ -80,23 +81,24 @@ void init_fm(){
 		for(int i = 0; i < NF1; i++) {
 			for(int j = 0; j < K1; j++) {
 				for(int l = 0; l < K1; l++) {
-					kernel[(k*NF1*K1*K1)+(i * K1*K1 + (j * K1) + l)] = (i + 1) * 0.01 + (j + 1)*(k+1)*(l+1)*0.1;
-//					printf("%f ", (float)kernel[(k*N_FILTERS*KERNEL_SIZE*KERNEL_SIZE)+(i * KERNEL_SIZE*KERNEL_SIZE + (j * KERNEL_SIZE) + l)]);
+					kernel[(k*NF1*K1*K1)+(i * K1*K1 + (j * K1) + l)] = (i + 1) * 0.01 + (j + 1)*(k+1)*(l+1)*0.01;
+//					printf("%f ", (float)kernel[(k*NF1*K1*K1)+(i * K1*K1 + (j * K1) + l)]);
 				}
 			}
 		}
+//		printf("\n\r");
 	}
 	for(int k = 0; k < Z2; k++) {
-			for(int i = 0; i < NF2; i++) {
-				for(int j = 0; j < K2; j++) {
-					for(int l = 0; l < K2; l++) {
-						kernel[LAYER1_WEIGHTS + (k*NF2*K2*K2)+(i * K2*K2 + (j * K2) + l)] = (i + 1) * 0.02 + (j + 1)*(k+1)*(l+1)*0.1;
-	//					printf("%f ", (float)kernel[(k*N_FILTERS*KERNEL_SIZE*KERNEL_SIZE)+(i * KERNEL_SIZE*KERNEL_SIZE + (j * KERNEL_SIZE) + l)]);
-					}
+		for(int i = 0; i < NF2; i++) {
+			for(int j = 0; j < K2; j++) {
+				for(int l = 0; l < K2; l++) {
+					kernel[LAYER1_WEIGHTS + (k*NF2*K2*K2)+(i * K2*K2 + (j * K2) + l)] = (i + 1) * 0.02 + (j + 1)*(k+1)*(l+1)*0.1;
+//					printf("%f ", (float)kernel[LAYER1_WEIGHTS + ((k*NF2*K2*K2)+(i * K2*K2 + (j * K2) + l))]);
 				}
 			}
 		}
-//    	printf("\n\r");
+//		printf("\n\r");
+	}
 
 }
 

@@ -124,7 +124,7 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 #endif
 
 	//Convolution
-	float acc = 0;
+	quant_t acc = 0;
 	quant_t acc_arr[nfilters];
 
 	loop_inputx:
@@ -160,9 +160,9 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 #endif
 							//normalize pixel
 #ifdef ARRAYS
-							acc += weights[kernel_idx] * ((float) in_feature_map[input_idx] / 255 - 0.5F) / 0.5F;
+							acc += weights[kernel_idx] * (float) in_feature_map[input_idx];
 #else
-							acc += weights[kernel_idx] * ((float) pixel / 255 - 0.5F) / 0.5F;
+							acc += weights[kernel_idx] *  pixel ;
 #endif
 						}
 					}

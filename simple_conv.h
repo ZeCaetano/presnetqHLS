@@ -1,4 +1,5 @@
 #include <ap_int.h>
+#include <ap_fixed.h>
 #include <hls_stream.h>
 #include <ap_axi_sdata.h>
 
@@ -36,8 +37,8 @@
 #define K2 1
 #define WEIGHTS2 (Z2*NF2*K2*K2)
 
-//typedef ap_int<4> quant_t;
-typedef float quant_t;
+typedef ap_fixed<4,2,AP_RND> quant_t;
+//typedef float quant_t;
 typedef ap_uint<12> count_t;
 typedef short params_t;
 typedef hls::axis<float, 0, 0, 0> strmio_t;
