@@ -55,6 +55,7 @@ void read_stream(hls::stream<strmio_t> &strm_in, hls::stream<quant_t> &ifm, coun
 	//Read weights for layer 1
 	for(int i = 0; i < WEIGHTS1; i++) {
 		tmpin = strm_in.read();
+//		printf("Receive %f\n", (float)tmpin.data);
 		weights_l1[i] = tmpin.data;
 //		if(layer_id == 1) printf("%d  %f-%d\n",i, weights[i], tmpin.last);
 		if(tmpin.last == 1) break;
@@ -63,6 +64,7 @@ void read_stream(hls::stream<strmio_t> &strm_in, hls::stream<quant_t> &ifm, coun
 	//Read weights for layer 2
 	for(int i = 0; i < WEIGHTS2; i++) {
 		tmpin = strm_in.read();
+//		printf("Receive %f\n", (float)tmpin.data);
 		weights_l2[i] = tmpin.data;
 //		if(layer_id == 1) printf("%d  %f-%d\n",i, weights[i], tmpin.last);
 		if(tmpin.last == 1) break;
@@ -124,13 +126,15 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 #endif
 
 	//Convolution
-	quant_t acc = 0;
-	quant_t acc_arr[nfilters];
+	quant_mult acc = 0;
+	quant_accum acc_arr[nfilters];
+//	int kernel_idx = 0;
 
 	loop_inputx:
 	for(count_t i = 0; i < fm_width; i++) {
 		loop_inputy:
 		for(count_t j = 0; j < fm_height; j++) {
+//			kernel_idx = 0;
 			loop_bands:
 			for(count_t k = 0; k < nbands; k++) {
 #ifndef ARRAYS
@@ -145,6 +149,7 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 						loop_kernely:
 						for(count_t y = 0; y < kernel_size; y++) {
 #pragma HLS PIPELINE
+//							kernel_idx++;
 							/* Kernel index */
 							count_t kernel_idx =
 									(z*kernel_size*kernel_size*nbands) +                   /* nfilter */
@@ -158,9 +163,9 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 									k * (fm_width * fm_height) + ((i + x) * fm_height +  /* input row */
 									j + y);                                      /* input column */
 #endif
-							//normalize pixel
+//							printf("%d IP - %d %d %f\n",z, k, (x*kernel_size) + y, (float)weights[kernel_idx]);
 #ifdef ARRAYS
-							acc += weights[kernel_idx] * (float) in_feature_map[input_idx];
+							acc += weights[kernel_idx] * in_feature_map[input_idx];
 #else
 							acc += weights[kernel_idx] *  pixel ;
 #endif
@@ -172,10 +177,10 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 						acc_arr[z] += acc;
 					if(k == nbands-1) {  //If it's the last band, put the accum in the output feature map and reset the accum array
 #ifdef ARRAYS
-						out_feature_map[z*fm_width*fm_height + i*fm_height + j] = acc_arr[z];
+						out_feature_map[z*fm_width*fm_height + i*fm_height + j] = (quant_t)acc_arr[z];
 #else
 //						printf("sending pixel number %d of filter %d \n", (i*fm_height)+j, z);
-						tmpout = acc_arr[z];
+						tmpout = (quant_t)acc_arr[z];
 						strm_out.write(tmpout);
 #endif
 						acc_arr[z] = 0;
