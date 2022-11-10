@@ -42,6 +42,7 @@ typedef ap_fixed<8,4,AP_RND> quant_mult;
 typedef ap_fixed<9,4,AP_RND> quant_accum;
 //typedef float quant_t;
 typedef ap_uint<12> count_t;
+typedef ap_uint<17> widx_t;
 typedef short params_t;
 typedef hls::axis<quant_t, 0, 0, 0> strmio_t;
 

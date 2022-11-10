@@ -128,13 +128,13 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 	//Convolution
 	quant_mult acc = 0;
 	quant_accum acc_arr[nfilters];
-//	int kernel_idx = 0;
+	widx_t kernel_idx = 0;
 
 	loop_inputx:
 	for(count_t i = 0; i < fm_width; i++) {
 		loop_inputy:
 		for(count_t j = 0; j < fm_height; j++) {
-//			kernel_idx = 0;
+			kernel_idx = 0;
 			loop_bands:
 			for(count_t k = 0; k < nbands; k++) {
 #ifndef ARRAYS
@@ -149,13 +149,12 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 						loop_kernely:
 						for(count_t y = 0; y < kernel_size; y++) {
 #pragma HLS PIPELINE
-//							kernel_idx++;
-							/* Kernel index */
-							count_t kernel_idx =
-									(z*kernel_size*kernel_size*nbands) +                   /* nfilter */
-									(k * (kernel_size * kernel_size) + 		               /* band*/
-									(x * kernel_size +                                     /* kernel row */
-									y));                                                   /* kernel column */
+//							/* Kernel index */
+//							count_t kernel_idx =
+//									(z*kernel_size*kernel_size*nbands) +                   /* nfilter */
+//									(k * (kernel_size * kernel_size) + 		               /* band*/
+//									(x * kernel_size +                                     /* kernel row */
+//									y));                                                   /* kernel column */
 
 #ifdef ARRAYS
 							/* Input matrix index */
@@ -169,6 +168,7 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 #else
 							acc += weights[kernel_idx] *  pixel ;
 #endif
+							kernel_idx++;
 						}
 					}
 					if(k == 0)
