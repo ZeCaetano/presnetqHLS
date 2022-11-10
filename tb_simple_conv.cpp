@@ -28,6 +28,7 @@ void sw_convolution_3D(quant_t *image_in, const quant_t *weights, float*image_ou
 
 //						printf("SW weight %f - %d\n", weights[weight_1d_idx], weight_1d_idx);
 //						printf("SW pixel %f - %d\n", image_in[image_1d_idx], image_1d_idx);
+//						printf("TB - %d %d %f\n", k, (x*kernel_size) + y, (float)weights[weight_1d_idx]);
 
 						accum += weights[weight_1d_idx] * ((float) image_in[image_1d_idx] / 255 - 0.5F) / 0.5F;
 					}
@@ -81,17 +82,18 @@ void init_fm(){
 			for(int j = 0; j < K1; j++) {
 				for(int l = 0; l < K1; l++) {
 					kernel[(k*NF1*K1*K1)+(i * K1*K1 + (j * K1) + l)] = (i + 1) * 0.01 + (j + 1)*(k+1)*(l+1)*0.1;
-//					printf("%f ", (float)kernel[(k*N_FILTERS*KERNEL_SIZE*KERNEL_SIZE)+(i * KERNEL_SIZE*KERNEL_SIZE + (j * KERNEL_SIZE) + l)]);
+					printf("%f\n", (float)kernel[(k*NF1*K1*K1)+(i * K1*K1 + (j * K1) + l)]);
 				}
 			}
 		}
 	}
+	printf("\n");
 	for(int k = 0; k < Z2; k++) {
 			for(int i = 0; i < NF2; i++) {
 				for(int j = 0; j < K2; j++) {
 					for(int l = 0; l < K2; l++) {
 						kernel[LAYER1_WEIGHTS + (k*NF2*K2*K2)+(i * K2*K2 + (j * K2) + l)] = (i + 1) * 0.02 + (j + 1)*(k+1)*(l+1)*0.1;
-	//					printf("%f ", (float)kernel[(k*N_FILTERS*KERNEL_SIZE*KERNEL_SIZE)+(i * KERNEL_SIZE*KERNEL_SIZE + (j * KERNEL_SIZE) + l)]);
+						printf("%f\n", (float)kernel[LAYER1_WEIGHTS + (k*NF2*K2*K2)+(i * K2*K2 + (j * K2) + l)]);
 					}
 				}
 			}
@@ -119,13 +121,43 @@ int main() {
 	//--------------------------------------------------------------------------------------------------//
 
 //    printf("Sending weights\n");
-    for (int t=0 ; t<WEIGHTS_MEM_SIZE; t++) {
-		vin.data = kernel[t];
-		if(t == WEIGHTS_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
-		else vin.last = (ap_int<1>)0;
-		sin.write(vin);
-//		printf("weight sent: %f\n",vin.data);
+    int nweights = 0;
+    for (int i = 0 ; i < Z1; i++) {
+    	for(int j = 0; j < NF1; j++){
+    		for(int x = 0; x < K1*K1; x++){
+    			nweights++;
+				vin.data = kernel[(i*K1*K1) + (j*Z1*K1*K1) + x];
+				vin.last = (ap_int<1>)0;
+				sin.write(vin);
+				printf("weight sent: b %d -- f %d -- %f\n",i,j,(float)vin.data);
+    		}
+    	}
 	}
+    printf("\n");
+    for (int i = 0 ; i < Z2; i++) {
+		for(int j = 0; j < NF2; j++){
+			for(int x = 0; x < K2*K2; x++){
+				nweights++;
+				vin.data = kernel[LAYER1_WEIGHTS + (j*Z2*K2*K2) + (i*K2*K2) + x];
+				if(nweights == WEIGHTS_MEM_SIZE) vin.last = (ap_int<1>)1;
+				else vin.last = (ap_int<1>)0;
+				sin.write(vin);
+				printf("weight sent: b %d -- f %d -- %f\n",i,j,(float)vin.data);
+			}
+		}
+	}
+
+
+//    for (int t=0 ; t<WEIGHTS_MEM_SIZE; t++) {
+//		vin.data = kernel[t];
+//		if(t == WEIGHTS_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
+//		else vin.last = (ap_int<1>)0;
+//		sin.write(vin);
+////		printf("weight sent: %f\n",vin.data);
+//	}
+
+
+
 //    printf("Sending fm\n");
 #ifdef ARRAYS
 	for (int t=0 ; t<INPUT1_MEM_SIZE; t++) {

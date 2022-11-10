@@ -57,9 +57,9 @@ void read_stream(hls::stream<strmio_t> &strm_in, hls::stream<quant_t> &ifm, coun
 		tmpin = strm_in.read();
 		weights_l1[i] = tmpin.data;
 //		if(layer_id == 1) printf("%d  %f-%d\n",i, weights[i], tmpin.last);
-		if(tmpin.last == 1) break;
+//		if(tmpin.last == 1) break;
 	}
-
+printf("\n");
 	//Read weights for layer 2
 	for(int i = 0; i < WEIGHTS2; i++) {
 		tmpin = strm_in.read();
@@ -126,11 +126,12 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 	//Convolution
 	float acc = 0;
 	quant_t acc_arr[nfilters];
-
+	int kernel_idx = 0;
 	loop_inputx:
 	for(count_t i = 0; i < fm_width; i++) {
 		loop_inputy:
 		for(count_t j = 0; j < fm_height; j++) {
+			kernel_idx = 0;
 			loop_bands:
 			for(count_t k = 0; k < nbands; k++) {
 #ifndef ARRAYS
@@ -146,12 +147,12 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 						for(count_t y = 0; y < kernel_size; y++) {
 #pragma HLS PIPELINE
 							/* Kernel index */
-							count_t kernel_idx =
-									(z*kernel_size*kernel_size*nbands) +                   /* nfilter */
-									(k * (kernel_size * kernel_size) + 		               /* band*/
-									(x * kernel_size +                                     /* kernel row */
-									y));                                                   /* kernel column */
-
+//							count_t kernel_idx =
+//									(z*kernel_size*kernel_size*nbands) +                   /* nfilter */
+//									(k * (kernel_size * kernel_size) + 		               /* band*/
+//									(x * kernel_size +                                     /* kernel row */
+//									y));                                                   /* kernel column */
+							printf("%d %f\n", kernel_idx, weights[kernel_idx]);
 #ifdef ARRAYS
 							/* Input matrix index */
 							count_t input_idx =
@@ -163,6 +164,7 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 							acc += weights[kernel_idx] * ((float) in_feature_map[input_idx] / 255 - 0.5F) / 0.5F;
 #else
 							acc += weights[kernel_idx] * ((float) pixel / 255 - 0.5F) / 0.5F;
+							kernel_idx++;
 #endif
 						}
 					}

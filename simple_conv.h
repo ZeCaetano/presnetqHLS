@@ -19,20 +19,20 @@
 //Input: 9,9,32
 //Number of filters: 43
 //Kernel size: 1
-#define X1 9
-#define Y1 9
-#define Z1 32
-#define NF1 43
+#define X1 3
+#define Y1 3
+#define Z1 2
+#define NF1 3
 #define K1 1
 #define WEIGHTS1 (Z1*NF1*K1*K1)
 //-------LAYER 2--------//
 //Input: 9,9,43
 //Number of filters: 43
 //Kernel size: 1
-#define X2 9
-#define Y2 9
-#define Z2 43
-#define NF2 43
+#define X2 3
+#define Y2 3
+#define Z2 3
+#define NF2 3
 #define K2 1
 #define WEIGHTS2 (Z2*NF2*K2*K2)
 
