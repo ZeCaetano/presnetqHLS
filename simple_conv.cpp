@@ -130,66 +130,114 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 	quant_accum acc_arr[nfilters];
 	widx_t kernel_idx = 0;
 
-	loop_inputx:
-	for(count_t i = 0; i < fm_width; i++) {
-		loop_inputy:
-		for(count_t j = 0; j < fm_height; j++) {
-			kernel_idx = 0;
-			loop_bands:
-			for(count_t k = 0; k < nbands; k++) {
-#ifndef ARRAYS
-				tmpin = strm_in.read();
-				pixel = tmpin;
-#endif
-				loop_filters:
-				for(count_t z = 0; z < nfilters; z++) {
-					acc = 0;
+	loop_filters:
+	for(count_t z = 0; z < nfilters; z++) {
+		loop_inputx:
+		for(count_t i = 0; i < fm_width; i++) {
+			loop_inputy:
+			for(count_t j = 0; j < fm_height; j++) {
+				acc = 0;
+				loop_bands:
+				for(count_t k = 0; k < nbands; k++) {
+//Fazer leitura px=strm
 					loop_kernelx:
 					for(count_t x = 0; x < kernel_size; x++) {
 						loop_kernely:
 						for(count_t y = 0; y < kernel_size; y++) {
 #pragma HLS PIPELINE
-//							/* Kernel index */
-//							count_t kernel_idx =
-//									(z*kernel_size*kernel_size*nbands) +                   /* nfilter */
-//									(k * (kernel_size * kernel_size) + 		               /* band*/
-//									(x * kernel_size +                                     /* kernel row */
-//									y));                                                   /* kernel column */
+							/* Kernel index */
+							count_t kernel_idx =
+									(z*kernel_size*kernel_size*nbands) +                   /* nfilter */
+									(k * (kernel_size * kernel_size) + 		               /* band*/
+									(x * kernel_size +                                     /* kernel row */
+									y));                                                   /* kernel column */
 
-#ifdef ARRAYS
+
 							/* Input matrix index */
 							count_t input_idx =
 									k * (fm_width * fm_height) + ((i + x) * fm_height +  /* input row */
 									j + y);                                      /* input column */
-#endif
-//							printf("%d IP - %d %d %f\n",z, k, (x*kernel_size) + y, (float)weights[kernel_idx]);
-#ifdef ARRAYS
+//							if(layer_id == 1) {
+//								printf("IP weight %f  - %d\n", weights[kernel_idx], kernel_idx);
+//								printf("IP pixel %f  - %d\n",in_feature_map[input_idx], input_idx);
+//							}
+							//normalize pixel
 							acc += weights[kernel_idx] * in_feature_map[input_idx];
-#else
-							acc += weights[kernel_idx] *  pixel ;
-#endif
-							kernel_idx++;
 						}
 					}
-					if(k == 0)
-						acc_arr[z] = acc;
-					else
-						acc_arr[z] += acc;
-					if(k == nbands-1) {  //If it's the last band, put the accum in the output feature map and reset the accum array
-#ifdef ARRAYS
-						out_feature_map[z*fm_width*fm_height + i*fm_height + j] = (quant_t)acc_arr[z];
-#else
-//						printf("sending pixel number %d of filter %d \n", (i*fm_height)+j, z);
-						tmpout = (quant_t)acc_arr[z];
-						strm_out.write(tmpout);
-#endif
-						acc_arr[z] = 0;
-					}
-
 				}
+				out_feature_map[z*fm_width*fm_height + i*fm_height + j] = (quant_t)acc;
+//				if(j == fm_width -1 && i == fm_height - 1 && z == nfilters - 1) tmpout.last = 1;
+//				else tmpout.last = 0;
+//				tmpout.data = acc;
+//				tmpout.keep = 0xF;
+//				tmpout.strb = 0xF;
+//				strm_out.write(tmpout);
 			}
 		}
 	}
+
+
+//	loop_inputx:
+//	for(count_t i = 0; i < fm_width; i++) {
+//		loop_inputy:
+//		for(count_t j = 0; j < fm_height; j++) {
+//			kernel_idx = 0;
+//			loop_bands:
+//			for(count_t k = 0; k < nbands; k++) {
+//#ifndef ARRAYS
+//				tmpin = strm_in.read();
+//				pixel = tmpin;
+//#endif
+//				loop_filters:
+//				for(count_t z = 0; z < nfilters; z++) {
+//					acc = 0;
+//					loop_kernelx:
+//					for(count_t x = 0; x < kernel_size; x++) {
+//						loop_kernely:
+//						for(count_t y = 0; y < kernel_size; y++) {
+//#pragma HLS PIPELINE
+////							/* Kernel index */
+////							count_t kernel_idx =
+////									(z*kernel_size*kernel_size*nbands) +                   /* nfilter */
+////									(k * (kernel_size * kernel_size) + 		               /* band*/
+////									(x * kernel_size +                                     /* kernel row */
+////									y));                                                   /* kernel column */
+//
+//#ifdef ARRAYS
+//							/* Input matrix index */
+//							count_t input_idx =
+//									k * (fm_width * fm_height) + ((i + x) * fm_height +  /* input row */
+//									j + y);                                      /* input column */
+//#endif
+////							printf("%d IP - %d %d %f\n",z, k, (x*kernel_size) + y, (float)weights[kernel_idx]);
+//#ifdef ARRAYS
+//							acc += weights[kernel_idx] * in_feature_map[input_idx];
+//#else
+//							acc += weights[kernel_idx] *  pixel ;
+//#endif
+//							kernel_idx++;
+//						}
+//					}
+//					if(k == 0)
+//						acc_arr[z] = acc;
+//					else
+//						acc_arr[z] += acc;
+//					if(k == nbands-1) {  //If it's the last band, put the accum in the output feature map and reset the accum array
+//#ifdef ARRAYS
+//						out_feature_map[z*fm_width*fm_height + i*fm_height + j] = (quant_t)acc_arr[z];
+//#else
+////						printf("sending pixel number %d of filter %d \n", (i*fm_height)+j, z);
+//						tmpout = (quant_t)acc_arr[z];
+//						strm_out.write(tmpout);
+//#endif
+//						acc_arr[z] = 0;
+//					}
+//
+//				}
+//			}
+//		}
+//	}
 
 //#ifndef ARRAYS
 //	if(layer_id < NLAYERS-1){  //only send weights if it's not the last layer

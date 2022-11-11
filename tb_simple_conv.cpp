@@ -30,6 +30,7 @@ void sw_convolution_3D(quant_t *image_in, const quant_t *weights, quant_t *image
 //						printf("SW pixel %f - %d\n", image_in[image_1d_idx], image_1d_idx);
 
 						accum += weights[weight_1d_idx] * image_in[image_1d_idx];
+//						printf("%X\n", accum);
 					}
 				}
 			}
@@ -66,36 +67,40 @@ void sw_convolution_3D(quant_t *image_in, const quant_t *weights, quant_t *image
 void init_fm(){
 
 	int npixels = 0;
+	quant_t values1[16] = {0,1,2,3,4,5,6,7,-1,-2,-3,-4,-5,-6,-7,-8};
+	quant_t values2[16] = {-1,-2,-3,-4,3,4,5,0,1,2,6,7,-5,-6,-7,-8};
+	quant_t values3[16] = {4,5,-6,0,1,2,3,-7,-8,6,7,-1,-2,-3,-4,-5};
 
 //	printf("Input Image\n\r");
 	for(int k = 0; k < Z1; k++) {
 		for (int i = 0; i < X1; i++) {
 			for (int j = 0; j < Y1; j++) {
-				image_in[(k*X1*Y1)+(i*Y1+j)] = (i+j+k + 1) * 0.01 + ((j + 1)*(k+1))*0.01;
+				image_in[(k*X1*Y1)+(i*Y1+j)] = values1[(i+j+k)%16];
 				npixels++;
-//				printf("i%d %f ", npixels-1, (float)image_in[(k*X1*Y1)+(i * Y1 + j)]);
+//				printf("i%d %d ", npixels-1, (int)image_in[(k*X1*Y1)+(i * Y1 + j)]);
 			}
 //			printf("\n\r");
 		}
 	}
-//	printf("Weights\n\r");
+//	printf("Weights1\n\r");
 	for(int k = 0; k < Z1; k++) {
 		for(int i = 0; i < NF1; i++) {
 			for(int j = 0; j < K1; j++) {
 				for(int l = 0; l < K1; l++) {
-					kernel[(k*NF1*K1*K1)+(i * K1*K1 + (j * K1) + l)] = (i + 1) * 0.1 + (j + 1)*(k+1)*(l+1)*0.1;
-//					printf("%f ", (float)kernel[(k*NF1*K1*K1)+(i * K1*K1 + (j * K1) + l)]);
+					kernel[(k*NF1*K1*K1)+(i * K1*K1 + (j * K1) + l)] = values2[(l+j+i+k)%16];
+//					printf("%d ", (int)kernel[(k*NF1*K1*K1)+(i * K1*K1 + (j * K1) + l)]);
 				}
 			}
 		}
 //		printf("\n\r");
 	}
+//	printf("\n\nWeights2\n\r");
 	for(int k = 0; k < Z2; k++) {
 		for(int i = 0; i < NF2; i++) {
 			for(int j = 0; j < K2; j++) {
 				for(int l = 0; l < K2; l++) {
-					kernel[LAYER1_WEIGHTS + (k*NF2*K2*K2)+(i * K2*K2 + (j * K2) + l)] = (i + 1) * 0.2 + (j + 1)*(k+1)*(l+1)*0.1;
-//					printf("%f ", (float)kernel[LAYER1_WEIGHTS + ((k*NF2*K2*K2)+(i * K2*K2 + (j * K2) + l))]);
+					kernel[LAYER1_WEIGHTS + (k*NF2*K2*K2)+(i * K2*K2 + (j * K2) + l)] = values3[(l+j+i+k)%16];
+//					printf("%d ", (int)kernel[LAYER1_WEIGHTS + ((k*NF2*K2*K2)+(i * K2*K2 + (j * K2) + l))]);
 				}
 			}
 		}
@@ -122,39 +127,39 @@ int main() {
 	//-----------------------------------------HARDWARE CONV--------------------------------------------//
 	//--------------------------------------------------------------------------------------------------//
 
-////    printf("Sending weights\n");
-//    for (int t=0 ; t<WEIGHTS_MEM_SIZE; t++) {
-//		vin.data = kernel[t];
-//		if(t == WEIGHTS_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
-//		else vin.last = (ap_int<1>)0;
-//		sin.write(vin);
-//    }
-    int nweights = 0;
-    for (int i = 0 ; i < Z1; i++) {
-    	for(int j = 0; j < NF1; j++){
-    		for(int x = 0; x < K1*K1; x++){
-    			nweights++;
-//    			printf("Sending - %d %d %d %f\n", j, i, x, (float)kernel[(i*K1*K1) + (j*Z1*K1*K1) + x]);
-				vin.data = kernel[(i*K1*K1) + (j*Z1*K1*K1) + x];
-				vin.last = (ap_int<1>)0;
-				sin.write(vin);
-//				printf("weight sent: b %d -- f %d -- %f\n",i,j,(float)vin.data);
-    		}
-    	}
-	}
-    for (int i = 0 ; i < Z2; i++) {
-		for(int j = 0; j < NF2; j++){
-			for(int x = 0; x < K2*K2; x++){
-				nweights++;
-//    			printf("Sending - %d %d %d %f\n", j, i, x, (float)kernel[LAYER1_WEIGHTS + (i*K1*K1) + (j*Z1*K1*K1) + x]);
-				vin.data = kernel[LAYER1_WEIGHTS + (j*Z2*K2*K2) + (i*K2*K2) + x];
-				if(nweights == WEIGHTS_MEM_SIZE) vin.last = (ap_int<1>)1;
-				else vin.last = (ap_int<1>)0;
-				sin.write(vin);
-//				printf("weight sent: b %d -- f %d -- %f\n",i,j,(float)vin.data);
-			}
-		}
-	}
+//    printf("Sending weights\n");
+    for (int t=0 ; t<WEIGHTS_MEM_SIZE; t++) {
+		vin.data = kernel[t];
+		if(t == WEIGHTS_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
+		else vin.last = (ap_int<1>)0;
+		sin.write(vin);
+    }
+//    int nweights = 0;
+//    for (int i = 0 ; i < Z1; i++) {
+//    	for(int j = 0; j < NF1; j++){
+//    		for(int x = 0; x < K1*K1; x++){
+//    			nweights++;
+////    			printf("Sending - %d %d %d %f\n", j, i, x, (float)kernel[(i*K1*K1) + (j*Z1*K1*K1) + x]);
+//				vin.data = kernel[(i*K1*K1) + (j*Z1*K1*K1) + x];
+//				vin.last = (ap_int<1>)0;
+//				sin.write(vin);
+////				printf("weight sent: b %d -- f %d -- %f\n",i,j,(float)vin.data);
+//    		}
+//    	}
+//	}
+//    for (int i = 0 ; i < Z2; i++) {
+//		for(int j = 0; j < NF2; j++){
+//			for(int x = 0; x < K2*K2; x++){
+//				nweights++;
+////    			printf("Sending - %d %d %d %f\n", j, i, x, (float)kernel[LAYER1_WEIGHTS + (i*K1*K1) + (j*Z1*K1*K1) + x]);
+//				vin.data = kernel[LAYER1_WEIGHTS + (j*Z2*K2*K2) + (i*K2*K2) + x];
+//				if(nweights == WEIGHTS_MEM_SIZE) vin.last = (ap_int<1>)1;
+//				else vin.last = (ap_int<1>)0;
+//				sin.write(vin);
+////				printf("weight sent: b %d -- f %d -- %f\n",i,j,(float)vin.data);
+//			}
+//		}
+//	}
 //    printf("Sending fm\n");
 #ifdef ARRAYS
 	for (int t=0 ; t<INPUT1_MEM_SIZE; t++) {
@@ -229,11 +234,11 @@ int main() {
 	    sw_convolution_3D(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2);
 	}
 
-//    printf("SOFTWARE Output Image 1\n\r");
-//    for(int k = 0; k < NF1; k++) {
-//		for (int i = 0; i < X1; i++) {
-//			for (int j = 0; j < Y1; j++) {
-//				printf("%f", (float)sw_image_out_2[(k*X1*Y1) + (i*Y1) + j]);
+//    printf("SOFTWARE Output Image 2\n\r");
+//    for(int k = 0; k < NF2; k++) {
+//		for (int i = 0; i < X2; i++) {
+//			for (int j = 0; j < Y2; j++) {
+//				printf("%d ", (int)sw_image_out_2[(k*X1*Y1) + (i*Y1) + j]);
 //			}
 //			printf("\n\r");
 //		}
@@ -249,8 +254,8 @@ int main() {
 			for (int j = 0; j < Y2; j++)
 				if (hw_image_out[(k*X2*Y2) + (i*Y2) + j] != sw_image_out_2[(k*X2*Y2) + (i*Y2) + j]) {
 					err_cnt++;
-					printf("%d - %d,%d: %f != %f\n\r",
-						   k, i, j, (float)hw_image_out[(k*X2*Y2) + (i*Y2) + j], (float)sw_image_out_2[(k*X2*Y2) + (i*Y2) + j]);
+					printf("%d - %d,%d: %d != %d\n\r",
+						   k, i, j, (int)hw_image_out[(k*X2*Y2) + (i*Y2) + j], (int)sw_image_out_2[(k*X2*Y2) + (i*Y2) + j]);
 				}
     }
     printf("\n%d different values\n", err_cnt);

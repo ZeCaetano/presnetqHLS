@@ -6,6 +6,8 @@
 #define ARRAYS
 
 #define DMA_WIDTH 64
+#define WEIGHTS_WIDTH 4
+#define ACT_WIDTH 4
 #define INPUT1_MEM_SIZE (X1*Y1*Z1)
 #define OUT1_FM_MEM_SIZE (X1*Y1*NF1)
 #define INPUT2_MEM_SIZE (X2*Y2*Z2)
@@ -37,9 +39,15 @@
 #define K2 1
 #define WEIGHTS2 (Z2*NF2*K2*K2)
 
-typedef ap_fixed<4,2,AP_RND> quant_t;
-typedef ap_fixed<8,4,AP_RND> quant_mult;
-typedef ap_fixed<9,4,AP_RND> quant_accum;
+//typedef ap_fixed<4,2,AP_RND> quant_t;
+//typedef ap_fixed<8,4,AP_RND> quant_mult;
+//typedef ap_fixed<9,4,AP_RND> quant_accum;
+
+typedef ap_int<4> quant_t;
+typedef ap_int<7> quant_mult;
+typedef ap_int<16> quant_accum;
+
+
 //typedef float quant_t;
 typedef ap_uint<12> count_t;
 typedef ap_uint<17> widx_t;
