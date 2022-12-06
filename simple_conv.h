@@ -3,7 +3,7 @@
 #include <hls_stream.h>
 #include <ap_axi_sdata.h>
 
-#define ARRAYS
+//#define ARRAYS
 
 #define DMA_WIDTH 64
 #define WEIGHTS_WIDTH 4
@@ -16,6 +16,7 @@
 #define LAYER1_WEIGHTS (NF1*Z1*K1*K1)
 #define LAYER2_WEIGHTS (NF2*Z2*K2*K2)
 #define NLAYERS 2
+#define NPATCHES 2
 
 //Argumentos que variam nos templates
 //-------LAYER 1--------//

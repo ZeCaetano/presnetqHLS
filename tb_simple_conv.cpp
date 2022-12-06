@@ -161,47 +161,50 @@ int main() {
 		}
 	}
 //    printf("Sending fm\n");
-#ifdef ARRAYS
-	for (int t=0 ; t<INPUT1_MEM_SIZE; t++) {
-		vin.data = image_in[t];
-		if(t == INPUT1_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
-		else vin.last = (ap_int<1>)0;
-		sin.write(vin);
-//		printf("pixel sent: %f count: %d last: %d\n",image_in[t], t, vin.last);
-	}
-#else
-	for (int t=0 ; t<X1*Y1; t++) {
-		for(int j = 0; j < Z1; j++) {
-			vin.data = image_in[(j*X1*Y1) + t];
+for(int i = 0; i < NPATCHES; i++){
+	#ifdef ARRAYS
+		for (int t=0 ; t<INPUT1_MEM_SIZE; t++) {
+			vin.data = image_in[t];
 			if(t == INPUT1_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
 			else vin.last = (ap_int<1>)0;
 			sin.write(vin);
 	//		printf("pixel sent: %f count: %d last: %d\n",image_in[t], t, vin.last);
 		}
-	}
-#endif
+	#else
+		for (int t=0 ; t<X1*Y1; t++) {
+			for(int j = 0; j < Z1; j++) {
+				vin.data = image_in[(j*X1*Y1) + t];
+				if(t == INPUT1_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
+				else vin.last = (ap_int<1>)0;
+				sin.write(vin);
+		//		printf("pixel sent: %f count: %d last: %d\n",image_in[t], t, vin.last);
+			}
+		}
+	#endif
+}
 //	exit(0);
 
 	//Hardware computation
     simple_conv(sin, so);
-
-#ifdef ARRAYS
-    //Read image_out
-	for(int t=0 ; t < OUT2_FM_MEM_SIZE ; t++){
-		vout = so.read();
-		hw_image_out[t] = vout.data;
-//		printf("%f ", vout.data);
-		if (vout.last == 1) break;
-	}
-#else
-	for(int i = 0; i < X2*Y2; i++) {
-		for(int j = 0; j < Z2; j++) {
+for(int i = 0; i < NPATCHES; i++){
+	#ifdef ARRAYS
+		//Read image_out
+		for(int t=0 ; t < OUT2_FM_MEM_SIZE ; t++){
 			vout = so.read();
-			hw_image_out[j*X2*Y2+ i] = vout.data;
-			if(vout.last == 1) break;
+			hw_image_out[t] = vout.data;
+	//		printf("%f ", vout.data);
+			if (vout.last == 1) break;
 		}
-	}
-#endif
+	#else
+		for(int i = 0; i < X2*Y2; i++) {
+			for(int j = 0; j < Z2; j++) {
+				vout = so.read();
+				hw_image_out[j*X2*Y2+ i] = vout.data;
+				if(vout.last == 1) break;
+			}
+		}
+	#endif
+}
 
 	//--------------------------------------------------------------------------------------------------//
 	//-----------------------------------------SOFTWARE CONV--------------------------------------------//

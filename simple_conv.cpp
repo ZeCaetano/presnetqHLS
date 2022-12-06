@@ -23,34 +23,53 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 #ifdef ARRAYS
 	quant_t in_feature_map[X1*Y1*Z1], m_feature_map[X2*Y2*Z2], out_feature_map[X2*Y2*NF2];
-
-
+	strmio_t tmpin;
 	read_stream(strm_in, in_feature_map, X1*Y1*Z1);
-	{
+
+	for(int i = 0; i < NPATCHES; i++){
 #pragma HLS DATAFLOW
-	layer<0,X1,Y1,Z1,NF1,K1,0> (in_feature_map, m_feature_map, weights_l1);
-	layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m_feature_map, out_feature_map, weights_l2);
+		//read input fm
+		for(count_t i = 0; i < X1*Y1*Z1; i++) {
+			tmpin = strm_in.read();
+			in_feature_map[i] = tmpin.data;
+	//		if(layer_id == 1) printf("%f-%d\n", tmpin.data, i);
+			if(tmpin.last == 1) break;
+		}
+
+		layer<0,X1,Y1,Z1,NF1,K1,0> (in_feature_map, m_feature_map, weights_l1);
+		layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m_feature_map, out_feature_map, weights_l2);
+
+		write_ofm(out_feature_map, strm_out, X2*Y2*NF2);
 	}
-	write_ofm(out_feature_map, strm_out, X2*Y2*NF2);
 #else
 	hls::stream<quant_t> m0, m1, m2;
+	strmio_t tmpin;
+	quant_t tmpout;
 
 #pragma HLS STREAM variable=m0
 #pragma HLS STREAM variable=m1
 #pragma HLS STREAM variable=m2
+
 	read_stream(strm_in, m0, X1*Y1*Z1);
-{
-	#pragma HLS DATAFLOW
-	layer<0,X1,Y1,Z1,NF1,K1,0> (m0, m1, weights_l1);
-	layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m1, m2, weights_l2);
-}
-	write_ofm(m2, strm_out, X2*Y2*NF2);
+
+	for(int i = 0; i < NPATCHES; i++){
+#pragma HLS DATAFLOW
+
+		for(count_t i = 0; i < X1*Y1*Z1; i++) {
+			tmpin = strm_in.read();
+			tmpout = tmpin.data;
+			m0.write(tmpout);
+			if(tmpin.last == 1) break;
+		}
+
+		layer<0,X1,Y1,Z1,NF1,K1,0> (m0, m1, weights_l1);
+		layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m1, m2, weights_l2);
+
+		write_ofm(m2, strm_out, X2*Y2*NF2);
+	}
 #endif
 }
 
-//void dflow_func(hls::stream<quant_t> m0,){
-//
-//}
 
 #ifdef ARRAYS
 void read_stream(hls::stream<strmio_t> &strm_in, quant_t *ifm, count_t n_pixels) {
@@ -78,22 +97,22 @@ void read_stream(hls::stream<strmio_t> &strm_in, hls::stream<quant_t> &ifm, coun
 //		if(layer_id == 1) printf("%d  %f-%d\n",i, weights[i], tmpin.last);
 		if(tmpin.last == 1) break;
 	}
-#ifdef ARRAYS
-	//Read input fm
-	for(count_t i = 0; i < n_pixels; i++) {
-		tmpin = strm_in.read();
-		ifm[i] = tmpin.data;
-//		if(layer_id == 1) printf("%f-%d\n", tmpin.data, i);
-		if(tmpin.last == 1) break;
-	}
-#else
-	for(count_t i = 0; i < n_pixels; i++) {
-		tmpin = strm_in.read();
-		tmpout = tmpin.data;
-		ifm.write(tmpout);
-		if(tmpin.last == 1) break;
-	}
-#endif
+//#ifdef ARRAYS
+//	//Read input fm
+//	for(count_t i = 0; i < n_pixels; i++) {
+//		tmpin = strm_in.read();
+//		ifm[i] = tmpin.data;
+////		if(layer_id == 1) printf("%f-%d\n", tmpin.data, i);
+//		if(tmpin.last == 1) break;
+//	}
+//#else
+//	for(count_t i = 0; i < n_pixels; i++) {
+//		tmpin = strm_in.read();
+//		tmpout = tmpin.data;
+//		ifm.write(tmpout);
+//		if(tmpin.last == 1) break;
+//	}
+//#endif
 }
 
 #ifdef ARRAYS
@@ -155,12 +174,12 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 #endif
 				loop_filters:
 				for(count_t z = 0; z < nfilters; z++) {
-#pragma HLS PIPELINE
 					acc = 0;
 					loop_kernelx:
 					for(count_t x = 0; x < kernel_size; x++) {
 						loop_kernely:
 						for(count_t y = 0; y < kernel_size; y++) {
+#pragma HLS PIPELINE
 //							/* Kernel index */
 //							count_t kernel_idx =
 //									(z*kernel_size*kernel_size*nbands) +                   /* nfilter */
