@@ -3,7 +3,7 @@
 #include <hls_stream.h>
 #include <ap_axi_sdata.h>
 
-//#define ARRAYS
+#define ARRAYS
 
 #define DMA_WIDTH 64
 #define WEIGHTS_WIDTH 4
@@ -60,16 +60,16 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t kernel_size, params_t weights_start>
 #ifdef ARRAYS
-void layer(quant_t *in_feature_map, quant_t *out_feature_map, quant_t *weights);
+void layer(quant_t in_feature_map[], quant_t out_feature_map[], const quant_t weights[]);
 #else
 void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_t *weights);
 #endif
 
 #ifdef ARRAYS
-void read_stream(hls::stream<strmio_t> &strm_in, quant_t *ifm, count_t n_pixels);
+void read_stream(hls::stream<strmio_t> &strm_in, quant_t *weights_l1, quant_t *weights_l2);
 void write_ofm(quant_t *ofm, hls::stream<strmio_t> &strm_out, count_t n_pixels);
 #else
-void read_stream(hls::stream<strmio_t> &strm_in, hls::stream<quant_t> &ifm, count_t n_pixels);
+void read_stream(hls::stream<strmio_t> &strm_in);
 void write_ofm(hls::stream<quant_t> &ofm, hls::stream<strmio_t> &strm_out, count_t n_pixels);
 #endif
 
