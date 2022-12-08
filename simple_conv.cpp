@@ -24,59 +24,116 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 	read_stream(strm_in, weights_l1, weights_l2);
 
 	for(int i = 0; i < NPATCHES; i++){
-#pragma HLS DATAFLOW
 
-		quant_t in_feature_map[X1*Y1*Z1], m_feature_map[X2*Y2*Z2], out_feature_map[X2*Y2*NF2];
-		strmio_t tmpin;
+		dataflow_func(strm_in, weights_l1, weights_l2, strm_out);
 
-		//read input fm
-		for(count_t i = 0; i < X1*Y1*Z1; i++) {
-			tmpin = strm_in.read();
-			in_feature_map[i] = tmpin.data;
-	//		if(layer_id == 1) printf("%f-%d\n", tmpin.data, i);
-			if(tmpin.last == 1) break;
-		}
+//#pragma HLS DATAFLOW
 
-		layer<0,X1,Y1,Z1,NF1,K1,0> (in_feature_map, m_feature_map, weights_l1);
-		layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m_feature_map, out_feature_map, weights_l2);
-
-		write_ofm(out_feature_map, strm_out, X2*Y2*NF2);
+//		quant_t in_feature_map[X1*Y1*Z1], m_feature_map[X2*Y2*Z2], out_feature_map[X2*Y2*NF2];
+//		strmio_t tmpin;
+//
+//		//read input fm
+//		for(count_t i = 0; i < X1*Y1*Z1; i++) {
+//			tmpin = strm_in.read();
+//			in_feature_map[i] = tmpin.data;
+//	//		if(layer_id == 1) printf("%f-%d\n", tmpin.data, i);
+//			if(tmpin.last == 1) break;
+//		}
+//
+//		layer<0,X1,Y1,Z1,NF1,K1,0> (in_feature_map, m_feature_map, weights_l1);
+//		layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m_feature_map, out_feature_map, weights_l2);
+//
+//		write_ofm(out_feature_map, strm_out, X2*Y2*NF2);
 	}
 #else
-	hls::stream<quant_t> m0, m1, m2;
-	strmio_t tmpin;
-	quant_t tmpout;
+//	hls::stream<quant_t> m0, m1, m2;
+//	strmio_t tmpin;
+//	quant_t tmpout;
+//
+//#pragma HLS STREAM variable=m0
+//#pragma HLS STREAM variable=m1
+//#pragma HLS STREAM variable=m2
 
-#pragma HLS STREAM variable=m0
-#pragma HLS STREAM variable=m1
-#pragma HLS STREAM variable=m2
-
-	read_stream(strm_in);
+	read_stream(strm_in, weights_l1, weights_l2);
 
 	for(int i = 0; i < NPATCHES; i++){
-#pragma HLS DATAFLOW
 
-		for(count_t i = 0; i < X1*Y1*Z1; i++) {
-			tmpin = strm_in.read();
-			tmpout = tmpin.data;
-			m0.write(tmpout);
-			if(tmpin.last == 1) break;
-		}
+		dataflow_func(strm_in, weights_l1, weights_l2, strm_out);
 
-		layer<0,X1,Y1,Z1,NF1,K1,0> (m0, m1, weights_l1);
-		layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m1, m2, weights_l2);
+//#pragma HLS DATAFLOW
 
-		write_ofm(m2, strm_out, X2*Y2*NF2);
+//		for(count_t i = 0; i < X1*Y1*Z1; i++) {
+//			tmpin = strm_in.read();
+//			tmpout = tmpin.data;
+//			m0.write(tmpout);
+//			if(tmpin.last == 1) break;
+//		}
+//
+//		layer<0,X1,Y1,Z1,NF1,K1,0> (m0, m1, weights_l1);
+//		layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m1, m2, weights_l2);
+//
+//		write_ofm(m2, strm_out, X2*Y2*NF2);
 	}
 #endif
 }
 
 
+void dataflow_func(hls::stream<strmio_t> &strm_in, quant_t *weights_l1, quant_t *weights_l2,  hls::stream<strmio_t> &strm_out){
+#pragma HLS DATAFLOW
+
 #ifdef ARRAYS
-void read_stream(hls::stream<strmio_t> &strm_in, quant_t *weights_l1, quant_t *weights_l2) {
+	quant_t in_feature_map[X1*Y1*Z1], m_feature_map[X2*Y2*Z2], out_feature_map[X2*Y2*NF2];
+
+	read_ifm(strm_in, in_feature_map);
+
+	layer<0,X1,Y1,Z1,NF1,K1,0> (in_feature_map, m_feature_map, weights_l1);
+	layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m_feature_map, out_feature_map, weights_l2);
+
+	write_ofm(out_feature_map, strm_out, X2*Y2*NF2);
 #else
-void read_stream(hls::stream<strmio_t> &strm_in) {
+	hls::stream<quant_t> m0, m1, m2;
+
+	#pragma HLS STREAM variable=m0
+	#pragma HLS STREAM variable=m1
+	#pragma HLS STREAM variable=m2
+
+	read_ifm(strm_in, m0);
+
+	layer<0,X1,Y1,Z1,NF1,K1,0> (m0, m1, weights_l1);
+	layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m1, m2, weights_l2);
+
+	write_ofm(m2, strm_out, X2*Y2*NF2);
 #endif
+}
+
+
+#ifdef ARRAYS
+void read_ifm(hls::stream<strmio_t> &strm_in, quant_t *in_feature_map){
+#else
+void read_ifm(hls::stream<strmio_t> &strm_in, hls::stream<quant_t> &in_feature_map){
+#endif
+	strmio_t tmpin;
+
+#ifdef ARRAYS
+	//read input fm
+	for(count_t i = 0; i < X1*Y1*Z1; i++) {
+		tmpin = strm_in.read();
+		in_feature_map[i] = tmpin.data;
+//		if(layer_id == 1) printf("%f-%d\n", tmpin.data, i);
+		if(tmpin.last == 1) break;
+	}
+#else
+	quant_t tmpout;
+	for(count_t i = 0; i < X1*Y1*Z1; i++) {
+		tmpin = strm_in.read();
+		tmpout = tmpin.data;
+		in_feature_map.write(tmpout);
+		if(tmpin.last == 1) break;
+	}
+#endif
+}
+
+void read_stream(hls::stream<strmio_t> &strm_in, quant_t *weights_l1, quant_t *weights_l2) {
 
 	strmio_t tmpin;
 	quant_t tmpout;
