@@ -24,55 +24,14 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 	read_stream(strm_in, weights_l1, weights_l2);
 
 	for(int i = 0; i < NPATCHES; i++){
-
 		dataflow_func(strm_in, weights_l1, weights_l2, strm_out);
-
-//#pragma HLS DATAFLOW
-
-//		quant_t in_feature_map[X1*Y1*Z1], m_feature_map[X2*Y2*Z2], out_feature_map[X2*Y2*NF2];
-//		strmio_t tmpin;
-//
-//		//read input fm
-//		for(count_t i = 0; i < X1*Y1*Z1; i++) {
-//			tmpin = strm_in.read();
-//			in_feature_map[i] = tmpin.data;
-//	//		if(layer_id == 1) printf("%f-%d\n", tmpin.data, i);
-//			if(tmpin.last == 1) break;
-//		}
-//
-//		layer<0,X1,Y1,Z1,NF1,K1,0> (in_feature_map, m_feature_map, weights_l1);
-//		layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m_feature_map, out_feature_map, weights_l2);
-//
-//		write_ofm(out_feature_map, strm_out, X2*Y2*NF2);
 	}
 #else
-//	hls::stream<quant_t> m0, m1, m2;
-//	strmio_t tmpin;
-//	quant_t tmpout;
-//
-//#pragma HLS STREAM variable=m0
-//#pragma HLS STREAM variable=m1
-//#pragma HLS STREAM variable=m2
 
 	read_stream(strm_in, weights_l1, weights_l2);
 
 	for(int i = 0; i < NPATCHES; i++){
-
 		dataflow_func(strm_in, weights_l1, weights_l2, strm_out);
-
-//#pragma HLS DATAFLOW
-
-//		for(count_t i = 0; i < X1*Y1*Z1; i++) {
-//			tmpin = strm_in.read();
-//			tmpout = tmpin.data;
-//			m0.write(tmpout);
-//			if(tmpin.last == 1) break;
-//		}
-//
-//		layer<0,X1,Y1,Z1,NF1,K1,0> (m0, m1, weights_l1);
-//		layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m1, m2, weights_l2);
-//
-//		write_ofm(m2, strm_out, X2*Y2*NF2);
 	}
 #endif
 }
@@ -202,26 +161,23 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 
 	loop_inputx:
 	for(count_t i = 0; i < fm_width; i++) {
-#pragma HLS PIPELINE off
 		loop_inputy:
 		for(count_t j = 0; j < fm_height; j++) {
-#pragma HLS PIPELINE off
 			kernel_idx = 0;
 			loop_bands:
 			for(count_t k = 0; k < nbands; k++) {
-#pragma HLS PIPELINE off
 #ifndef ARRAYS
 				tmpin = strm_in.read();
 				pixel = tmpin;
 #endif
 				loop_filters:
 				for(count_t z = 0; z < nfilters; z++) {
+#pragma HLS PIPELINE
 					acc = 0;
 					loop_kernelx:
 					for(count_t x = 0; x < kernel_size; x++) {
 						loop_kernely:
 						for(count_t y = 0; y < kernel_size; y++) {
-#pragma HLS PIPELINE
 //							/* Kernel index */
 //							count_t kernel_idx =
 //									(z*kernel_size*kernel_size*nbands) +                   /* nfilter */
