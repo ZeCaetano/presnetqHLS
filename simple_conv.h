@@ -2,6 +2,9 @@
 #include <ap_fixed.h>
 #include <hls_stream.h>
 #include <ap_axi_sdata.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 //#define ARRAYS
 
@@ -62,7 +65,7 @@ template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nban
 #ifdef ARRAYS
 void layer(quant_t in_feature_map[], quant_t out_feature_map[], const quant_t weights[]);
 #else
-void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_t *weights);
+void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, FILE *fp);
 #endif
 
 void read_stream(hls::stream<strmio_t> &strm_in, quant_t *weights_l1, quant_t *weights_l2);

@@ -134,32 +134,32 @@ int main() {
 //		else vin.last = (ap_int<1>)0;
 //		sin.write(vin);
 //    }
-    int nweights = 0;
-    for (int i = 0 ; i < Z1; i++) {
-    	for(int j = 0; j < NF1; j++){
-    		for(int x = 0; x < K1*K1; x++){
-    			nweights++;
-//    			printf("Sending - %d %d %d %f\n", j, i, x, (float)kernel[(i*K1*K1) + (j*Z1*K1*K1) + x]);
-				vin.data = kernel[(i*K1*K1) + (j*Z1*K1*K1) + x];
-				vin.last = (ap_int<1>)0;
-				sin.write(vin);
-//				printf("weight sent: b %d -- f %d -- %f\n",i,j,(float)vin.data);
-    		}
-    	}
-	}
-    for (int i = 0 ; i < Z2; i++) {
-		for(int j = 0; j < NF2; j++){
-			for(int x = 0; x < K2*K2; x++){
-				nweights++;
-//    			printf("Sending - %d %d %d %f\n", j, i, x, (float)kernel[LAYER1_WEIGHTS + (i*K1*K1) + (j*Z1*K1*K1) + x]);
-				vin.data = kernel[LAYER1_WEIGHTS + (j*Z2*K2*K2) + (i*K2*K2) + x];
-				if(nweights == WEIGHTS_MEM_SIZE) vin.last = (ap_int<1>)1;
-				else vin.last = (ap_int<1>)0;
-				sin.write(vin);
-//				printf("weight sent: b %d -- f %d -- %f\n",i,j,(float)vin.data);
-			}
-		}
-	}
+//    int nweights = 0;
+//    for (int i = 0 ; i < Z1; i++) {
+//    	for(int j = 0; j < NF1; j++){
+//    		for(int x = 0; x < K1*K1; x++){
+//    			nweights++;
+////    			printf("Sending - %d %d %d %f\n", j, i, x, (float)kernel[(i*K1*K1) + (j*Z1*K1*K1) + x]);
+//				vin.data = kernel[(i*K1*K1) + (j*Z1*K1*K1) + x];
+//				vin.last = (ap_int<1>)0;
+//				sin.write(vin);
+////				printf("weight sent: b %d -- f %d -- %f\n",i,j,(float)vin.data);
+//    		}
+//    	}
+//	}
+//    for (int i = 0 ; i < Z2; i++) {
+//		for(int j = 0; j < NF2; j++){
+//			for(int x = 0; x < K2*K2; x++){
+//				nweights++;
+////    			printf("Sending - %d %d %d %f\n", j, i, x, (float)kernel[LAYER1_WEIGHTS + (i*K1*K1) + (j*Z1*K1*K1) + x]);
+//				vin.data = kernel[LAYER1_WEIGHTS + (j*Z2*K2*K2) + (i*K2*K2) + x];
+//				if(nweights == WEIGHTS_MEM_SIZE) vin.last = (ap_int<1>)1;
+//				else vin.last = (ap_int<1>)0;
+//				sin.write(vin);
+////				printf("weight sent: b %d -- f %d -- %f\n",i,j,(float)vin.data);
+//			}
+//		}
+//	}
 //    printf("Sending fm\n");
 for(int i = 0; i < NPATCHES; i++){
 	#ifdef ARRAYS

@@ -28,7 +28,7 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 	}
 #else
 
-	read_stream(strm_in, weights_l1, weights_l2);
+//	read_stream(strm_in, weights_l1, weights_l2);
 
 	for(int i = 0; i < NPATCHES; i++){
 		dataflow_func(strm_in, weights_l1, weights_l2, strm_out);
@@ -39,6 +39,9 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 void dataflow_func(hls::stream<strmio_t> &strm_in, quant_t *weights_l1, quant_t *weights_l2,  hls::stream<strmio_t> &strm_out){
 #pragma HLS DATAFLOW
+
+	FILE *fp;
+	fp = fopen("/home/ze/Documents/1-IST/1-thesis/implementation/test_weights.txt", "r");
 
 #ifdef ARRAYS
 	quant_t in_feature_map[X1*Y1*Z1], m_feature_map[X2*Y2*Z2], out_feature_map[X2*Y2*NF2];
@@ -58,8 +61,8 @@ void dataflow_func(hls::stream<strmio_t> &strm_in, quant_t *weights_l1, quant_t 
 
 	read_ifm(strm_in, m0);
 
-	layer<0,X1,Y1,Z1,NF1,K1,0> (m0, m1, weights_l1);
-	layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m1, m2, weights_l2);
+	layer<0,X1,Y1,Z1,NF1,K1,0> (m0, m1, fp);
+	layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m1, m2, fp);
 
 	write_ofm(m2, strm_out, X2*Y2*NF2);
 #endif
@@ -146,8 +149,17 @@ template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nban
 #ifdef ARRAYS
 void layer(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t out_feature_map[fm_height*fm_width*nfilters], const quant_t weights[nbands*nfilters]) {
 #else
-void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_t *weights) {
+void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, FILE *fp) {
 #endif
+
+	quant_t weights[nbands*nfilters*kernel_size*kernel_size];
+	char buff[2];
+	loop_read_weights:
+	for(int i = 0; i < nbands*nfilters*kernel_size*kernel_size; i++){
+		fscanf(fp, "%s", buff);
+		weights[i] = (quant_t)atoi(buff);
+		printf("%d\n", (int)weights[i]);
+	}
 
 #ifndef ARRAYS
 	quant_t tmpin, tmpout;
@@ -157,13 +169,13 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 	//Convolution
 	quant_mult acc = 0;
 	quant_accum acc_arr[nfilters];
-	int kernel_idx = 0;
+//	int kernel_idx = 0;
 
 	loop_inputx:
 	for(count_t i = 0; i < fm_width; i++) {
 		loop_inputy:
 		for(count_t j = 0; j < fm_height; j++) {
-			kernel_idx = 0;
+//			kernel_idx = 0;
 			loop_bands:
 			for(count_t k = 0; k < nbands; k++) {
 #ifndef ARRAYS
@@ -179,11 +191,11 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 						loop_kernely:
 						for(count_t y = 0; y < kernel_size; y++) {
 //							/* Kernel index */
-//							count_t kernel_idx =
-//									(z*kernel_size*kernel_size*nbands) +                   /* nfilter */
-//									(k * (kernel_size * kernel_size) + 		               /* band*/
-//									(x * kernel_size +                                     /* kernel row */
-//									y));                                                   /* kernel column */
+							count_t kernel_idx =
+									(z*kernel_size*kernel_size*nbands) +                   /* nfilter */
+									(k * (kernel_size * kernel_size) + 		               /* band*/
+									(x * kernel_size +                                     /* kernel row */
+									y));                                                   /* kernel column */
 
 #ifdef ARRAYS
 							/* Input matrix index */
@@ -197,7 +209,7 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 #else
 							acc += weights[kernel_idx] *  pixel ;
 #endif
-							kernel_idx++;
+//							kernel_idx++;
 						}
 					}
 					if(k == 0)
