@@ -60,18 +60,18 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t kernel_size, params_t weights_start>
 #ifdef ARRAYS
-void layer(quant_t in_feature_map[], quant_t out_feature_map[], const quant_t weights[]);
+void layer(quant_t in_feature_map[], quant_t out_feature_map[]);
 #else
-void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_t *weights);
+void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out);
 #endif
 
 void read_stream(hls::stream<strmio_t> &strm_in, quant_t *weights_l1, quant_t *weights_l2);
 #ifdef ARRAYS
-void dataflow_func(hls::stream<strmio_t> &strm_in, quant_t *weights_l1, quant_t *weights_l2,  hls::stream<strmio_t> &strm_out);
+void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out);
 void read_ifm(hls::stream<strmio_t> &strm_in, quant_t *in_feature_map);
 void write_ofm(quant_t *ofm, hls::stream<strmio_t> &strm_out, count_t n_pixels);
 #else
-void dataflow_func(hls::stream<strmio_t> &strm_in, quant_t *weights_l1, quant_t *weights_l2,  hls::stream<strmio_t> &strm_out);
+void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out);
 void read_ifm(hls::stream<strmio_t> &strm_in, hls::stream<quant_t> &in_feature_map);
 void write_ofm(hls::stream<quant_t> &ofm, hls::stream<strmio_t> &strm_out, count_t n_pixels);
 #endif

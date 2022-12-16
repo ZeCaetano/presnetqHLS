@@ -9,6 +9,7 @@
 
 
 #include "simple_conv.h"
+#include "weights.h"
 
 
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
@@ -17,27 +18,26 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 #pragma HLS INTERFACE axis port=strm_in
 #pragma HLS INTERFACE axis port=strm_out
 
-	quant_t weights_l1[WEIGHTS1], weights_l2[WEIGHTS2];
 
 #ifdef ARRAYS
 
-	read_stream(strm_in, weights_l1, weights_l2);
+//	read_stream(strm_in, weights_l1, weights_l2);
 
 	for(int i = 0; i < NPATCHES; i++){
-		dataflow_func(strm_in, weights_l1, weights_l2, strm_out);
+		dataflow_func(strm_in, strm_out);
 	}
 #else
 
-	read_stream(strm_in, weights_l1, weights_l2);
+//	read_stream(strm_in, weights_l1, weights_l2);
 
 	for(int i = 0; i < NPATCHES; i++){
-		dataflow_func(strm_in, weights_l1, weights_l2, strm_out);
+		dataflow_func(strm_in, strm_out);
 	}
 #endif
 }
 
 
-void dataflow_func(hls::stream<strmio_t> &strm_in, quant_t *weights_l1, quant_t *weights_l2,  hls::stream<strmio_t> &strm_out){
+void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out){
 #pragma HLS DATAFLOW
 
 #ifdef ARRAYS
@@ -45,21 +45,21 @@ void dataflow_func(hls::stream<strmio_t> &strm_in, quant_t *weights_l1, quant_t 
 
 	read_ifm(strm_in, in_feature_map);
 
-	layer<0,X1,Y1,Z1,NF1,K1,0> (in_feature_map, m_feature_map, weights_l1);
-	layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m_feature_map, out_feature_map, weights_l2);
+	layer<0,X1,Y1,Z1,NF1,K1,0> (in_feature_map, m_feature_map);
+	layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m_feature_map, out_feature_map);
 
 	write_ofm(out_feature_map, strm_out, X2*Y2*NF2);
 #else
 	hls::stream<quant_t> m0, m1, m2;
 
-	#pragma HLS STREAM variable=m0
-	#pragma HLS STREAM variable=m1
-	#pragma HLS STREAM variable=m2
+	#pragma HLS STREAM variable=m0 depth=2
+	#pragma HLS STREAM variable=m1 depth=2
+	#pragma HLS STREAM variable=m2 depth=2
 
 	read_ifm(strm_in, m0);
 
-	layer<0,X1,Y1,Z1,NF1,K1,0> (m0, m1, weights_l1);
-	layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m1, m2, weights_l2);
+	layer<0,X1,Y1,Z1,NF1,K1,0> (m0, m1);
+	layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m1, m2);
 
 	write_ofm(m2, strm_out, X2*Y2*NF2);
 #endif
@@ -144,9 +144,9 @@ void write_ofm(hls::stream<quant_t> &ofm, hls::stream<strmio_t> &strm_out, count
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t kernel_size, params_t weights_start>
 #ifdef ARRAYS
-void layer(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t out_feature_map[fm_height*fm_width*nfilters], const quant_t weights[nbands*nfilters]) {
+void layer(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t out_feature_map[fm_height*fm_width*nfilters]) {
 #else
-void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_t *weights) {
+void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out) {
 #endif
 
 #ifndef ARRAYS
@@ -163,7 +163,7 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 	for(count_t i = 0; i < fm_width; i++) {
 		loop_inputy:
 		for(count_t j = 0; j < fm_height; j++) {
-			kernel_idx = 0;
+			kernel_idx = weights_start;
 			loop_bands:
 			for(count_t k = 0; k < nbands; k++) {
 #ifndef ARRAYS
@@ -193,9 +193,9 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out, quant_
 #endif
 //							printf("%d IP - %d %d %f\n",z, k, (x*kernel_size) + y, (float)weights[kernel_idx]);
 #ifdef ARRAYS
-							acc += weights[kernel_idx] * in_feature_map[input_idx];
+							acc += cnn_weights[kernel_idx] * in_feature_map[input_idx];
 #else
-							acc += weights[kernel_idx] *  pixel ;
+							acc += cnn_weights[kernel_idx] *  pixel;
 #endif
 							kernel_idx++;
 						}
