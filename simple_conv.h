@@ -58,7 +58,7 @@ typedef hls::axis<quant_t, 0, 0, 0> strmio_t;
 
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out);
 
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t kernel_size, params_t weights_start>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t kernel_size, params_t weights_start, quant_t *weights>
 #ifdef ARRAYS
 void layer(quant_t in_feature_map[], quant_t out_feature_map[]);
 #else

@@ -58,8 +58,8 @@ void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_o
 
 	read_ifm(strm_in, m0);
 
-	layer<0,X1,Y1,Z1,NF1,K1,0> (m0, m1);
-	layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m1, m2);
+	layer<0,X1,Y1,Z1,NF1,K1,0, weights_l1> (m0, m1);
+	layer<1,X2,Y2,Z2,NF2,K2,0, weights_l2> (m1, m2);
 
 	write_ofm(m2, strm_out, X2*Y2*NF2);
 #endif
@@ -142,7 +142,7 @@ void write_ofm(hls::stream<quant_t> &ofm, hls::stream<strmio_t> &strm_out, count
 	}
 }
 
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t kernel_size, params_t weights_start>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t kernel_size, params_t weights_start, quant_t *weights>
 #ifdef ARRAYS
 void layer(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t out_feature_map[fm_height*fm_width*nfilters]) {
 #else
@@ -195,7 +195,7 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out) {
 #ifdef ARRAYS
 							acc += cnn_weights[kernel_idx] * in_feature_map[input_idx];
 #else
-							acc += cnn_weights[kernel_idx] *  pixel;
+							acc += weights[kernel_idx] *  pixel;
 #endif
 							kernel_idx++;
 						}
