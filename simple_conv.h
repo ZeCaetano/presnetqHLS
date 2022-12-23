@@ -58,12 +58,18 @@ typedef hls::axis<quant_t, 0, 0, 0> strmio_t;
 
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out);
 
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t kernel_size, params_t weights_start, quant_t *weights>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights>
 #ifdef ARRAYS
-void layer(quant_t in_feature_map[], quant_t out_feature_map[]);
+void conv_layer_k1(quant_t in_feature_map[], quant_t out_feature_map[]);
 #else
-void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out);
+void conv_layer_k1(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out);
 #endif
+
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights>
+void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out);
+
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights>
+void conv_layer_relu(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out);
 
 void read_stream(hls::stream<strmio_t> &strm_in, quant_t *weights_l1, quant_t *weights_l2);
 #ifdef ARRAYS

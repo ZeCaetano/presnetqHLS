@@ -45,8 +45,8 @@ void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_o
 
 	read_ifm(strm_in, in_feature_map);
 
-	layer<0,X1,Y1,Z1,NF1,K1,0> (in_feature_map, m_feature_map);
-	layer<1,X2,Y2,Z2,NF2,K2,K1*K1*NF1*Z1> (m_feature_map, out_feature_map);
+	conv_layer_k1<0,X1,Y1,Z1,NF1, weights_l1> (in_feature_map, m_feature_map);
+	conv_layer_k1<1,X2,Y2,Z2,NF2, weights_l2> (m_feature_map, out_feature_map);
 
 	write_ofm(out_feature_map, strm_out, X2*Y2*NF2);
 #else
@@ -58,8 +58,8 @@ void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_o
 
 	read_ifm(strm_in, m0);
 
-	layer<0,X1,Y1,Z1,NF1,K1,0, weights_l1> (m0, m1);
-	layer<1,X2,Y2,Z2,NF2,K2,0, weights_l2> (m1, m2);
+	conv_layer_k1<0,X1,Y1,Z1,NF1, weights_l1> (m0, m1);
+	conv_layer_k1<1,X2,Y2,Z2,NF2, weights_l2> (m1, m2);
 
 	write_ofm(m2, strm_out, X2*Y2*NF2);
 #endif
@@ -142,11 +142,11 @@ void write_ofm(hls::stream<quant_t> &ofm, hls::stream<strmio_t> &strm_out, count
 	}
 }
 
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t kernel_size, params_t weights_start, quant_t *weights>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights>
 #ifdef ARRAYS
-void layer(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t out_feature_map[fm_height*fm_width*nfilters]) {
+void conv_layer_k1(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t out_feature_map[fm_height*fm_width*nfilters]) {
 #else
-void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out) {
+void conv_layer_k1(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out) {
 #endif
 
 #ifndef ARRAYS
@@ -163,7 +163,78 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out) {
 	for(count_t i = 0; i < fm_width; i++) {
 		loop_inputy:
 		for(count_t j = 0; j < fm_height; j++) {
-			kernel_idx = weights_start;
+			kernel_idx = 0;
+			loop_bands:
+			for(count_t k = 0; k < nbands; k++) {
+				loop_filters:
+				for(count_t z = 0; z < nfilters; z++) {
+#pragma HLS PIPELINE
+#ifndef ARRAYS
+					if(z == 0){
+						tmpin = strm_in.read();
+						pixel = tmpin;
+					}
+#endif
+//					acc = 0;
+#ifdef ARRAYS
+					/* Input matrix index */
+					count_t input_idx =
+							k * (fm_width * fm_height) + (i * fm_height +    /* input row */
+							j);                                              /* input column */
+#endif
+//							printf("%d IP - %d %d %f\n",z, k, (x*kernel_size) + y, (float)weights[kernel_idx]);
+#ifdef ARRAYS
+					acc = weights[kernel_idx] * in_feature_map[input_idx];
+#else
+					acc = weights[kernel_idx] *  pixel;
+#endif
+					kernel_idx++;
+
+					if(k == 0)
+						acc_arr[z] = acc;
+					else
+						acc_arr[z] += acc;
+					if(k == nbands-1) {  //If it's the last band, put the accum in the output feature map and reset the accum array
+#ifdef ARRAYS
+						out_feature_map[z*fm_width*fm_height + i*fm_height + j] = (quant_t)acc_arr[z]; //ver o fator de escala aqui
+						//aplicar função de ativação aqui
+#else
+//						printf("sending pixel number %d of filter %d \n", (i*fm_height)+j, z);
+						tmpout = (quant_t)acc_arr[z];
+						strm_out.write(tmpout);
+#endif
+						acc_arr[z] = 0;
+					}
+
+				}
+			}
+		}
+	}
+	return;
+}
+
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights>
+#ifdef ARRAYS
+void conv_layer_k2(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t out_feature_map[fm_height*fm_width*nfilters]) {
+#else
+void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out) {
+#endif
+
+#ifndef ARRAYS
+	quant_t tmpin, tmpout;
+	quant_t pixel;
+#endif
+	//Convolution
+	quant_mult acc = 0;
+	quant_accum acc_arr[nfilters];
+	int kernel_size = 2;
+	int kernel_idx = 0;
+
+	loop_inputx:
+	for(count_t i = 0; i < fm_width; i++) {
+		loop_inputy:
+		for(count_t j = 0; j < fm_height; j++) {
+			kernel_idx = 0;
 			loop_bands:
 			for(count_t k = 0; k < nbands; k++) {
 #ifndef ARRAYS
@@ -178,12 +249,6 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out) {
 					for(count_t x = 0; x < kernel_size; x++) {
 						loop_kernely:
 						for(count_t y = 0; y < kernel_size; y++) {
-//							/* Kernel index */
-//							count_t kernel_idx =
-//									(z*kernel_size*kernel_size*nbands) +                   /* nfilter */
-//									(k * (kernel_size * kernel_size) + 		               /* band*/
-//									(x * kernel_size +                                     /* kernel row */
-//									y));                                                   /* kernel column */
 
 #ifdef ARRAYS
 							/* Input matrix index */
@@ -193,7 +258,7 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out) {
 #endif
 //							printf("%d IP - %d %d %f\n",z, k, (x*kernel_size) + y, (float)weights[kernel_idx]);
 #ifdef ARRAYS
-							acc += cnn_weights[kernel_idx] * in_feature_map[input_idx];
+							acc += weights[kernel_idx] * in_feature_map[input_idx];
 #else
 							acc += weights[kernel_idx] *  pixel;
 #endif
@@ -220,88 +285,77 @@ void layer(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out) {
 			}
 		}
 	}
+	return;
+}
 
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights>
+#ifdef ARRAYS
+void conv_layer_relu(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t out_feature_map[fm_height*fm_width*nfilters]) {
+#else
+void conv_layer_relu(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out) {
+#endif
 
-//	loop_filters:
-//	for(count_t z = 0; z < nfilters; z++) {
-//		loop_inputx:
-//		for(count_t i = 0; i < fm_width; i++) {
-//			loop_inputy:
-//			for(count_t j = 0; j < fm_height; j++) {
-//				acc = 0;
-//				loop_bands:
-//				for(count_t k = 0; k < nbands; k++) {
-////Fazer leitura px=strm
-//					loop_kernelx:
-//					for(count_t x = 0; x < kernel_size; x++) {
-//						loop_kernely:
-//						for(count_t y = 0; y < kernel_size; y++) {
-//#pragma HLS PIPELINE
-//							/* Kernel index */
-//							count_t kernel_idx =
-//									(z*kernel_size*kernel_size*nbands) +                   /* nfilter */
-//									(k * (kernel_size * kernel_size) + 		               /* band*/
-//									(x * kernel_size +                                     /* kernel row */
-//									y));                                                   /* kernel column */
-//
-//
-//							/* Input matrix index */
-//							count_t input_idx =
-//									k * (fm_width * fm_height) + ((i + x) * fm_height +  /* input row */
-//									j + y);                                      /* input column */
-////							if(layer_id == 1) {
-////								printf("IP weight %f  - %d\n", weights[kernel_idx], kernel_idx);
-////								printf("IP pixel %f  - %d\n",in_feature_map[input_idx], input_idx);
-////							}
-//							//normalize pixel
-//							acc += weights[kernel_idx] * in_feature_map[input_idx];
-//						}
-//					}
-//				}
-//				out_feature_map[z*fm_width*fm_height + i*fm_height + j] = (quant_t)acc;
-////				if(j == fm_width -1 && i == fm_height - 1 && z == nfilters - 1) tmpout.last = 1;
-////				else tmpout.last = 0;
-////				tmpout.data = acc;
-////				tmpout.keep = 0xF;
-////				tmpout.strb = 0xF;
-////				strm_out.write(tmpout);
-//			}
-//		}
-//	}
+#ifndef ARRAYS
+	quant_t tmpin, tmpout;
+	quant_t pixel;
+#endif
+	int negatives = 0;
 
-//#ifndef ARRAYS
-//	if(layer_id < NLAYERS-1){  //only send weights if it's not the last layer
-//		printf("Layer %d is sending weights again\n", layer_id);
-//		for (int i = 0 ; i < WEIGHTS_MEM_SIZE; i++) {
-//			if(i == WEIGHTS_MEM_SIZE - 1) tmpout.last = 1;
-//			else tmpout.last = 0;
-////			printf("weights sent inside ip %f  - %d\n", weights[i], i);
-//			tmpout.data = weights[i];
-//			tmpout.keep = 0xF;
-//			tmpout.strb = 0xF;
-//			strm_out.write(tmpout);
-//		}
-//	}
-//#endif
-//	for(count_t i = 0; i < fm_width*fm_height*nfilters; i++){
-//		if(i == fm_width*fm_height*nfilters - 1) tmpout.last = 1;
-//		else tmpout.last = 0;
-//		tmpout.data = out_feature_map[i];
-//		tmpout.keep = 0xF;
-//		tmpout.strb = 0xF;
-//		strm_out.write(tmpout);
-//	}
+	//Convolution
+	quant_mult acc = 0;
+	quant_accum acc_arr[nfilters];
+	int kernel_idx = 0;
 
-//	if(layer_id == 1){
-//		printf("HARDWARE Output Image 1\n\r");
-//		for(int k = 0; k < nfilters; k++) {
-//			for (int x = 0; x < fm_height; x++) {
-//				for (int j = 0; j < fm_width; j++) {
-//					printf("%f ", out_feature_map[(k+1)*x * fm_width + j]);
-//				}
-//				printf("\n\r");
-//			}
-//		}
-//	}
+	loop_inputx:
+	for(count_t i = 0; i < fm_width; i++) {
+		loop_inputy:
+		for(count_t j = 0; j < fm_height; j++) {
+			kernel_idx = 0;
+			loop_bands:
+			for(count_t k = 0; k < nbands; k++) {
+#ifndef ARRAYS
+				tmpin = strm_in.read();
+				pixel = tmpin;
+#endif
+				loop_filters:
+				for(count_t z = 0; z < nfilters; z++) {
+#pragma HLS PIPELINE
+					acc = 0;
+#ifdef ARRAYS
+					/* Input matrix index */
+					count_t input_idx =
+							k * (fm_width * fm_height) + (i * fm_height +  /* input row */
+							j);                                      /* input column */
+#endif
+//							printf("%d IP - %d %d %f\n",z, k, (x*kernel_size) + y, (float)weights[kernel_idx]);
+#ifdef ARRAYS
+					acc += weights[kernel_idx] * in_feature_map[input_idx];
+#else
+					acc += weights[kernel_idx] *  pixel;
+#endif
+					kernel_idx++;
+
+					if(k == 0)
+						acc_arr[z] = acc;
+					else
+						acc_arr[z] += acc;
+					if(k == nbands-1) {  //If it's the last band, put the accum in the output feature map and reset the accum array
+#ifdef ARRAYS
+						out_feature_map[z*fm_width*fm_height + i*fm_height + j] = (quant_t)acc_arr[z]; //ver o fator de escala aqui
+						//aplicar função de ativação aqui
+#else
+//						printf("sending pixel number %d of filter %d \n", (i*fm_height)+j, z);
+
+						tmpout = (quant_t)acc_arr[z];
+						tmpout = tmpout > 0 ? tmpout : (quant_t)0;
+						strm_out.write(tmpout);
+#endif
+						acc_arr[z] = 0;
+					}
+
+				}
+			}
+		}
+	}
 	return;
 }

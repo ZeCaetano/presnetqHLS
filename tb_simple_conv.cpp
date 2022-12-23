@@ -10,7 +10,7 @@ quant_t sw_image_out_1[OUT1_FM_MEM_SIZE];
 quant_t sw_image_out_2[OUT2_FM_MEM_SIZE];
 
 //Performs software-only matrix convolution.
-void sw_convolution_3D(quant_t *image_in, const quant_t *weights, quant_t *image_out, int nbands, int fm_size, int kernel_size) {
+void sw_convolution_3D(quant_t *image_in, const quant_t *weights, quant_t *image_out, int nbands, int fm_size, int kernel_size, bool relu) {
 	for (int i = 0; i < fm_size; i++) {
 		for (int j = 0; j < fm_size; j++) {
 			quant_accum accum = 0;
@@ -38,6 +38,8 @@ void sw_convolution_3D(quant_t *image_in, const quant_t *weights, quant_t *image
 //			printf("%X  ", accum);
 //			printf("%X\n", (quant_t)accum);
 			image_out[ i * fm_size + j] = (quant_t)accum;
+			if(relu)
+				image_out[ i * fm_size + j] = (int)image_out[ i * fm_size + j] > 0 ? image_out[ i * fm_size + j] : (quant_t)0;
 		}
 	}
 
@@ -220,7 +222,7 @@ for(int i = 0; i < NPATCHES; i++){
 				sw_image_out_1 +                                        /* base address */
 				i * (X1 * Y1);               /* offset (number of images) */
 
-	    sw_convolution_3D(image_in, fp_weights, image_out_1, Z1, X1, K1);
+	    sw_convolution_3D(image_in, fp_weights, image_out_1, Z1, X1, K1, false);
 	}
 	//Layer 2
 //	printf("---------------------SW Layer 2------------------------\n");
@@ -234,7 +236,7 @@ for(int i = 0; i < NPATCHES; i++){
 				sw_image_out_2 +                                        /* base address */
 				i * (X2 * Y2);               /* offset (number of images) */
 
-	    sw_convolution_3D(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2);
+	    sw_convolution_3D(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, false);
 	}
 
 //    printf("SOFTWARE Output Image 2\n\r");
