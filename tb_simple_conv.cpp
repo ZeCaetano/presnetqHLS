@@ -45,6 +45,40 @@ void sw_convolution_3D(quant_t *image_in, const quant_t *weights, quant_t *image
 
 }
 
+void sw_convolution_3D_k2(quant_t *image_in, const quant_t *weights, quant_t *image_out, int nbands, int fm_size, int kernel_size, int output_size) {
+	//stride = 2
+	for (int i = 0; i < fm_size-1; i+=2) {
+		for (int j = 0; j < fm_size-1; j+=2) {
+			quant_accum accum = 0;
+			for (int k = 0; k < nbands; k++) {
+				for (int x = 0; x < kernel_size; x++) {
+					for (int y = 0; y < kernel_size; y++) {
+						/* Weights matrix index */
+						int weight_1d_idx =
+								k * (kernel_size * kernel_size) + /* channels */
+								x * kernel_size + y;                   /* planar coordinate */
+						/* Input image index */
+						int image_1d_idx =
+								k * (fm_size * fm_size) +          /* OFM */
+								(x + i) * fm_size + (y + j);           /* pixel */
+
+//						printf("TB - %d %d %f\n", k, (x*kernel_size) + y, (float)weights[weight_1d_idx]);
+//						printf("SW pixel %f - %d\n", image_in[image_1d_idx], image_1d_idx);
+
+						accum += weights[weight_1d_idx] * image_in[image_1d_idx];
+//						printf("%X\n", accum);
+					}
+				}
+			}
+//			printf("\n");
+//			printf("%X  ", accum);
+//			printf("%X\n", (quant_t)accum);
+//			printf("index %d\n", (i/2) * output_size + (j/2));
+			image_out[ (i/2) * output_size + (j/2)] = (quant_t)accum;
+		}
+	}
+
+}
 //void init_weights_from_file(){
 //	FILE *fweights;
 //	char tmp[(3440)/2];
@@ -163,7 +197,7 @@ int main() {
 //		}
 //	}
 //    printf("Sending fm\n");
-for(int i = 0; i < NPATCHES; i++){
+    for(int i = 0; i < NPATCHES; i++){
 	#ifdef ARRAYS
 		for (int t=0 ; t<INPUT1_MEM_SIZE; t++) {
 			vin.data = image_in[t];
@@ -183,12 +217,12 @@ for(int i = 0; i < NPATCHES; i++){
 			}
 		}
 	#endif
-}
+    }
 //	exit(0);
 
 	//Hardware computation
     simple_conv(sin, so);
-for(int i = 0; i < NPATCHES; i++){
+    for(int i = 0; i < NPATCHES; i++){
 	#ifdef ARRAYS
 		//Read image_out
 		for(int t=0 ; t < OUT2_FM_MEM_SIZE ; t++){
@@ -206,7 +240,10 @@ for(int i = 0; i < NPATCHES; i++){
 			}
 		}
 	#endif
-}
+    }
+    for(int i = 0; i < OUT2_FM_MEM_SIZE; i++){
+    	sw_image_out_2[i] = 0;
+    }
 
 	//--------------------------------------------------------------------------------------------------//
 	//-----------------------------------------SOFTWARE CONV--------------------------------------------//
@@ -220,7 +257,7 @@ for(int i = 0; i < NPATCHES; i++){
 
 		quant_t *image_out_1 =
 				sw_image_out_1 +                                        /* base address */
-				i * (X1 * Y1);               /* offset (number of images) */
+				i * (X2 * Y2);               /* offset (number of images) */
 
 	    sw_convolution_3D(image_in, fp_weights, image_out_1, Z1, X1, K1, false);
 	}
@@ -234,19 +271,23 @@ for(int i = 0; i < NPATCHES; i++){
 
 		quant_t *image_out_2 =
 				sw_image_out_2 +                                        /* base address */
-				i * (X2 * Y2);               /* offset (number of images) */
+				i * (X3 * Y3);               /* offset (number of images) */
 
-	    sw_convolution_3D(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, false);
+	    sw_convolution_3D_k2(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, X3);
 	}
 
 //    printf("SOFTWARE Output Image 2\n\r");
-//    for(int k = 0; k < NF2; k++) {
-//		for (int i = 0; i < X2; i++) {
-//			for (int j = 0; j < Y2; j++) {
-//				printf("%d ", (int)sw_image_out_2[(k*X1*Y1) + (i*Y1) + j]);
+//    for(int k = 0; k < Z3; k++) {
+//		for (int i = 0; i < X3; i++) {
+//			for (int j = 0; j < Y3; j++) {
+//				printf("%d ", (int)sw_image_out_2[(k*X3*Y3) + (i*Y3) + j]);
 //			}
 //			printf("\n\r");
 //		}
+//		printf("%d\n\r", k);
+//    }
+//    for(int i = 0; i < Z3*X3*Y3; i++){
+//    	printf("%d ", (int)sw_image_out_2[i]);
 //    }
 
 
@@ -255,12 +296,12 @@ for(int i = 0; i < NPATCHES; i++){
 	//--------------------------------------------------------------------------------------------------//
     int err_cnt = 0;
     for(int k = 0; k < NF2; k++) {
-		for (int i = 0; i < X2; i++)
-			for (int j = 0; j < Y2; j++)
-				if (hw_image_out[(k*X2*Y2) + (i*Y2) + j] != sw_image_out_2[(k*X2*Y2) + (i*Y2) + j]) {
+		for (int i = 0; i < X3; i++)
+			for (int j = 0; j < Y3; j++)
+				if (hw_image_out[(k*X3*Y3) + (i*Y3) + j] != sw_image_out_2[(k*X3*Y3) + (i*Y3) + j]) {
 					err_cnt++;
 					printf("%d - %d,%d: %d != %d\n\r",
-						   k, i, j, (int)hw_image_out[(k*X2*Y2) + (i*Y2) + j], (int)sw_image_out_2[(k*X2*Y2) + (i*Y2) + j]);
+						   k, i, j, (int)hw_image_out[(k*X3*Y3) + (i*Y3) + j], (int)sw_image_out_2[(k*X3*Y3) + (i*Y3) + j]);
 				}
     }
     printf("\n%d different values\n", err_cnt);

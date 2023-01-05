@@ -9,7 +9,7 @@
 
 
 #include "simple_conv.h"
-#include "weights.h"
+#include "weights_k2.h"
 
 
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
@@ -41,14 +41,14 @@ void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_o
 #pragma HLS DATAFLOW
 
 #ifdef ARRAYS
-	quant_t in_feature_map[X1*Y1*Z1], m_feature_map[X2*Y2*Z2], out_feature_map[X2*Y2*NF2];
+	quant_t in_feature_map[X1*Y1*Z1], m_feature_map[X2*Y2*Z2], out_feature_map[X3*Y3*NF2];
 
 	read_ifm(strm_in, in_feature_map);
 
 	conv_layer_k1<0,X1,Y1,Z1,NF1, weights_l1> (in_feature_map, m_feature_map);
-	conv_layer_k1<1,X2,Y2,Z2,NF2, weights_l2> (m_feature_map, out_feature_map);
+	conv_layer_k2<1,X2,Y2,Z2,NF2,X3, weights_l2> (m_feature_map, out_feature_map);
 
-	write_ofm(out_feature_map, strm_out, X2*Y2*NF2);
+	write_ofm(out_feature_map, strm_out, X3*Y3*NF2);
 #else
 	hls::stream<quant_t> m0, m1, m2;
 
@@ -213,7 +213,7 @@ void conv_layer_k1(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 	return;
 }
 
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim,quant_t *weights>
 #ifdef ARRAYS
 void conv_layer_k2(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t out_feature_map[fm_height*fm_width*nfilters]) {
 #else
@@ -224,16 +224,16 @@ void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 	quant_t tmpin, tmpout;
 	quant_t pixel;
 #endif
-	//Convolution
+	//Convolution with stride 2
 	quant_mult acc = 0;
 	quant_accum acc_arr[nfilters];
 	int kernel_size = 2;
 	int kernel_idx = 0;
 
 	loop_inputx:
-	for(count_t i = 0; i < fm_width; i++) {
+	for(count_t i = 0; i < fm_width-1; i+=2) {
 		loop_inputy:
-		for(count_t j = 0; j < fm_height; j++) {
+		for(count_t j = 0; j < fm_height-1; j+=2) {
 			kernel_idx = 0;
 			loop_bands:
 			for(count_t k = 0; k < nbands; k++) {
@@ -271,7 +271,7 @@ void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 						acc_arr[z] += acc;
 					if(k == nbands-1) {  //If it's the last band, put the accum in the output feature map and reset the accum array
 #ifdef ARRAYS
-						out_feature_map[z*fm_width*fm_height + i*fm_height + j] = (quant_t)acc_arr[z]; //ver o fator de escala aqui
+						out_feature_map[z*output_dim*output_dim+ (i/2)*output_dim+ (j/2)] = (quant_t)acc_arr[z]; //ver o fator de escala aqui
 						//aplicar função de ativação aqui
 #else
 //						printf("sending pixel number %d of filter %d \n", (i*fm_height)+j, z);
