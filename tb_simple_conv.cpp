@@ -8,6 +8,8 @@ static quant_t kernel[WEIGHTS_MEM_SIZE];
 quant_t hw_image_out[OUT2_FM_MEM_SIZE];
 quant_t sw_image_out_1[OUT1_FM_MEM_SIZE];
 quant_t sw_image_out_2[OUT2_FM_MEM_SIZE];
+quant_t sw_image_out_3[OUT2_FM_MEM_SIZE];
+quant_t sw_image_out_ds[OUTDS_FM_MEM_SIZE];
 
 //Performs software-only matrix convolution.
 void sw_convolution_3D(quant_t *image_in, const quant_t *weights, quant_t *image_out, int nbands, int fm_size, int kernel_size, bool relu) {
@@ -49,7 +51,7 @@ void sw_convolution_3D_k2(quant_t *image_in, const quant_t *weights, quant_t *im
 	//stride = 2
 	for (int i = 0; i < fm_size-1; i+=2) {
 		for (int j = 0; j < fm_size-1; j+=2) {
-			quant_accum accum = 0;
+			int accum = 0;
 			for (int k = 0; k < nbands; k++) {
 				for (int x = 0; x < kernel_size; x++) {
 					for (int y = 0; y < kernel_size; y++) {
@@ -79,6 +81,43 @@ void sw_convolution_3D_k2(quant_t *image_in, const quant_t *weights, quant_t *im
 	}
 
 }
+
+
+void average_pooling(quant_t *image_in, quant_t *image_out, int fm_size, int out_size, int nbands, int kernel_size){
+	int accum;
+	int avg;
+	for(int z = 0; z < nbands; z++){
+		for (int i = 0; i < fm_size-1; i+=2) {
+			for (int j = 0; j < fm_size-1; j+=2) {
+				accum = 0;
+				for(int k = 0; k < kernel_size; k++){
+					for(int l = 0; l < kernel_size; l++){
+						accum += image_in[(z*fm_size*fm_size) + (i+k)*fm_size + j+l];
+					}
+				}
+				avg = accum / (kernel_size*kernel_size);
+				image_out[z*out_size*out_size + (i/2)*out_size + (j/2)] = (quant_t) avg;
+			}
+		}
+	}
+
+}
+
+void sum_shorctut(quant_t *conv_fm, quant_t *shortcut, quant_t *fm_out, int fm_size, int nbands_conv, int nbands_shortcut){
+	for(int z = 0; z < nbands_conv; z++){
+		for (int i = 0; i < fm_size; i++) {
+			for (int j = 0; j < fm_size; j++) {
+				if(z > nbands_shortcut)
+					fm_out[z*fm_size*fm_size + i*fm_size + j] = conv_fm[z*fm_size*fm_size + i*fm_size + j];
+				else
+					fm_out[z*fm_size*fm_size + i*fm_size + j] = (quant_t) (conv_fm[z*fm_size*fm_size + i*fm_size + j] + shortcut[z*fm_size*fm_size + i*fm_size + j]);
+
+			}
+		}
+	}
+}
+
+
 //void init_weights_from_file(){
 //	FILE *fweights;
 //	char tmp[(3440)/2];
@@ -276,6 +315,32 @@ int main() {
 	    sw_convolution_3D_k2(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, X3);
 	}
 
+
+	average_pooling(image_in, sw_image_out_ds, X1, XDS, Z1, KDS);
+
+	sum_shorctut(sw_image_out_2, sw_image_out_ds, sw_image_out_3, X3, Z3, Z1);
+
+//	printf("Input:\n");
+//	for(int k = 0; k < Z1; k++) {
+//		for (int i = 0; i < X1; i++) {
+//			for (int j = 0; j < Y1; j++) {
+//				printf("  %d", (int)image_in[(k*X1*Y1) + (i*Y1) + j]);
+//			}
+//			printf("\n\r");
+//		}
+//		printf("\n\r");
+//	}
+//	printf("DS output:\n");
+//	for(int k = 0; k < Z1; k++) {
+//		for (int i = 0; i < XDS; i++) {
+//			for (int j = 0; j < YDS; j++) {
+//				printf("  %d", (int)sw_image_out_ds[(k*XDS*YDS) + (i*YDS) + j]);
+//			}
+//			printf("\n\r");
+//		}
+//		printf("\n\r");
+//	}
+//
 //    printf("SOFTWARE Output Image 2\n\r");
 //    for(int k = 0; k < Z3; k++) {
 //		for (int i = 0; i < X3; i++) {
@@ -286,9 +351,16 @@ int main() {
 //		}
 //		printf("%d\n\r", k);
 //    }
-//    for(int i = 0; i < Z3*X3*Y3; i++){
-//    	printf("%d ", (int)sw_image_out_2[i]);
-//    }
+//    printf("SOFTWARE Output Image 3\n\r");
+//        for(int k = 0; k < Z3; k++) {
+//    		for (int i = 0; i < X3; i++) {
+//    			for (int j = 0; j < Y3; j++) {
+//    				printf("%d ", (int)sw_image_out_3[(k*X3*Y3) + (i*Y3) + j]);
+//    			}
+//    			printf("\n\r");
+//    		}
+//    		printf("%d\n\r", k);
+//        }
 
 
 	//--------------------------------------------------------------------------------------------------//
