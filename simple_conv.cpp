@@ -48,8 +48,8 @@ void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_o
 
 //	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(in_feature_map, ds_feature_map, in_cpy);
 
-	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1> (in_cpy, m1_feature_map);
-	conv_layer_k2<1,X1,Y1,Z1,NF1,X3, weights_l2> (m1_feature_map, out_feature_map);
+	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1> (in_feature_map, m1_feature_map);
+	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2,X3, weights_l2> (m1_feature_map, out_feature_map);
 
 //	add_shortcut<X3,Y3,Z3,Z1>(m2_feature_map, ds_feature_map, out_feature_map);
 
@@ -347,7 +347,7 @@ void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 	int kernel_size = 2;
 	int kernel_idx = 0;
 
-#pragma HLS ARRAY_RESHAPE variable=in_feature_map type=cyclic factor=2
+//#pragma HLS ARRAY_RESHAPE variable=in_feature_map type=cyclic factor=2
 
 	loop_inputx:
 	for(count_t i = 0; i < fm_width-1; i+=2) {
@@ -355,13 +355,13 @@ void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 		for(count_t j = 0; j < fm_height-1; j+=2) {
 			kernel_idx = 0;
 			loop_bands:
-				for(count_t z = 0; z < nfilters; z++) {
 			for(count_t k = 0; k < nbands; k++) {
 #ifndef ARRAYS
 				tmpin = strm_in.read();
 				pixel = tmpin;
 #endif
 				loop_filters:
+				for(count_t z = 0; z < nfilters; z++) {
 					acc = 0;
 					loop_kernelx:
 #pragma HLS PIPELINE

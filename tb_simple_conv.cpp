@@ -316,9 +316,9 @@ int main() {
 	}
 
 
-	average_pooling(image_in, sw_image_out_ds, X1, XDS, Z1, KDS);
+//	average_pooling(image_in, sw_image_out_ds, X1, XDS, Z1, KDS);
 
-	sum_shorctut(sw_image_out_2, sw_image_out_ds, sw_image_out_3, X3, Z3, Z1);
+//	sum_shorctut(sw_image_out_2, sw_image_out_ds, sw_image_out_3, X3, Z3, Z1);
 
 //	printf("Input:\n");
 //	for(int k = 0; k < Z1; k++) {
