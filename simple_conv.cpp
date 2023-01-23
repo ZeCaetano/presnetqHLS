@@ -193,77 +193,6 @@ template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nban
 #ifdef ARRAYS
 void conv_layer_k1(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t out_feature_map[fm_height*fm_width*nfilters]) {
 #else
-void conv_layer_k1(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out) {
-#endif
-
-#ifndef ARRAYS
-	quant_t tmpin, tmpout;
-	quant_t pixel;
-#endif
-
-	//Convolution
-	quant_mult acc = 0;
-	quant_accum acc_arr[nfilters];
-	int kernel_idx = 0;
-
-	loop_inputx:
-	for(count_t i = 0; i < fm_width; i++) {
-		loop_inputy:
-		for(count_t j = 0; j < fm_height; j++) {
-			kernel_idx = 0;
-			loop_bands:
-			for(count_t z = 0; z < nbands; z++) {
-				loop_filters:
-				for(count_t k = 0; k < nfilters; k++) {
-#pragma HLS PIPELINE
-#ifndef ARRAYS
-					if(k == 0){
-						tmpin = strm_in.read();
-						pixel = tmpin;
-					}
-#endif
-//					acc = 0;
-#ifdef ARRAYS
-					/* Input matrix index */
-					count_t input_idx =
-							z * (fm_width * fm_height) + (i * fm_height +    /* input row */
-							j);                                              /* input column */
-#endif
-//							printf("%d IP - %d %d %f\n",z, k, (x*kernel_size) + y, (float)weights[kernel_idx]);
-#ifdef ARRAYS
-					acc = weights[kernel_idx] * in_feature_map[input_idx];
-#else
-					acc = weights[kernel_idx] *  pixel;
-#endif
-					kernel_idx++;
-
-					if(z == 0)
-						acc_arr[k] = acc;
-					else
-						acc_arr[k] += acc;
-					if(z == nbands-1) {  //If it's the last band, put the accum in the output feature map and reset the accum array
-#ifdef ARRAYS
-						out_feature_map[k*fm_width*fm_height + i*fm_height + j] = (quant_t)acc_arr[k]; //ver o fator de escala aqui
-						//aplicar função de ativação aqui
-#else
-//						printf("sending pixel number %d of filter %d \n", (i*fm_height)+j, z);
-						tmpout = (quant_t)acc_arr[k];
-						strm_out.write(tmpout);
-#endif
-						acc_arr[k] = 0;
-					}
-
-				}
-			}
-		}
-	}
-	return;
-}
-//Convolutional layer to be aplied before a convolution with kernel and stride 2, that will clear the last row and column from the outputs
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights>
-#ifdef ARRAYS
-void conv_layer_k1_b4k2(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t out_feature_map[fm_height*fm_width*nfilters]) {
-#else
 void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out) {
 #endif
 
@@ -293,6 +222,53 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 					if(z == nbands-1) {
 						count_t output_idx = k*(fm_width)*(fm_height) + i*(fm_height) + j;
 						out_feature_map[output_idx] = (quant_t)acc; //ver o fator de escala aqui
+						//aplicar função de ativação aqui
+						acc = 0;
+						if(k != nfilters-1) input_idx -= nbands;
+					}
+
+				}
+			}
+		}
+	}
+	return;
+}
+//Convolutional layer to be aplied before a convolution with kernel and stride 2, that will clear the last row and column from the outputs
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights>
+#ifdef ARRAYS
+void conv_layer_k1_b4k2(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t out_feature_map[fm_height*fm_width*nfilters]) {
+#else
+void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out) {
+#endif
+
+#ifndef ARRAYS
+	quant_t tmpin, tmpout;
+	quant_t pixel;
+#endif
+
+	//Convolution
+	quant_accum acc = 0;
+	int kernel_idx = 0;
+	int input_idx = 0;
+	int output_idx = 0;
+
+	loop_inputx:
+	for(count_t i = 0; i < fm_width; i++) {
+		loop_inputy:
+		for(count_t j = 0; j < fm_height; j++) {
+			kernel_idx = 0;
+			loop_filters:
+			for(count_t k = 0; k < nfilters; k++) {
+				loop_bands:
+				for(count_t z = 0; z < nbands; z++) {
+#pragma HLS PIPELINE
+					acc += weights[kernel_idx] * in_feature_map[input_idx];
+					kernel_idx++;
+					input_idx++;
+					if(z == nbands-1) {
+//						count_t output_idx = k*(fm_width)*(fm_height) + i*(fm_height) + j;
+						out_feature_map[output_idx] = (quant_t)acc; //ver o fator de escala aqui
+						output_idx++;
 						//aplicar função de ativação aqui
 						acc = 0;
 						if(k != nfilters-1) input_idx -= nbands;
@@ -339,10 +315,7 @@ void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 						for(count_t y = 0; y < kernel_size; y++) {
 
 							/* Input matrix index */
-							count_t input_idx =
-									z * (fm_width * fm_height) + ((i + x) * fm_height +  /* input row */
-									j + y);                                      /* input column */
-//							printf("%d \n", input_idx);
+							count_t input_idx = (i+x) * (fm_width * nbands) + (j + y) * nbands + z;
 							acc += weights[kernel_idx] * in_feature_map[input_idx];
 							kernel_idx++;
 
