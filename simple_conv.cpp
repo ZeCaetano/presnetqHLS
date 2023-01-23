@@ -44,14 +44,16 @@ void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_o
 #pragma HLS DATAFLOW
 
 #ifdef ARRAYS
-	quant_t in_feature_map[X1*Y1*Z1], m1_feature_map[(X2)*(Y2)*Z2], m2_feature_map[X3*Y3*NF2], ds_feature_map[XDS*YDS*Z1], out_feature_map[X3*Y3*NF2];
+	quant_t in_feature_map[X1*Y1*Z1], m2_feature_map[X3*Y3*NF2], ds_feature_map[XDS*YDS*Z1], out_feature_map[X3*Y3*NF2];
+	quant_t m1_feature_map[(X2-1)*(Y2-1)*Z2];
+
 
 	read_ifm(strm_in, in_feature_map);
 
 //	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(in_feature_map, ds_feature_map, in_cpy);
 
 	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1> (in_feature_map, m1_feature_map);
-	conv_layer_k2<1,X2,Y2,Z2,NF2,X3, weights_l2> (m1_feature_map, out_feature_map);
+	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2,X3, weights_l2> (m1_feature_map, out_feature_map);
 
 //	add_shortcut<X3,Y3,Z3,Z1>(m2_feature_map, ds_feature_map, out_feature_map);
 
@@ -238,7 +240,7 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 //Convolutional layer to be aplied before a convolution with kernel and stride 2, that will clear the last row and column from the outputs
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights>
 #ifdef ARRAYS
-void conv_layer_k1_b4k2(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t out_feature_map[fm_height*fm_width*nfilters]) {
+void conv_layer_k1_b4k2(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t out_feature_map[(fm_height-1)*(fm_width-1)*nfilters]) {
 #else
 void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out) {
 #endif
@@ -259,15 +261,18 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 		loop_inputy:
 		for(count_t j = 0; j < fm_height; j++) {
 			kernel_idx = 0;
-			if(j == fm_height-1) {
-				input_idx += nbands;
-			}
-			else {
-				loop_filters:
-				for(count_t k = 0; k < nfilters; k++) {
-					loop_bands:
-					for(count_t z = 0; z < nbands; z++) {
-	#pragma HLS PIPELINE
+			loop_filters:
+			for(count_t k = 0; k < nfilters; k++) {
+				loop_bands:
+				for(count_t z = 0; z < nbands; z++) {
+#pragma HLS PIPELINE
+					if(j == fm_height-1){
+						if(k == 0 && z == 0)
+							input_idx += nbands;
+//						z = nbands;
+//						k = nfilters;
+					}
+					else {
 						acc += weights[kernel_idx] * in_feature_map[input_idx];
 						kernel_idx++;
 						input_idx++;
@@ -279,7 +284,6 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 							acc = 0;
 							if(k != nfilters-1) input_idx -= nbands;
 						}
-
 					}
 				}
 			}
@@ -315,14 +319,14 @@ void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 			for(count_t k = 0; k < nfilters; k++) {
 				loop_bands:
 				for(count_t z = 0; z < nbands; z++) {
-#pragma HLS PIPELINE
 					loop_kernelx:
 					for(count_t x = 0; x < kernel_size; x++) {
 						loop_kernely:
 						for(count_t y = 0; y < kernel_size; y++) {
+#pragma HLS PIPELINE
 
 							/* Input matrix index */
-							count_t input_idx = (i+x) * ((fm_width-1) * nbands) + (j + y) * nbands + z;
+							count_t input_idx = (i+x) * (fm_width * nbands) + (j + y) * nbands + z;
 							acc += weights[kernel_idx] * in_feature_map[input_idx];
 							kernel_idx++;
 
