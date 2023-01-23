@@ -85,7 +85,7 @@ void read_ifm(hls::stream<strmio_t> &strm_in, hls::stream<quant_t> &in_feature_m
 
 #ifdef ARRAYS
 	//read input fm
-	for(count_t i = 0; i < X1*Y1*Z1; i++) {
+	for(int i = 0; i < X1*Y1*Z1; i++) {
 		tmpin = strm_in.read();
 		in_feature_map[i] = tmpin.data;
 //		if(layer_id == 1) printf("%f-%d\n", tmpin.data, i);
@@ -211,14 +211,14 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 	int output_idx = 0;
 
 	loop_inputx:
-	for(count_t i = 0; i < fm_width; i++) {
+	for(int i = 0; i < fm_width; i++) {
 		loop_inputy:
-		for(count_t j = 0; j < fm_height; j++) {
+		for(int j = 0; j < fm_height; j++) {
 			kernel_idx = 0;
 			loop_filters:
-			for(count_t k = 0; k < nfilters; k++) {
+			for(int k = 0; k < nfilters; k++) {
 				loop_bands:
-				for(count_t z = 0; z < nbands; z++) {
+				for(int z = 0; z < nbands; z++) {
 #pragma HLS PIPELINE
 					acc += weights[kernel_idx] * in_feature_map[input_idx];
 					kernel_idx++;
@@ -259,14 +259,14 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 	int output_idx_odd = 0;
 
 	loop_inputx:
-	for(count_t i = 0; i < fm_width-1; i++) {
+	for(int i = 0; i < fm_width-1; i++) {
 		loop_inputy:
-		for(count_t j = 0; j < fm_height; j++) {
+		for(int j = 0; j < fm_height; j++) {
 			kernel_idx = 0;
 			loop_filters:
-			for(count_t k = 0; k < nfilters; k++) {
+			for(int k = 0; k < nfilters; k++) {
 				loop_bands:
-				for(count_t z = 0; z < nbands; z++) {
+				for(int z = 0; z < nbands; z++) {
 #pragma HLS PIPELINE
 					if(j == fm_height-1){
 						if(k == 0 && z == 0)
@@ -327,14 +327,14 @@ void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 //#pragma HLS ARRAY_RESHAPE variable=in_feature_map type=cyclic factor=2
 
 	loop_inputx:
-	for(count_t i = 0; i < fm_width-1; i+=2) {
+	for(int i = 0; i < fm_width-1; i+=2) {
 		loop_inputy:
-		for(count_t j = 0; j < fm_height-1; j+=2) {
+		for(int j = 0; j < fm_height-1; j+=2) {
 			kernel_idx = 0;
 			loop_filters:
-			for(count_t k = 0; k < nfilters; k++) {
+			for(int k = 0; k < nfilters; k++) {
 				loop_bands:
-				for(count_t z = 0; z < nbands*2; z++) {
+				for(int z = 0; z < nbands*2; z++) {
 #pragma HLS PIPELINE
 					acc_even += weights[kernel_idx] * in_feature_map[0][input_idx];
 					kernel_idx++;
@@ -376,18 +376,18 @@ void conv_layer_relu(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_o
 	int kernel_idx = 0;
 
 	loop_inputx:
-	for(count_t i = 0; i < fm_width; i++) {
+	for(int i = 0; i < fm_width; i++) {
 		loop_inputy:
-		for(count_t j = 0; j < fm_height; j++) {
+		for(int j = 0; j < fm_height; j++) {
 			kernel_idx = 0;
 			loop_bands:
-			for(count_t z = 0; z < nbands; z++) {
+			for(int z = 0; z < nbands; z++) {
 #ifndef ARRAYS
 				tmpin = strm_in.read();
 				pixel = tmpin;
 #endif
 				loop_filters:
-				for(count_t k = 0; k < nfilters; k++) {
+				for(int k = 0; k < nfilters; k++) {
 #pragma HLS PIPELINE
 					acc = 0;
 #ifdef ARRAYS
