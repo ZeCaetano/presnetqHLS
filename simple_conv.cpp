@@ -44,14 +44,14 @@ void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_o
 #pragma HLS DATAFLOW
 
 #ifdef ARRAYS
-	quant_t in_feature_map[X1*Y1*Z1], m1_feature_map[(X2-1)*(Y2-1)*Z2], m2_feature_map[X3*Y3*NF2], ds_feature_map[XDS*YDS*Z1], out_feature_map[X3*Y3*NF2];
+	quant_t in_feature_map[X1*Y1*Z1], m1_feature_map[(X2)*(Y2)*Z2], m2_feature_map[X3*Y3*NF2], ds_feature_map[XDS*YDS*Z1], out_feature_map[X3*Y3*NF2];
 
 	read_ifm(strm_in, in_feature_map);
 
 //	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(in_feature_map, ds_feature_map, in_cpy);
 
 	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1> (in_feature_map, m1_feature_map);
-	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2,X3, weights_l2> (m1_feature_map, out_feature_map);
+	conv_layer_k2<1,X2,Y2,Z2,NF2,X3, weights_l2> (m1_feature_map, out_feature_map);
 
 //	add_shortcut<X3,Y3,Z3,Z1>(m2_feature_map, ds_feature_map, out_feature_map);
 
@@ -273,33 +273,29 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 #endif
 
 	//Convolution
-	quant_mult acc = 0;
+	quant_accum acc = 0;
 	int kernel_idx = 0;
+	int input_idx = 0;
 
 	loop_inputx:
-	for(count_t i = 0; i < fm_width-1; i++) {
+	for(count_t i = 0; i < fm_width; i++) {
 		loop_inputy:
-		for(count_t j = 0; j < fm_height-1; j++) {
+		for(count_t j = 0; j < fm_height; j++) {
 			kernel_idx = 0;
 			loop_filters:
 			for(count_t k = 0; k < nfilters; k++) {
 				loop_bands:
 				for(count_t z = 0; z < nbands; z++) {
 #pragma HLS PIPELINE
-
-//					acc = 0;
-					/* Input matrix index */
-					count_t input_idx =
-							z * (fm_width * fm_height) + (i * fm_height +    /* input row */
-							j);                                              /* input column */
-//							printf("%d IP - %d %d %f\n",z, k, (x*kernel_size) + y, (float)weights[kernel_idx]);
 					acc += weights[kernel_idx] * in_feature_map[input_idx];
 					kernel_idx++;
+					input_idx++;
 					if(z == nbands-1) {
-						count_t output_idx = k*(fm_width-1)*(fm_height-1) + i*(fm_height-1) + j;
+						count_t output_idx = k*(fm_width)*(fm_height) + i*(fm_height) + j;
 						out_feature_map[output_idx] = (quant_t)acc; //ver o fator de escala aqui
 						//aplicar função de ativação aqui
 						acc = 0;
+						if(k != nfilters-1) input_idx -= nbands;
 					}
 
 				}

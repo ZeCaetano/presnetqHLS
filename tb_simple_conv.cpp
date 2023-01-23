@@ -238,12 +238,14 @@ int main() {
 //    printf("Sending fm\n");
     for(int i = 0; i < NPATCHES; i++){
 	#ifdef ARRAYS
-		for (int t=0 ; t<INPUT1_MEM_SIZE; t++) {
-			vin.data = image_in[t];
-			if(t == INPUT1_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
-			else vin.last = (ap_int<1>)0;
-			sin.write(vin);
-	//		printf("pixel sent: %f count: %d last: %d\n",image_in[t], t, vin.last);
+		for (int t=0 ; t<X1*Y1; t++) {
+			for(int j = 0; j < Z1; j++) {
+				vin.data = image_in[(j*X1*Y1) + t];
+				if(t == INPUT1_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
+				else vin.last = (ap_int<1>)0;
+				sin.write(vin);
+		//		printf("pixel sent: %f count: %d last: %d\n",image_in[t], t, vin.last);
+			}
 		}
 	#else
 		for (int t=0 ; t<X1*Y1; t++) {
