@@ -258,6 +258,7 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 	int output_idx_even = 0;
 	int output_idx_odd = 0;
 
+
 	loop_inputx:
 	for(int i = 0; i < fm_width-1; i++) {
 		loop_inputy:
@@ -265,9 +266,9 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 			kernel_idx = 0;
 			loop_filters:
 			for(int k = 0; k < nfilters; k++) {
+#pragma HLS PIPELINE
 				loop_bands:
 				for(int z = 0; z < nbands; z++) {
-#pragma HLS PIPELINE
 					if(j == fm_height-1){
 						if(k == 0 && z == 0)
 							input_idx += nbands;
@@ -275,7 +276,9 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 //						k = nfilters;
 					}
 					else {
-						acc += weights[kernel_idx] * in_feature_map[input_idx];
+						quant_accum temp = weights[kernel_idx] * in_feature_map[input_idx];
+						acc += temp;
+//#pragma HLS BIND_OP variable=temp op=mul
 						kernel_idx++;
 						input_idx++;
 						if(z == nbands-1) {
@@ -323,6 +326,7 @@ void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 	int kernel_size = 2;
 	int kernel_idx = 0;
 	int input_idx = 0;
+	int output_idx = 0;
 
 //#pragma HLS ARRAY_RESHAPE variable=in_feature_map type=cyclic factor=2
 
@@ -345,6 +349,8 @@ void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 					if(z == (nbands*2)-1) {
 						acc_even += acc_odd;
 						out_feature_map[k*output_dim*output_dim + (i/2)*output_dim+ (j/2)] = (quant_t)acc_even; //ver o fator de escala aqui
+//						out_feature_map[output_idx] = (quant_t)acc_even; //ver o fator de escala aqui
+						output_idx++;
 						acc_even = 0;
 						acc_odd = 0;
 						//aplicar função de ativação aqui
