@@ -265,21 +265,21 @@ int main() {
     simple_conv(sin, so);
     for(int i = 0; i < NPATCHES; i++){
 //	#ifdef ARRAYS
-//		Read image_out
-		for(int t=0 ; t < OUT2_FM_MEM_SIZE ; t++){
-			vout = so.read();
-			hw_image_out[t] = vout.data;
-//			printf("%d ", (int)vout.data);
-			if (vout.last == 1) break;
-		}
-//		for(int l = 0; l < X3*Y3; l++) {
-//			for(int j = 0; j < Z3; j++) {
-//				vout = so.read();
-//				hw_image_out[j*X2*Y2+ l] = vout.data;
-//				printf("%f \n", vout.data);
-//				if(vout.last == 1) break;
-//			}
+//// 		Read image_out
+//		for(int t=0 ; t < OUT2_FM_MEM_SIZE ; t++){
+//			vout = so.read();
+//			hw_image_out[t] = vout.data;
+////			printf("%d ", (int)vout.data);
+//			if (vout.last == 1) break;
 //		}
+		for(int l = 0; l < X3*Y3; l++) {
+			for(int j = 0; j < Z3; j++) {
+				vout = so.read();
+				hw_image_out[(j*X3*Y3) + l] = vout.data;
+//				printf("idx-%d  %d\n", (j*X3*Y3) + l, (int)vout.data);
+				if(vout.last == 1) break;
+			}
+		}
     }
     for(int i = 0; i < OUT2_FM_MEM_SIZE; i++){
     	sw_image_out_2[i] = 0;

@@ -47,6 +47,7 @@
 #define NF3 172
 #define K3 1
 #define LAYER3_WEIGHTS (Z3*NF3*K3*K3)
+#define OUTPUT_MEM_SIZE (X3*Y3*Z3)
 //-------DOWNSAMPLING LAYER--------//
 //Input: LAYER 1
 //Output: 4,4,32
@@ -74,7 +75,7 @@ typedef ap_int<16> quant_accum;
 
 
 //typedef float quant_t;
-typedef ap_uint<12> count_t;
+typedef ap_uint<13> count_t;
 typedef ap_uint<17> widx_t;
 typedef short params_t;
 typedef hls::axis<quant_t, 0, 0, 0> strmio_t;
@@ -93,7 +94,7 @@ template<params_t fm_width, params_t fm_height, params_t nbands_conv, params_t n
 void add_shortcut(quant_t conv_feature_map[fm_width*fm_height*nbands_conv], quant_t shortcut[fm_width*fm_height*nbands_shortcut], quant_t out_feature_map[fm_width*fm_height*nbands_conv]);
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights>
-void conv_layer_k1(quant_t in_feature_map[], quant_t out_feature_map[]);
+void conv_layer_k1(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t out_feature_map[fm_height*fm_width*nfilters]);
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights>
 void conv_layer_k1_b4k2(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t out_feature_map[2][(fm_height-1)*(fm_width-1)*nfilters/2]);
@@ -105,8 +106,8 @@ template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nban
 void conv_layer_relu(quant_t in_feature_map[], quant_t out_feature_map[]);
 
 void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out);
-void read_ifm(hls::stream<strmio_t> &strm_in, quant_t *in_feature_map);
-void write_ofm(quant_t *ofm, hls::stream<strmio_t> &strm_out, count_t n_pixels);
+void read_ifm(hls::stream<strmio_t> &strm_in, quant_t in_feature_map[X1*Y1*Z1]);
+void write_ofm(quant_t *ofm, hls::stream<strmio_t> &strm_out);
 
 #else
 

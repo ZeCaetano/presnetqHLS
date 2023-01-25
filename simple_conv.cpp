@@ -41,24 +41,24 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 
 void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out){
-#pragma HLS DATAFLOW
 
 #ifdef ARRAYS
-	quant_t in_feature_map[X1*Y1*Z1], m2_feature_map[X3*Y3*NF2], ds_feature_map[XDS*YDS*Z1], out_feature_map[X3*Y3*NF2];
+	quant_t in_feature_map[X1*Y1*Z1], out_feature_map[X3*Y3*NF2]; //, m2_feature_map[X3*Y3*NF2], ds_feature_map[XDS*YDS*Z1];
 //	quant_t m1_feature_map[(X2-1)*(Y2-1)*Z2];
 	quant_t m1_feature_map[2][(X2-1)*(Y2-1)*Z2/2];
+#pragma HLS STREAM variable=in_feature_map type=PIPO
+#pragma HLS STREAM variable=m1_feature_map type=PIPO
+#pragma HLS STREAM variable=out_feature_map type=PIPO
 
-
+#pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map);
-
-//	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(in_feature_map, ds_feature_map, in_cpy);
-
 	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1> (in_feature_map, m1_feature_map);
 	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2,X3, weights_l2> (m1_feature_map, out_feature_map);
+	write_ofm(out_feature_map, strm_out);
 
+	//	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(in_feature_map, ds_feature_map, in_cpy);
 //	add_shortcut<X3,Y3,Z3,Z1>(m2_feature_map, ds_feature_map, out_feature_map);
 
-	write_ofm(out_feature_map, strm_out, X3*Y3*NF2);
 #else
 	hls::stream<quant_t> m0, m1, m2;
 
@@ -77,7 +77,7 @@ void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_o
 
 
 #ifdef ARRAYS
-void read_ifm(hls::stream<strmio_t> &strm_in, quant_t *in_feature_map){
+void read_ifm(hls::stream<strmio_t> &strm_in, quant_t in_feature_map[INPUT1_MEM_SIZE]){
 #else
 void read_ifm(hls::stream<strmio_t> &strm_in, hls::stream<quant_t> &in_feature_map){
 #endif
@@ -85,7 +85,7 @@ void read_ifm(hls::stream<strmio_t> &strm_in, hls::stream<quant_t> &in_feature_m
 
 #ifdef ARRAYS
 	//read input fm
-	for(int i = 0; i < X1*Y1*Z1; i++) {
+	for(int i = 0; i < INPUT1_MEM_SIZE; i++) {
 		tmpin = strm_in.read();
 		in_feature_map[i] = tmpin.data;
 //		if(layer_id == 1) printf("%f-%d\n", tmpin.data, i);
@@ -102,32 +102,32 @@ void read_ifm(hls::stream<strmio_t> &strm_in, hls::stream<quant_t> &in_feature_m
 #endif
 }
 
-void read_stream(hls::stream<strmio_t> &strm_in, quant_t *weights_l1, quant_t *weights_l2) {
-
-	strmio_t tmpin;
-	quant_t tmpout;
-
-	//Read weights for layer 1
-	for(int i = 0; i < LAYER1_WEIGHTS; i++) {
-		tmpin = strm_in.read();
-//		printf("Receive %f\n", (float)tmpin.data);
-		weights_l1[i] = tmpin.data;
-//		if(layer_id == 1) printf("%d  %f-%d\n",i, weights[i], tmpin.last);
-		if(tmpin.last == 1) break;
-	}
-
-	//Read weights for layer 2
-	for(int i = 0; i < LAYER2_WEIGHTS; i++) {
-		tmpin = strm_in.read();
-//		printf("Receive %f\n", (float)tmpin.data);
-		weights_l2[i] = tmpin.data;
-//		if(layer_id == 1) printf("%d  %f-%d\n",i, weights[i], tmpin.last);
-		if(tmpin.last == 1) break;
-	}
-}
+//void read_stream(hls::stream<strmio_t> &strm_in, quant_t *weights_l1, quant_t *weights_l2) {
+//
+//	strmio_t tmpin;
+//	quant_t tmpout;
+//
+//	//Read weights for layer 1
+//	for(int i = 0; i < LAYER1_WEIGHTS; i++) {
+//		tmpin = strm_in.read();
+////		printf("Receive %f\n", (float)tmpin.data);
+//		weights_l1[i] = tmpin.data;
+////		if(layer_id == 1) printf("%d  %f-%d\n",i, weights[i], tmpin.last);
+//		if(tmpin.last == 1) break;
+//	}
+//
+//	//Read weights for layer 2
+//	for(int i = 0; i < LAYER2_WEIGHTS; i++) {
+//		tmpin = strm_in.read();
+////		printf("Receive %f\n", (float)tmpin.data);
+//		weights_l2[i] = tmpin.data;
+////		if(layer_id == 1) printf("%d  %f-%d\n",i, weights[i], tmpin.last);
+//		if(tmpin.last == 1) break;
+//	}
+//}
 
 #ifdef ARRAYS
-void write_ofm(quant_t *ofm, hls::stream<strmio_t> &strm_out, count_t n_pixels) {
+void write_ofm(quant_t ofm[OUTPUT_MEM_SIZE], hls::stream<strmio_t> &strm_out) {
 #else
 void write_ofm(hls::stream<quant_t> &ofm, hls::stream<strmio_t> &strm_out, count_t n_pixels) {
 #endif
@@ -137,8 +137,8 @@ void write_ofm(hls::stream<quant_t> &ofm, hls::stream<strmio_t> &strm_out, count
 #endif
 
 	//Write output fm to stream
-	for(int i = 0; i < n_pixels; i++){
-		if(i == n_pixels - 1) tmpout.last = 1;
+	for(int i = 0; i < OUTPUT_MEM_SIZE; i++){
+		if(i == OUTPUT_MEM_SIZE - 1) tmpout.last = 1;
 		else tmpout.last = 0;
 #ifdef ARRAYS
 		tmpout.data = ofm[i];
@@ -206,9 +206,9 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 
 	//Convolution
 	quant_accum acc = 0;
-	int kernel_idx = 0;
-	int input_idx = 0;
-	int output_idx = 0;
+	count_t kernel_idx = 0;
+	count_t input_idx = 0;
+	count_t output_idx = 0;
 
 	loop_inputx:
 	for(int i = 0; i < fm_width; i++) {
@@ -253,10 +253,10 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 
 	//Convolution
 	quant_accum acc = 0;
-	int kernel_idx = 0;
-	int input_idx = 0;
-	int output_idx_even = 0;
-	int output_idx_odd = 0;
+	count_t kernel_idx = 0;
+	count_t input_idx = 0;
+	count_t output_idx_even = 0;
+	count_t output_idx_odd = 0;
 
 
 	loop_inputx:
@@ -266,9 +266,9 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 			kernel_idx = 0;
 			loop_filters:
 			for(int k = 0; k < nfilters; k++) {
-#pragma HLS PIPELINE
 				loop_bands:
 				for(int z = 0; z < nbands; z++) {
+#pragma HLS PIPELINE
 					if(j == fm_height-1){
 						if(k == 0 && z == 0)
 							input_idx += nbands;
@@ -323,10 +323,10 @@ void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 #endif
 	//Convolution with stride 2
 	quant_accum acc_even = 0, acc_odd = 0;
-	int kernel_size = 2;
-	int kernel_idx = 0;
-	int input_idx = 0;
-	int output_idx = 0;
+	ap_uint<2> kernel_size = 2;
+	count_t kernel_idx = 0;
+	count_t input_idx = 0;
+	count_t output_idx = 0;
 
 //#pragma HLS ARRAY_RESHAPE variable=in_feature_map type=cyclic factor=2
 
@@ -348,8 +348,8 @@ void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 
 					if(z == (nbands*2)-1) {
 						acc_even += acc_odd;
-						out_feature_map[k*output_dim*output_dim + (i/2)*output_dim+ (j/2)] = (quant_t)acc_even; //ver o fator de escala aqui
-//						out_feature_map[output_idx] = (quant_t)acc_even; //ver o fator de escala aqui
+//						out_feature_map[k*output_dim*output_dim + (i/2)*output_dim+ (j/2)] = (quant_t)acc_even; //ver o fator de escala aqui
+						out_feature_map[output_idx] = (quant_t)acc_even; //ver o fator de escala aqui
 						output_idx++;
 						acc_even = 0;
 						acc_odd = 0;
