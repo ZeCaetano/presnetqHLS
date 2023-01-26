@@ -52,7 +52,7 @@ void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_o
 
 #pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map);
-	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1> (in_feature_map, m1_feature_map);
+	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1, 1> (in_feature_map, m1_feature_map);
 	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2,X3, weights_l2> (m1_feature_map, out_feature_map);
 	write_ofm(out_feature_map, strm_out);
 
@@ -239,7 +239,7 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 	return;
 }
 //Convolutional layer to be aplied before a convolution with kernel and stride 2, that will clear the last row and column from the outputs
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights, params_t PE>
 #ifdef ARRAYS
 void conv_layer_k1_b4k2(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t out_feature_map[2][(fm_height-1)*(fm_width-1)*nfilters/2]) {
 #else
@@ -253,10 +253,10 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 
 	//Convolution
 	quant_accum acc = 0;
-	count_t kernel_idx = 0;
-	count_t input_idx = 0;
-	count_t output_idx_even = 0;
-	count_t output_idx_odd = 0;
+	int kernel_idx = 0;
+	int input_idx = 0;
+	int output_idx_even = 0;
+	int output_idx_odd = 0;
 
 
 	loop_inputx:
@@ -267,40 +267,42 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 			loop_filters:
 			for(int k = 0; k < nfilters; k++) {
 				loop_bands:
-				for(int z = 0; z < nbands; z++) {
+				for(int z = 0; z < nbands; z+=PE) {
 #pragma HLS PIPELINE
-					if(j == fm_height-1){
-						if(k == 0 && z == 0)
-							input_idx += nbands;
-//						z = nbands;
-//						k = nfilters;
-					}
-					else {
-						quant_accum temp = weights[kernel_idx] * in_feature_map[input_idx];
-						acc += temp;
-//#pragma HLS BIND_OP variable=temp op=mul
-						kernel_idx++;
-						input_idx++;
-						if(z == nbands-1) {
-//	//						count_t output_idx = k*(fm_width)*(fm_height) + i*(fm_height) + j;
-//							out_feature_map[output_idx] = (quant_t)acc; //ver o fator de escala aqui
-//							output_idx++;
-//							//aplicar função de ativação aqui
+					for(int p = 0; p < PE; p++) {
+						if(j == fm_height-1){
+							if(k == 0 && z == 0 && p == 0)
+								input_idx += nbands;
+	//						z = nbands;
+	//						k = nfilters;
+						}
+						else {
+							quant_accum temp = weights[kernel_idx] * in_feature_map[input_idx];
+							acc += temp;
+	//#pragma HLS BIND_OP variable=temp op=mul
+							kernel_idx++;
+							input_idx++;
+							if(z == nbands-PE && p == PE-1) {
+	//	//						count_t output_idx = k*(fm_width)*(fm_height) + i*(fm_height) + j;
+	//							out_feature_map[output_idx] = (quant_t)acc; //ver o fator de escala aqui
+	//							output_idx++;
+	//							//aplicar função de ativação aqui
 
-							if(((input_idx-1)/nbands/fm_width) % 2 == 0){
-								out_feature_map[0][output_idx_even] = (quant_t)acc; //ver o fator de escala aqui
-//								printf("index: [0][%d] - %d\n", output_idx_even, (int)out_feature_map[0][output_idx_even]);
-//								printf("index: [0][%d] - %d\n", output_idx_even, (int)acc);
-								output_idx_even++;
-							}
-							else {
-								out_feature_map[1][output_idx_odd] = (quant_t)acc; //ver o fator de escala aqui
-//								printf("index: [1][%d] - %d\n", output_idx_odd, (int)out_feature_map[1][output_idx_odd]);
-								output_idx_odd++;
-							}
+								if(((input_idx-1)/nbands/fm_width) % 2 == 0){
+									out_feature_map[0][output_idx_even] = (quant_t)acc; //ver o fator de escala aqui
+	//								printf("index: [0][%d] - %d\n", output_idx_even, (int)out_feature_map[0][output_idx_even]);
+	//								printf("index: [0][%d] - %d\n", output_idx_even, (int)acc);
+									output_idx_even++;
+								}
+								else {
+									out_feature_map[1][output_idx_odd] = (quant_t)acc; //ver o fator de escala aqui
+	//								printf("index: [1][%d] - %d\n", output_idx_odd, (int)out_feature_map[1][output_idx_odd]);
+									output_idx_odd++;
+								}
 
-							if(k != nfilters-1) input_idx -= nbands;
-							acc = 0;
+								if(k != nfilters-1) input_idx -= nbands;
+								acc = 0;
+							}
 						}
 					}
 				}
