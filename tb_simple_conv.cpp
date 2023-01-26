@@ -169,6 +169,7 @@ void init_fm(){
 		}
 //		printf("\n\r");
 	}
+//	printf("\n\n\n\n\n\n");
 //	printf("\n\nWeights2\n\r");
 	for(int k = 0; k < Z2; k++) {
 		for(int i = 0; i < NF2; i++) {
@@ -313,7 +314,7 @@ int main() {
 				sw_image_out_2 +                                        /* base address */
 				i * (X3 * Y3);               /* offset (number of images) */
 
-	    sw_convolution_3D_k2(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, X3);
+	    sw_convolution_3D(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, false);
 	}
 
 

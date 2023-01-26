@@ -9,10 +9,10 @@
 
 
 #include "simple_conv.h"
-//#include "weights_k1.h"
-//#include "weights_k2.h"  //Pesos ordenados por filtro
-//#include "weights_k2_2.h"  //Pesos ordenados por banda
-#include "weights_k2_3.h"  //Pesos ordenados por banda dois a dois
+#include "weights_k1.h"      //Weights for two k1 layers arranged by band
+//#include "weights_k2.h"    //Weights for layer 2 k2 arranged by filter
+//#include "weights_k2_2.h"  //Weights for layer 2 k2 arranged by bands
+//#include "weights_k2_3.h"  //Weights for layer 2 k2 arranged by bands by every two pixels
 
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 
@@ -44,16 +44,17 @@ void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_o
 
 #ifdef ARRAYS
 	quant_t in_feature_map[X1*Y1*Z1], out_feature_map[X3*Y3*NF2]; //, m2_feature_map[X3*Y3*NF2], ds_feature_map[XDS*YDS*Z1];
-//	quant_t m1_feature_map[(X2-1)*(Y2-1)*Z2];
-	quant_t m1_feature_map[2][(X2-1)*(Y2-1)*Z2/2];
+	quant_t m1_feature_map[(X2)*(Y2)*Z2];
+//	quant_t m1_feature_map[2][(X2-1)*(Y2-1)*Z2/2];
+
 #pragma HLS STREAM variable=in_feature_map type=PIPO
 #pragma HLS STREAM variable=m1_feature_map type=PIPO
 #pragma HLS STREAM variable=out_feature_map type=PIPO
 
 #pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map);
-	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1, 1> (in_feature_map, m1_feature_map);
-	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2,X3, weights_l2> (m1_feature_map, out_feature_map);
+	conv_layer_k1<0,X1,Y1,Z1,NF1, weights_l1> (in_feature_map, m1_feature_map);
+	conv_layer_k1<1,X2,Y2,Z2,NF2, weights_l2> (m1_feature_map, out_feature_map);
 	write_ofm(out_feature_map, strm_out);
 
 	//	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(in_feature_map, ds_feature_map, in_cpy);
