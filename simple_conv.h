@@ -25,7 +25,7 @@ typedef ap_int<16> quant_accum;
 
 
 //typedef float quant_t;
-typedef ap_uint<13> count_t;
+typedef ap_uint<16> count_t;
 typedef ap_uint<17> widx_t;
 typedef short params_t;
 typedef hls::axis<quant_t, 0, 0, 0> strmio_t;
@@ -49,7 +49,7 @@ void conv_layer_k1(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t ou
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights, params_t PE>
 void conv_layer_k1_b4k2(quant_t in_feature_map[fm_height*fm_width*nbands], quant_t out_feature_map[2][(fm_height-1)*(fm_width-1)*nfilters/2]);
 
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim,quant_t *weights>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim,quant_t *weights, params_t PE>
 void conv_layer_k2(quant_t in_feature_map[2][fm_height*fm_width*nbands/2], quant_t out_feature_map[(fm_height/2)*(fm_width/2)*nfilters]);
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights>
