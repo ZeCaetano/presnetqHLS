@@ -263,7 +263,9 @@ int main() {
 //	exit(0);
 
 	//Hardware computation
-    simple_conv(sin, so);
+    for(int i = 0; i < NPATCHES; i++)
+    	simple_conv(sin, so);
+
     for(int i = 0; i < NPATCHES; i++){
 //	#ifdef ARRAYS
 //// 		Read image_out
@@ -314,8 +316,8 @@ int main() {
 				sw_image_out_2 +                                        /* base address */
 				i * (X3 * Y3);               /* offset (number of images) */
 
-//	    sw_convolution_3D(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, false);
-		sw_convolution_3D_k2(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, X3);
+	    sw_convolution_3D(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, false);
+//		sw_convolution_3D_k2(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, X3);
 	}
 
 

@@ -11,7 +11,7 @@
 #define WEIGHTS_WIDTH 4
 #define ACT_WIDTH 4
 #define NLAYERS 2
-#define NPATCHES 1
+#define NPATCHES 3
 
 
 //typedef ap_fixed<4,2,AP_RND> quant_t;
