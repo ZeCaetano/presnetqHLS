@@ -9,7 +9,8 @@
 
 
 #include "simple_conv.h"
-#include "weights_k1.h"      //Weights for two k1 layers arranged by band
+//#include "weights_k1.h"      //Weights for two k1 layers arranged by band
+#include "weights_k1_2.h"      //Weights for two k1 layers arranged by band for 48 filters in layer 2
 //#include "weights_k2.h"    //Weights for layer 2 k2 arranged by filter
 //#include "weights_k2_2.h"  //Weights for layer 2 k2 arranged by bands
 //#include "weights_k2_3.h"  //Weights for layer 2 k2 arranged by bands by every two pixels
@@ -18,7 +19,7 @@
 
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 
-#pragma HLS INTERFACE ap_ctrl_none port=return
+//#pragma HLS INTERFACE ap_ctrl_none port=return
 #pragma HLS INTERFACE axis port=strm_in
 #pragma HLS INTERFACE axis port=strm_out
 
@@ -32,10 +33,9 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 #pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map);
-	conv_layer_k1<0,X1,Y1,Z1,NF1, weights_l1, 1> (in_feature_map, m1_feature_map);
-	conv_layer_k1<1,X2,Y2,Z2,NF2, weights_l2, 1> (m1_feature_map, out_feature_map);
+	conv_layer_k1<0,X1,Y1,Z1,NF1, weights_l1, 16> (in_feature_map, m1_feature_map);
+	conv_layer_k1<1,X2,Y2,Z2,NF2, weights_l2, 16> (m1_feature_map, out_feature_map);
 	write_ofm(out_feature_map, strm_out);
-
 
 }
 
