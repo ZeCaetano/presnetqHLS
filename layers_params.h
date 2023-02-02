@@ -129,8 +129,9 @@
 //Kernel size: 2
 #define XDS 4
 #define YDS 4
+#define ZDS 32
 #define KDS 2
-#define OUTDS_FM_MEM_SIZE (XDS*YDS*Z1)
+#define OUTDS_FM_MEM_SIZE (XDS*YDS*ZDS)
 ////Average pool test
 //#define X1 8
 //#define Y1 8

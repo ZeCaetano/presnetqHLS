@@ -19,7 +19,7 @@
 //typedef ap_fixed<9,4,AP_RND> quant_accum;
 
 typedef ap_int<4> quant_t;
-typedef ap_int<6> quant_sum;
+typedef ap_int<5> quant_sum;
 typedef ap_int<7> quant_mult;
 typedef ap_int<16> quant_accum;
 
@@ -33,7 +33,7 @@ typedef hls::axis<quant_t, 0, 0, 0> strmio_t;
 
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out);
 
-void read_stream(hls::stream<strmio_t> &strm_in, quant_t *weights_l1, quant_t *weights_l2);
+//void read_stream(hls::stream<strmio_t> &strm_in, quant_t *weights_l1, quant_t *weights_l2);
 
 #ifdef ARRAYS
 
@@ -56,7 +56,7 @@ template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nban
 void conv_layer_relu(quant_t in_feature_map[], quant_t out_feature_map[]);
 
 void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out);
-void read_ifm(hls::stream<strmio_t> &strm_in, quant_t in_feature_map[X1*Y1*Z1]);
+void read_ifm(hls::stream<strmio_t> &strm_in, quant_t in_feature_map[X1*Y1*Z1], quant_t shortcut_ifm[X1*Y1*Z1]);
 void write_ofm(quant_t *ofm, hls::stream<strmio_t> &strm_out);
 
 #else

@@ -104,14 +104,17 @@ void average_pooling(quant_t *image_in, quant_t *image_out, int fm_size, int out
 }
 
 void sum_shorctut(quant_t *conv_fm, quant_t *shortcut, quant_t *fm_out, int fm_size, int nbands_conv, int nbands_shortcut){
+	int sum = 0;
 	for(int z = 0; z < nbands_conv; z++){
 		for (int i = 0; i < fm_size; i++) {
 			for (int j = 0; j < fm_size; j++) {
-				if(z > nbands_shortcut)
-					fm_out[z*fm_size*fm_size + i*fm_size + j] = conv_fm[z*fm_size*fm_size + i*fm_size + j];
-				else
-					fm_out[z*fm_size*fm_size + i*fm_size + j] = (quant_t) (conv_fm[z*fm_size*fm_size + i*fm_size + j] + shortcut[z*fm_size*fm_size + i*fm_size + j]);
-
+				if(z >= nbands_shortcut) {
+					sum = conv_fm[z*fm_size*fm_size + i*fm_size + j];
+				}
+				else {
+					sum = conv_fm[z*fm_size*fm_size + i*fm_size + j] + shortcut[z*fm_size*fm_size + i*fm_size + j];
+				}
+				fm_out[z*fm_size*fm_size + i*fm_size + j] = (quant_t) sum;
 			}
 		}
 	}
@@ -337,7 +340,7 @@ int main() {
 
 //	average_pooling(image_in, sw_image_out_ds, X1, XDS, Z1, KDS);
 
-//	sum_shorctut(sw_image_out_2, sw_image_out_ds, sw_image_out_3, X3, Z3, Z1);
+	sum_shorctut(sw_image_out_2, image_in, sw_image_out_3, X2, Z2, Z1);
 
 //	printf("Input:\n");
 //	for(int k = 0; k < Z1; k++) {
@@ -389,13 +392,21 @@ int main() {
     for(int k = 0; k < NF2; k++) {
 		for (int i = 0; i < X3; i++)
 			for (int j = 0; j < Y3; j++)
-				if (hw_image_out[(k*X3*Y3) + (i*Y3) + j] != sw_image_out_2[(k*X3*Y3) + (i*Y3) + j]) {
+				if (hw_image_out[(k*X3*Y3) + (i*Y3) + j] != sw_image_out_3[(k*X3*Y3) + (i*Y3) + j]) {
 					err_cnt++;
 					printf("%d - %d,%d: %d != %d\n\r",
-						   k, i, j, (int)hw_image_out[(k*X3*Y3) + (i*Y3) + j], (int)sw_image_out_2[(k*X3*Y3) + (i*Y3) + j]);
+						   k, i, j, (int)hw_image_out[(k*X3*Y3) + (i*Y3) + j], (int)sw_image_out_3[(k*X3*Y3) + (i*Y3) + j]);
 				}
     }
+//    for(int k = 0; k < ZDS; k++) {
+//   		for (int i = 0; i < XDS; i++)
+//   			for (int j = 0; j < YDS; j++)
+//   				if (hw_image_out[(k*XDS*YDS) + (i*YDS) + j] != sw_image_out_ds[(k*XDS*YDS) + (i*YDS) + j]) {
+//   					err_cnt++;
+//   					printf("%d - %d,%d: %d != %d\n\r",
+//   						   k, i, j, (int)hw_image_out[(k*XDS*YDS) + (i*YDS) + j], (int)sw_image_out_ds[(k*XDS*YDS) + (i*YDS) + j]);
+//   				}
+//       }
     printf("\n%d different values\n", err_cnt);
-    return 0;
     return err_cnt;
 }
