@@ -1,16 +1,8 @@
-//-------LAYER 1--------//
-//Input: 9,9,32
-//Number of filters: 43
-//Kernel size: 1
-//-------LAYER 2--------//
-//Input: 9,9,43
-//Number of filters: 43
-//Kernel size: 1
-
-
 #include "simple_conv.h"
 //#include "weights_k1.h"      //Weights for two k1 layers arranged by band
 #include "weights_k1_2.h"      //Weights for two k1 layers arranged by band for 48 filters in layer 2
+//#include "weights_k1_3.h"      //Weights for two k1 layers arranged by band for a lot of bands and filters
+//#include "weights_k1_4.h"      //Weights for two k1 layers arranged by band for a 80 and 96 filters
 //#include "weights_k2.h"    //Weights for layer 2 k2 arranged by filter
 //#include "weights_k2_2.h"  //Weights for layer 2 k2 arranged by bands
 //#include "weights_k2_3.h"  //Weights for layer 2 k2 arranged by bands by every two pixels
@@ -23,7 +15,7 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 #pragma HLS INTERFACE axis port=strm_in
 #pragma HLS INTERFACE axis port=strm_out
 
-	quant_t in_feature_map[X1*Y1*Z1], out_feature_map[X3*Y3*NF2]; //, m2_feature_map[X3*Y3*NF2], ds_feature_map[XDS*YDS*Z1];
+	quant_t in_feature_map[X1*Y1*Z1], out_feature_map[X3*Y3*NF2]; //, m2_feature_map[X3*Y3*NF2];//, ds_feature_map[XDS*YDS*Z1];
 	quant_t m1_feature_map[(X2)*(Y2)*Z2];
 //	quant_t m1_feature_map[2][(X2-1)*(Y2-1)*Z2/2];
 
@@ -31,10 +23,20 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 #pragma HLS STREAM variable=m1_feature_map type=PIPO depth=2
 #pragma HLS STREAM variable=out_feature_map type=PIPO depth=2
 
+//#pragma HLS ARRAY_RESHAPE variable=in_feature_map type=cyclic factor=8
+//#pragma HLS ARRAY_RESHAPE variable=m1_feature_map type=cyclic factor=8
+//#pragma HLS ARRAY_RESHAPE variable=out_feature_map type=cyclic factor=8
+
+#pragma HLS ARRAY_RESHAPE variable=weights_l1 factor=8 type=cyclic
+#pragma HLS ARRAY_RESHAPE variable=weights_l2 factor=8 type=cyclic
+
 #pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map);
-	conv_layer_k1<0,X1,Y1,Z1,NF1, weights_l1, 16> (in_feature_map, m1_feature_map);
-	conv_layer_k1<1,X2,Y2,Z2,NF2, weights_l2, 16> (m1_feature_map, out_feature_map);
+//	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1, 16> (in_feature_map, m1_feature_map);
+//	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2, X3, weights_l2, 8> (m1_feature_map, out_feature_map);
+	conv_layer_k1<0,X1,Y1,Z1,NF1, weights_l1, 8> (in_feature_map, m1_feature_map);
+	conv_layer_k1<1,X2,Y2,Z2,NF2, weights_l2, 8> (m1_feature_map, out_feature_map);
+//	conv_layer_k1<1,X2,Y2,Z2,NF2, weights_l2, 4> (m2_feature_map, out_feature_map);
 	write_ofm(out_feature_map, strm_out);
 
 }
@@ -136,9 +138,10 @@ void write_ofm(hls::stream<quant_t> &ofm, hls::stream<strmio_t> &strm_out, count
 #ifndef ARRAYS
 	quant_t tmpin;
 #endif
-
+//#pragma HLS ARRAY_RESHAPE variable=ofm type=cyclic factor=1
 	//Write output fm to stream
 	for(int i = 0; i < OUTPUT_MEM_SIZE; i++){
+//#pragma HLS UNROLL factor=4
 		if(i == OUTPUT_MEM_SIZE - 1) tmpout.last = 1;
 		else tmpout.last = 0;
 #ifdef ARRAYS
@@ -204,7 +207,8 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 	quant_t tmpin, tmpout;
 	quant_t pixel;
 #endif
-
+//#pragma HLS ARRAY_RESHAPE variable=in_feature_map type=cyclic factor=4
+//#pragma HLS ARRAY_RESHAPE variable=out_feature_map type=cyclic factor=4
 	//Convolution
 	quant_accum acc = 0;
 	int kernel_idx = 0;

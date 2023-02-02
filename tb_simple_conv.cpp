@@ -319,6 +319,20 @@ int main() {
 	    sw_convolution_3D(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, false);
 //		sw_convolution_3D_k2(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, X3);
 	}
+//	printf("---------------------SW Layer 3------------------------\n");
+//		for(int i = 0; i < NF2; i++){
+//			/* Address where the convolutional weights are stored */
+//			quant_t *fp_weights =
+//					 kernel +                                       /* start address of params */
+//					LAYER1_WEIGHTS + (i * (Z2 * K2 * K2)); /* kernel of OFM(i) */
+//
+//			quant_t *image_out_3 =
+//					sw_image_out_3 +                                        /* base address */
+//					i * (X3 * Y3);               /* offset (number of images) */
+//
+//		    sw_convolution_3D(sw_image_out_2, fp_weights, image_out_3, Z2, X2, K2, false);
+//	//		sw_convolution_3D_k2(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, X3);
+//		}
 
 
 //	average_pooling(image_in, sw_image_out_ds, X1, XDS, Z1, KDS);
@@ -382,6 +396,6 @@ int main() {
 				}
     }
     printf("\n%d different values\n", err_cnt);
-
+    return 0;
     return err_cnt;
 }
