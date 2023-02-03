@@ -29,16 +29,16 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 //#pragma HLS ARRAY_RESHAPE variable=in_feature_map type=cyclic factor=8
 //#pragma HLS ARRAY_RESHAPE variable=m1_feature_map type=cyclic factor=8
-//#pragma HLS ARRAY_RESHAPE variable=out_feature_map type=cyclic factor=8
+//#pragma HLS ARRAY_RESHAPE variable=m2_feature_map type=cyclic factor=8
 
-#pragma HLS ARRAY_PARTITION variable=in_feature_map type=cyclic factor=8
+//#pragma HLS ARRAY_PARTITION variable=in_feature_map type=cyclic factor=8
 
-//#pragma HLS ARRAY_RESHAPE variable=weights_l1 factor=2 type=cyclic
-//#pragma HLS ARRAY_RESHAPE variable=weights_l2 factor=2 type=cyclic
+//#pragma HLS ARRAY_RESHAPE variable=weights_l1 factor=8 type=cyclic
+#pragma HLS ARRAY_RESHAPE variable=weights_l2 factor=8 type=cyclic
 
 #pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map, shortcut_fm);
-	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1, 16> (in_feature_map, m1_feature_map);
+	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1, 8> (in_feature_map, m1_feature_map);
 	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2, X3, weights_l2, 8> (m1_feature_map, m2_feature_map);
 	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(shortcut_fm, ds_ofm);
 //	conv_layer_k1<0,X1,Y1,Z1,NF1, weights_l1, 16> (in_feature_map, m1_feature_map);
@@ -314,13 +314,15 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 	//							output_idx++;
 	//							//aplicar função de ativação aqui
 
-								if(((input_idx-1)/nbands/fm_width) % 2 == 0){
+								if(i % 2 == 0) {
+//									printf("line even: %d\n", i);
 									out_feature_map[0][output_idx_even] = (quant_t)acc; //ver o fator de escala aqui
 	//								printf("index: [0][%d] - %d\n", output_idx_even, (int)out_feature_map[0][output_idx_even]);
 	//								printf("index: [0][%d] - %d\n", output_idx_even, (int)acc);
 									output_idx_even++;
 								}
 								else {
+//									printf("line odd: %d\n", i);
 									out_feature_map[1][output_idx_odd] = (quant_t)acc; //ver o fator de escala aqui
 	//								printf("index: [1][%d] - %d\n", output_idx_odd, (int)out_feature_map[1][output_idx_odd]);
 									output_idx_odd++;
