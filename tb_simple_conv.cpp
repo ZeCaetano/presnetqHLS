@@ -96,6 +96,8 @@ void average_pooling(quant_t *image_in, quant_t *image_out, int fm_size, int out
 					}
 				}
 				avg = accum / (kernel_size*kernel_size);
+//				printf("SW idx: %d accum: %d    avg: %d\n", z*out_size*out_size + (i/2)*out_size + (j/2), accum, avg);
+
 				image_out[z*out_size*out_size + (i/2)*out_size + (j/2)] = (quant_t) avg;
 			}
 		}
@@ -319,8 +321,8 @@ int main() {
 				sw_image_out_2 +                                        /* base address */
 				i * (X3 * Y3);               /* offset (number of images) */
 
-	    sw_convolution_3D(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, false);
-//		sw_convolution_3D_k2(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, X3);
+//	    sw_convolution_3D(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, false);
+		sw_convolution_3D_k2(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, X3);
 	}
 //	printf("---------------------SW Layer 3------------------------\n");
 //		for(int i = 0; i < NF2; i++){
@@ -338,9 +340,9 @@ int main() {
 //		}
 
 
-//	average_pooling(image_in, sw_image_out_ds, X1, XDS, Z1, KDS);
+	average_pooling(image_in, sw_image_out_ds, X1, XDS, Z1, KDS);
 
-	sum_shorctut(sw_image_out_2, image_in, sw_image_out_3, X2, Z2, Z1);
+	sum_shorctut(sw_image_out_2, sw_image_out_ds, sw_image_out_3, X3, Z2, Z1);
 
 //	printf("Input:\n");
 //	for(int k = 0; k < Z1; k++) {
@@ -362,6 +364,17 @@ int main() {
 //		}
 //		printf("\n\r");
 //	}
+//
+//	    printf("HARDWARE Output Image\n\r");
+//	    for(int k = 0; k < Z3; k++) {
+//			for (int i = 0; i < X3; i++) {
+//				for (int j = 0; j < Y3; j++) {
+//					printf("%d ", (int)hw_image_out[(k*X3*Y3) + (i*Y3) + j]);
+//				}
+//				printf("\n\r");
+//			}
+//			printf("%d\n\r", k);
+//	    }
 //
 //    printf("SOFTWARE Output Image 2\n\r");
 //    for(int k = 0; k < Z3; k++) {
