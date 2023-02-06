@@ -26,7 +26,6 @@
 #define LAYER2_WEIGHTS (NF2*Z2*K2*K2)
 #define INPUT2_MEM_SIZE (X2*Y2*Z2)
 #define OUT2_FM_MEM_SIZE (X3*Y3*NF2)
-#define WEIGHTS_MEM_SIZE (LAYER1_WEIGHTS+LAYER2_WEIGHTS)
 //-------LAYER 3--------//
 //For kernel = 2, stride = 2
 //Input: 4,4,43
@@ -38,7 +37,20 @@
 #define NF3 172
 #define K3 1
 #define LAYER3_WEIGHTS (Z3*NF3*K3*K3)
-#define OUTPUT_MEM_SIZE (X3*Y3*Z3)
+#define INPUT3_MEM_SIZE (X3*Y3*Z3)
+#define OUT3_FM_MEM_SIZE ((X3*Y3*NF3))
+
+#define WEIGHTS_MEM_SIZE (LAYER1_WEIGHTS+LAYER2_WEIGHTS+LAYER3_WEIGHTS)
+#define OUTPUT_MEM_SIZE (X3*Y3*NF3)
+//-------DOWNSAMPLING LAYER--------//
+//Input: LAYER 1
+//Output: 4,4,32
+//Kernel size: 2
+#define XDS 4
+#define YDS 4
+#define ZDS 32
+#define KDS 2
+#define OUTDS_FM_MEM_SIZE (XDS*YDS*ZDS)
 
 ////////////------------------------------ 2 Layers: 1st k=1 s=1, 1nd k=1 s=1 --------------------------------//////////
 ////-------LAYER 1--------//
@@ -123,15 +135,7 @@
 
 
 
-//-------DOWNSAMPLING LAYER--------//
-//Input: LAYER 1
-//Output: 4,4,32
-//Kernel size: 2
-#define XDS 4
-#define YDS 4
-#define ZDS 32
-#define KDS 2
-#define OUTDS_FM_MEM_SIZE (XDS*YDS*ZDS)
+
 ////Average pool test
 //#define X1 8
 //#define Y1 8
