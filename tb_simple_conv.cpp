@@ -264,7 +264,7 @@ int main() {
 				if(t == INPUT1_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
 				else vin.last = (ap_int<1>)0;
 				sin.write(vin);
-		//		printf("pixel sent: %f count: %d last: %d\n",image_in[t], t, vin.last);
+//				printf("pixel sent: %d \n",(int)image_in[(j*X1*Y1) + t]);
 			}
 		}
 	#else
@@ -353,11 +353,11 @@ int main() {
 		}
 
 
-	average_pooling(image_in, sw_image_out_ds, X1, XDS, Z1, KDS);
+//	average_pooling(image_in, sw_image_out_ds, X1, XDS, Z1, KDS);
 
-	sum_shorctut(sw_image_out_3, sw_image_out_ds, sw_image_out, X3, NF3, Z1);
+//	sum_shorctut(sw_image_out_3, sw_image_out_ds, sw_image_out, X3, NF3, Z1);
 
-//	printf("Input:\n");
+//	printf("Input SW:\n");
 //	for(int k = 0; k < Z1; k++) {
 //		for (int i = 0; i < X1; i++) {
 //			for (int j = 0; j < Y1; j++) {
@@ -418,10 +418,10 @@ int main() {
     for(int k = 0; k < NF3; k++) {
 		for (int i = 0; i < X3; i++)
 			for (int j = 0; j < Y3; j++)
-				if (hw_image_out[(k*X3*Y3) + (i*Y3) + j] != sw_image_out[(k*X3*Y3) + (i*Y3) + j]) {
+				if (hw_image_out[(k*X3*Y3) + (i*Y3) + j] != sw_image_out_3[(k*X3*Y3) + (i*Y3) + j]) {
 					err_cnt++;
 					printf("%d - %d,%d: %d != %d\n\r",
-						   k, i, j, (int)hw_image_out[(k*X3*Y3) + (i*Y3) + j], (int)sw_image_out[(k*X3*Y3) + (i*Y3) + j]);
+						   k, i, j, (int)hw_image_out[(k*X3*Y3) + (i*Y3) + j], (int)sw_image_out_3[(k*X3*Y3) + (i*Y3) + j]);
 				}
     }
 //    for(int k = 0; k < ZDS; k++) {
