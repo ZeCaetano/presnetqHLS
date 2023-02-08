@@ -17,7 +17,7 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 #pragma HLS INTERFACE axis port=strm_out
 
 	quant_reshp in_feature_map[INPUT1_MEM_SIZE/RESHP_FACTOR], out_feature_map[OUTPUT_MEM_SIZE/RESHP_FACTOR], m2_feature_map[OUT2_FM_MEM_SIZE/RESHP_FACTOR], m3_feature_map[OUT3_FM_MEM_SIZE/RESHP_FACTOR];//
-	quant_t shortcut_fm[X1*Y1*Z1/RESHP_FACTOR], ds_ofm[XDS*YDS*ZDS/RESHP_FACTOR];
+	quant_t shortcut_fm[X1*Y1*Z1], ds_ofm[XDS*YDS*ZDS];
 //	quant_t m1_feature_map[(X2)*(Y2)*Z2];
 	quant_reshp m1_feature_map[2][((X2-1)*(Y2-1)*Z2/2)/RESHP_FACTOR];
 
@@ -42,14 +42,14 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 #pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map, shortcut_fm);
-//	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(shortcut_fm, ds_ofm);
+	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(shortcut_fm, ds_ofm);
 	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1, 4> (in_feature_map, m1_feature_map);
 	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2, X3, weights_l2, 4> (m1_feature_map, m2_feature_map);
 	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3, 8> (m2_feature_map, m3_feature_map);
 //	conv_layer_k1<0,X1,Y1,Z1,NF1, weights_l1, 16> (in_feature_map, m1_feature_map);
 //	conv_layer_k1<1,X2,Y2,Z2,NF2, weights_l2, 16> (m1_feature_map, m2_feature_map);
-//	add_shortcut<X3,Y3,NF3,ZDS>(m3_feature_map, ds_ofm, out_feature_map);
-	write_ofm(m3_feature_map, strm_out);
+	add_shortcut<X3,Y3,NF3,ZDS>(m3_feature_map, ds_ofm, out_feature_map);
+	write_ofm(out_feature_map, strm_out);
 
 }
 
@@ -264,8 +264,8 @@ void add_shortcut(quant_reshp conv_feature_map[fm_width*fm_height*nbands_conv], 
 	for (int i = 0; i < fm_width; i++) {
 		for (int j = 0; j < fm_height; j++) {
 			for(int z = 0; z < nbands_conv/RESHP_FACTOR; z++){
-#pragma HLS PIPELINE
-				if(z >= nbands_shortcut){
+#pragma HLS PIPELINE II=4
+				if(z >= nbands_shortcut/RESHP_FACTOR){
 					sum = (quant_t)conv_feature_map[idx_conv].range(3,0);
 					out_feature_map[idx_conv].range(3,0) = (quant_t) sum;
 					sum = (quant_t)conv_feature_map[idx_conv].range(7,4);

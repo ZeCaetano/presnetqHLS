@@ -418,10 +418,10 @@ int main() {
     for(int k = 0; k < NF3; k++) {
 		for (int i = 0; i < X3; i++)
 			for (int j = 0; j < Y3; j++)
-				if (hw_image_out[(k*X3*Y3) + (i*Y3) + j] != sw_image_out_3[(k*X3*Y3) + (i*Y3) + j]) {
+				if (hw_image_out[(k*X3*Y3) + (i*Y3) + j] != sw_image_out[(k*X3*Y3) + (i*Y3) + j]) {
 					err_cnt++;
 					printf("%d - %d,%d: %d != %d\n\r",
-						   k, i, j, (int)hw_image_out[(k*X3*Y3) + (i*Y3) + j], (int)sw_image_out_3[(k*X3*Y3) + (i*Y3) + j]);
+						   k, i, j, (int)hw_image_out[(k*X3*Y3) + (i*Y3) + j], (int)sw_image_out[(k*X3*Y3) + (i*Y3) + j]);
 				}
     }
 //    for(int k = 0; k < ZDS; k++) {
