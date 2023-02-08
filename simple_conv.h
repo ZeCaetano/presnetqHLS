@@ -39,10 +39,10 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 #ifdef ARRAYS
 
 template<params_t fm_width, params_t fm_height, params_t output_width, params_t output_height, params_t nbands, params_t kernel_size>
-void average_pool(quant_reshp in_feature_map[fm_width*fm_height*nbands], quant_reshp out_feature_map[output_height*output_width*nbands]);
+void average_pool(quant_t in_feature_map[fm_width*fm_height*nbands], quant_t out_feature_map[output_height*output_width*nbands]);
 
 template<params_t fm_width, params_t fm_height, params_t nbands_conv, params_t nbands_shortcut>
-void add_shortcut(quant_reshp conv_feature_map[fm_width*fm_height*nbands_conv], quant_reshp shortcut[fm_width*fm_height*nbands_shortcut], quant_reshp out_feature_map[fm_width*fm_height*nbands_conv]);
+void add_shortcut(quant_reshp conv_feature_map[fm_width*fm_height*nbands_conv], quant_t shortcut[fm_width*fm_height*nbands_shortcut], quant_reshp out_feature_map[fm_width*fm_height*nbands_conv]);
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights, params_t PE>
 void conv_layer_k1(quant_reshp in_feature_map[fm_height*fm_width*nbands], quant_reshp out_feature_map[fm_height*fm_width*nfilters]);
@@ -57,7 +57,7 @@ template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nban
 void conv_layer_relu(quant_t in_feature_map[], quant_t out_feature_map[]);
 
 void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out);
-void read_ifm(hls::stream<strmio_t> &strm_in, quant_reshp in_feature_map[X1*Y1*Z1], quant_reshp shortcut_ifm[X1*Y1*Z1]);
+void read_ifm(hls::stream<strmio_t> &strm_in, quant_reshp in_feature_map[X1*Y1*Z1], quant_t shortcut_ifm[X1*Y1*Z1]);
 void write_ofm(quant_reshp *ofm, hls::stream<strmio_t> &strm_out);
 
 #else
