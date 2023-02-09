@@ -1,14 +1,15 @@
 #include "simple_conv.h"
-//#include "weights_k1.h"      //Weights for two k1 layers arranged by band
+//#include "weights_k1.h"        //Weights for two k1 layers arranged by band
 //#include "weights_k1_2.h"      //Weights for two k1 layers arranged by band for 48 filters in layer 2
 //#include "weights_k1_3.h"      //Weights for two k1 layers arranged by band for a lot of bands and filters
 //#include "weights_k1_4.h"      //Weights for two k1 layers arranged by band for a 80 and 96 filters
-//#include "weights_k2.h"    //Weights for layer 2 k2 arranged by filter
-//#include "weights_k2_2.h"  //Weights for layer 2 k2 arranged by bands
-//#include "weights_k2_3.h"  //Weights for layer 2 k2 arranged by bands by every two pixels
-//#include "weights_k2_4.h"  //Weights for layer 2 k2 arranged by bands by every two pixels for 48 filters on layer 2
-//#include "weights_k2_5.h"  //Weights for layer 2 k2 arranged by bands by every two pixels for 96 filters on layer 1 and 2
-#include "weights_k2_6.h"  //Weights for layer 2 k2 arranged by bands by every two pixels for 3 layers
+//#include "weights_k2.h"        //Weights for layer 2 k2 arranged by filter
+//#include "weights_k2_2.h"      //Weights for layer 2 k2 arranged by bands
+//#include "weights_k2_3.h"      //Weights for layer 2 k2 arranged by bands by every two pixels
+//#include "weights_k2_4.h"      //Weights for layer 2 k2 arranged by bands by every two pixels for 48 filters on layer 2
+//#include "weights_k2_5.h"      //Weights for layer 2 k2 arranged by bands by every two pixels for 96 filters on layer 1 and 2
+//#include "weights_k2_6.h"        //Weights for layer 2 k2 arranged by bands by every two pixels for 3 layers
+#include "weights_reshaped.h"    //Weights reshaped with a factor of 4
 
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
 
@@ -296,7 +297,7 @@ void add_shortcut(quant_reshp conv_feature_map[fm_width*fm_height*nbands_conv], 
 	}
 }
 
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights, params_t PE>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_reshp *weights, params_t PE>
 #ifdef ARRAYS
 void conv_layer_k1(quant_reshp in_feature_map[fm_height*fm_width*nbands], quant_reshp out_feature_map[fm_height*fm_width*nfilters]) {
 #else
@@ -330,13 +331,10 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 				for(int z = 0; z < nbands/RESHP_FACTOR; z+=PE) {
 #pragma HLS PIPELINE II=4
 					for(int p = 0; p < PE; p++) {
-						acc += (quant_t)weights[kernel_idx] * (quant_t)in_feature_map[input_idx].range(3,0);
-						kernel_idx++;
-						acc += (quant_t)weights[kernel_idx] * (quant_t)in_feature_map[input_idx].range(7,4);
-						kernel_idx++;
-						acc += (quant_t)weights[kernel_idx] * (quant_t)in_feature_map[input_idx].range(11,8);
-						kernel_idx++;
-						acc += (quant_t)weights[kernel_idx] * (quant_t)in_feature_map[input_idx].range(15,12);
+						acc += (quant_t)weights[kernel_idx].range(3,0) * (quant_t)in_feature_map[input_idx].range(3,0);
+						acc += (quant_t)weights[kernel_idx].range(7,4) * (quant_t)in_feature_map[input_idx].range(7,4);
+						acc += (quant_t)weights[kernel_idx].range(11,8) * (quant_t)in_feature_map[input_idx].range(11,8);
+						acc += (quant_t)weights[kernel_idx].range(15,12) * (quant_t)in_feature_map[input_idx].range(15,12);
 						kernel_idx++;
 						input_idx++;
 //						printf("%d + %d*4 = %d\n", z,  p*RESHP_FACTOR,z + (p*RESHP_FACTOR));
@@ -373,7 +371,7 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 	return;
 }
 //Convolutional layer to be aplied before a convolution with kernel and stride 2, that will clear the last row and column from the outputs
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights, params_t PE>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_reshp *weights, params_t PE>
 #ifdef ARRAYS
 void conv_layer_k1_b4k2(quant_reshp in_feature_map[fm_height*fm_width*nbands], quant_reshp out_feature_map[2][(fm_height-1)*(fm_width-1)*nfilters/2/RESHP_FACTOR]) {
 #else
@@ -412,16 +410,13 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 	//						k = nfilters;
 						}
 						else {
-							acc += weights[kernel_idx] * (quant_t)in_feature_map[input_idx].range(3,0);
+							acc += weights[kernel_idx].range(3,0) * (quant_t)in_feature_map[input_idx].range(3,0);
 //							printf("idx: %d\nacc = %d * %d\n", input_idx,(int)weights[kernel_idx], (int)(quant_t)in_feature_map[input_idx].range(3,0));
-							kernel_idx++;
-							acc += weights[kernel_idx] * (quant_t)in_feature_map[input_idx].range(7,4);
+							acc += weights[kernel_idx].range(7,4) * (quant_t)in_feature_map[input_idx].range(7,4);
 //							printf("acc = %d * %d\n", (int)weights[kernel_idx], (int)(quant_t)in_feature_map[input_idx].range(7,4));
-							kernel_idx++;
-							acc += weights[kernel_idx] * (quant_t)in_feature_map[input_idx].range(11,8);
+							acc += weights[kernel_idx].range(11,8) * (quant_t)in_feature_map[input_idx].range(11,8);
 //							printf("acc = %d * %d\n", (int)weights[kernel_idx], (int)(quant_t)in_feature_map[input_idx].range(11,8));
-							kernel_idx++;
-							acc += weights[kernel_idx] * (quant_t)in_feature_map[input_idx].range(15,12);
+							acc += weights[kernel_idx].range(15,12) * (quant_t)in_feature_map[input_idx].range(15,12);
 //							printf("acc = %d * %d\n", (int)weights[kernel_idx], (int)(quant_t)in_feature_map[input_idx].range(15,12));
 							kernel_idx++;
 							input_idx++;
@@ -482,7 +477,7 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 	return;
 }
 
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim,quant_t *weights, params_t PE>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim,quant_reshp *weights, params_t PE>
 #ifdef ARRAYS
 void conv_layer_k2(quant_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP_FACTOR], quant_reshp out_feature_map[(fm_height/2)*(fm_width/2)*nfilters]) {
 #else
@@ -514,21 +509,15 @@ void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 				for(int z = 0; z < nbands*2/RESHP_FACTOR; z+=PE) {
 #pragma HLS PIPELINE II=4
 					for(int p = 0; p < PE; p++) {
-						acc_even += weights[kernel_idx] * (quant_t)in_feature_map[0][input_idx].range(3,0);
+						acc_even += weights[kernel_idx].range(3,0) * (quant_t)in_feature_map[0][input_idx].range(3,0);
+						acc_odd += weights[kernel_idx].range(7,4) * (quant_t)in_feature_map[1][input_idx].range(3,0);
+						acc_even += weights[kernel_idx].range(11,8) * (quant_t)in_feature_map[0][input_idx].range(7,4);
+						acc_odd += weights[kernel_idx].range(15,12) * (quant_t)in_feature_map[1][input_idx].range(7,4);
 						kernel_idx++;
-						acc_odd += weights[kernel_idx] * (quant_t)in_feature_map[1][input_idx].range(3,0);
-						kernel_idx++;
-						acc_even += weights[kernel_idx] * (quant_t)in_feature_map[0][input_idx].range(7,4);
-						kernel_idx++;
-						acc_odd += weights[kernel_idx] * (quant_t)in_feature_map[1][input_idx].range(7,4);
-						kernel_idx++;
-						acc_even += weights[kernel_idx] * (quant_t)in_feature_map[0][input_idx].range(11,8);
-						kernel_idx++;
-						acc_odd += weights[kernel_idx] * (quant_t)in_feature_map[1][input_idx].range(11,8);
-						kernel_idx++;
-						acc_even += weights[kernel_idx] * (quant_t)in_feature_map[0][input_idx].range(15,12);
-						kernel_idx++;
-						acc_odd += weights[kernel_idx] * (quant_t)in_feature_map[1][input_idx].range(15,12);
+						acc_even += weights[kernel_idx].range(3,0) * (quant_t)in_feature_map[0][input_idx].range(11,8);
+						acc_odd += weights[kernel_idx].range(7,4) * (quant_t)in_feature_map[1][input_idx].range(11,8);
+						acc_even += weights[kernel_idx].range(11,8) * (quant_t)in_feature_map[0][input_idx].range(15,12);
+						acc_odd += weights[kernel_idx].range(15,12) * (quant_t)in_feature_map[1][input_idx].range(15,12);
 						kernel_idx++;
 						input_idx++;
 

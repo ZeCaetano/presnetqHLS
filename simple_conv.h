@@ -44,13 +44,13 @@ void average_pool(quant_t in_feature_map[fm_width*fm_height*nbands], quant_t out
 template<params_t fm_width, params_t fm_height, params_t nbands_conv, params_t nbands_shortcut>
 void add_shortcut(quant_reshp conv_feature_map[fm_width*fm_height*nbands_conv], quant_t shortcut[fm_width*fm_height*nbands_shortcut], quant_reshp out_feature_map[fm_width*fm_height*nbands_conv]);
 
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights, params_t PE>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_reshp *weights, params_t PE>
 void conv_layer_k1(quant_reshp in_feature_map[fm_height*fm_width*nbands], quant_reshp out_feature_map[fm_height*fm_width*nfilters]);
 
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights, params_t PE>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_reshp *weights, params_t PE>
 void conv_layer_k1_b4k2(quant_reshp in_feature_map[fm_height*fm_width*nbands], quant_reshp out_feature_map[2][(fm_height-1)*(fm_width-1)*nfilters/2/RESHP_FACTOR]);
 
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim,quant_t *weights, params_t PE>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim,quant_reshp *weights, params_t PE>
 void conv_layer_k2(quant_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP_FACTOR], quant_reshp out_feature_map[(fm_height/2)*(fm_width/2)*nfilters]);
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_t *weights>
