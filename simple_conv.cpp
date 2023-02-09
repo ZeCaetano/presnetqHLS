@@ -37,16 +37,16 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 //#pragma HLS ARRAY_RESHAPE variable=out_feature_map type=cyclic factor=8
 
 //#pragma HLS ARRAY_PARTITION variable=in_feature_map type=cyclic factor=8
-#pragma HLS ARRAY_RESHAPE variable=weights_l1 factor=4 type=cyclic
-#pragma HLS ARRAY_RESHAPE variable=weights_l2 factor=4 type=cyclic
-#pragma HLS ARRAY_RESHAPE variable=weights_l3 factor=8 type=cyclic
+//#pragma HLS ARRAY_RESHAPE variable=weights_l1 factor=4 type=cyclic
+//#pragma HLS ARRAY_RESHAPE variable=weights_l2 factor=4 type=cyclic
+//#pragma HLS ARRAY_RESHAPE variable=weights_l3 factor=8 type=cyclic
 
 #pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map, shortcut_fm);
 	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(shortcut_fm, ds_ofm);
-	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1, 4> (in_feature_map, m1_feature_map);
-	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2, X3, weights_l2, 4> (m1_feature_map, m2_feature_map);
-	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3, 8> (m2_feature_map, m3_feature_map);
+	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1, 8> (in_feature_map, m1_feature_map);
+	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2, X3, weights_l2, 8> (m1_feature_map, m2_feature_map);
+	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3, 16> (m2_feature_map, m3_feature_map);
 //	conv_layer_k1<0,X1,Y1,Z1,NF1, weights_l1, 16> (in_feature_map, m1_feature_map);
 //	conv_layer_k1<1,X2,Y2,Z2,NF2, weights_l2, 16> (m1_feature_map, m2_feature_map);
 	add_shortcut<X3,Y3,NF3,ZDS>(m3_feature_map, ds_ofm, out_feature_map);
