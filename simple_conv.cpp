@@ -319,6 +319,42 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 	int output_idx = 0;
 	ap_uint<3> range_idx = 0;
 
+//	loop_inputx:
+//	for(int i = 0; i < fm_width; i++) {
+//		loop_inputy:
+//		for(int j = 0; j < fm_height; j++) {
+//			kernel_idx = 0;
+//			loop_filters:
+//			for(int k = 0; k < nfilters; k++) {
+//				loop_bands:
+//				for(int z = 0; z < nbands; z+=PE) {
+//#pragma HLS PIPELINE
+//					for(int p = 0; p < PE/RESHP_FACTOR; p++) {
+//						acc += (quant_t)weights[kernel_idx].range(3,0) * (quant_t)in_feature_map[input_idx].range(3,0);
+//						acc += (quant_t)weights[kernel_idx].range(7,4) * (quant_t)in_feature_map[input_idx].range(7,4);
+//						acc += (quant_t)weights[kernel_idx].range(11,8) * (quant_t)in_feature_map[input_idx].range(11,8);
+//						acc += (quant_t)weights[kernel_idx].range(15,12) * (quant_t)in_feature_map[input_idx].range(15,12);
+//						kernel_idx++;
+//						input_idx++;
+//						if (z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR){
+//							tmp[k % 4] = (quant_t)acc;
+//							acc = 0;
+//
+//							if(k % 4 == 3) {
+//								quant_reshp tmp2;
+//								tmp2.range(3,0) = tmp[0];
+//								tmp2.range(7,4) = tmp[1];
+//								tmp2.range(11,8) = tmp[2];
+//								tmp2.range(15,12) = tmp[3];
+//								out_feature_map[output_idx] = tmp2;
+//								output_idx++;
+//							}
+//						}
+//					}
+//				}
+//			}
+
+
 	loop_inputx:
 	for(int i = 0; i < fm_width; i++) {
 		loop_inputy:
