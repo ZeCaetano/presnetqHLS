@@ -41,13 +41,13 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 //#pragma HLS ARRAY_PARTITION variable=in_feature_map type=cyclic factor=8
 //#pragma HLS ARRAY_RESHAPE variable=weights_l1 factor=2 type=cyclic
 #pragma HLS ARRAY_RESHAPE variable=weights_l2 factor=2 type=cyclic
-//#pragma HLS ARRAY_RESHAPE variable=weights_l3 factor=4 type=cyclic
+//#pragma HLS ARRAY_RESHAPE variable=weights_l3 factor=2 type=cyclic
 
 #pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map, shortcut_fm);
 	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(shortcut_fm, ds_ofm);
-	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1, 4> (in_feature_map, m1_feature_map);
-	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2, X3, weights_l2, 4> (m1_feature_map, m2_feature_map);
+	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1, 16> (in_feature_map, m1_feature_map);
+	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2, X3, weights_l2, 8> (m1_feature_map, m2_feature_map);
 	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3, 8> (m2_feature_map, m3_feature_map);
 //	conv_layer_k1<0,X1,Y1,Z1,NF1, weights_l1, 16> (in_feature_map, m1_feature_map);
 //	conv_layer_k1<1,X2,Y2,Z2,NF2, weights_l2, 16> (m1_feature_map, m2_feature_map);
@@ -100,28 +100,30 @@ void read_ifm(hls::stream<strmio_t> &strm_in, quant_reshp in_feature_map[INPUT1_
 void read_ifm(hls::stream<strmio_t> &strm_in, hls::stream<quant_t> &in_feature_map){
 #endif
 	strmio_t tmpin;
+	quant_reshp tmp = 0;
 
 #ifdef ARRAYS
 	//read input fm
 	for(int i = 0; i < INPUT1_MEM_SIZE/RESHP_FACTOR; i++) {
 #pragma HLS PIPELINE II=4
 		tmpin = strm_in.read();
-		in_feature_map[i].range(3,0) = tmpin.data;
+		tmp.range(3,0) = tmpin.data;
 		shortcut_ifm[i*RESHP_FACTOR] = tmpin.data;
 //		printf("%d   ", (int)(quant_t)(in_feature_map[i].range(3,0)));
 		if(tmpin.last == 1) break;
 		tmpin = strm_in.read();
-		in_feature_map[i].range(7,4) = tmpin.data;
+		tmp.range(7,4) = tmpin.data;
 		shortcut_ifm[i*RESHP_FACTOR+1] = tmpin.data;
 //		printf("%d: %d   ", (int)tmpin.data, (int)((quant_t)in_feature_map[i].range(7,4)));
 		if(tmpin.last == 1) break;
 		tmpin = strm_in.read();
-		in_feature_map[i].range(11,8) = tmpin.data;
+		tmp.range(11,8) = tmpin.data;
 		shortcut_ifm[i*RESHP_FACTOR+2] = tmpin.data;
 //		printf("%d: %d   ", (int)tmpin.data, (int)((quant_t)in_feature_map[i].range(11,8)));
 		if(tmpin.last == 1) break;
 		tmpin = strm_in.read();
-		in_feature_map[i].range(15,12) = tmpin.data;
+		tmp.range(15,12) = tmpin.data;
+		in_feature_map[i] = tmp;
 		shortcut_ifm[i*RESHP_FACTOR+3] = tmpin.data;
 //		printf("%d: %d \n", (int)tmpin.data, (int)((quant_t)in_feature_map[i].range(15,12)));
 		if(tmpin.last == 1) break;
@@ -300,60 +302,14 @@ void add_shortcut(quant_reshp conv_feature_map[fm_width*fm_height*nbands_conv], 
 }
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_reshp *weights, params_t PE>
-#ifdef ARRAYS
 void conv_layer_k1(quant_reshp in_feature_map[fm_height*fm_width*nbands], quant_reshp out_feature_map[fm_height*fm_width*nfilters]) {
-#else
-void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out) {
-#endif
-
-#ifndef ARRAYS
-	quant_t tmpin, tmpout;
-	quant_t pixel;
-#endif
-//#pragma HLS ARRAY_RESHAPE variable=in_feature_map type=cyclic factor=4
-//#pragma HLS ARRAY_RESHAPE variable=out_feature_map type=cyclic factor=4
-	//Convolution
 	quant_accum acc = 0;
 	int kernel_idx = 0;
 	int input_idx = 0;
 	int output_idx = 0;
 	ap_uint<3> range_idx = 0;
-
-//	loop_inputx:
-//	for(int i = 0; i < fm_width; i++) {
-//		loop_inputy:
-//		for(int j = 0; j < fm_height; j++) {
-//			kernel_idx = 0;
-//			loop_filters:
-//			for(int k = 0; k < nfilters; k++) {
-//				loop_bands:
-//				for(int z = 0; z < nbands; z+=PE) {
-//#pragma HLS PIPELINE
-//					for(int p = 0; p < PE/RESHP_FACTOR; p++) {
-//						acc += (quant_t)weights[kernel_idx].range(3,0) * (quant_t)in_feature_map[input_idx].range(3,0);
-//						acc += (quant_t)weights[kernel_idx].range(7,4) * (quant_t)in_feature_map[input_idx].range(7,4);
-//						acc += (quant_t)weights[kernel_idx].range(11,8) * (quant_t)in_feature_map[input_idx].range(11,8);
-//						acc += (quant_t)weights[kernel_idx].range(15,12) * (quant_t)in_feature_map[input_idx].range(15,12);
-//						kernel_idx++;
-//						input_idx++;
-//						if (z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR){
-//							tmp[k % 4] = (quant_t)acc;
-//							acc = 0;
-//
-//							if(k % 4 == 3) {
-//								quant_reshp tmp2;
-//								tmp2.range(3,0) = tmp[0];
-//								tmp2.range(7,4) = tmp[1];
-//								tmp2.range(11,8) = tmp[2];
-//								tmp2.range(15,12) = tmp[3];
-//								out_feature_map[output_idx] = tmp2;
-//								output_idx++;
-//							}
-//						}
-//					}
-//				}
-//			}
-
+	quant_reshp acc_tmp = 0;
+	quant_t acc_tmp_arr[RESHP_FACTOR];
 
 	loop_inputx:
 	for(int i = 0; i < fm_width; i++) {
@@ -362,39 +318,24 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 			kernel_idx = 0;
 			loop_filters:
 			for(int k = 0; k < nfilters; k++) {
-//				for(int z = 0; z < nbands; z+=PE) {
-//				#pragma HLS PIPELINE
-//					for(int p = 0; p < PE/RESHP_FACTOR; p++) {
 				loop_bands:
-				for(int z = 0; z < nbands/RESHP_FACTOR; z+=PE) {
-#pragma HLS PIPELINE II=4
-					for(int p = 0; p < PE; p++) {
+				for(int z = 0; z < nbands; z+=PE) {
+#pragma HLS PIPELINE
+					for(int p = 0; p < PE/RESHP_FACTOR; p++) {
 						acc += (quant_t)weights[kernel_idx].range(3,0) * (quant_t)in_feature_map[input_idx].range(3,0);
 						acc += (quant_t)weights[kernel_idx].range(7,4) * (quant_t)in_feature_map[input_idx].range(7,4);
 						acc += (quant_t)weights[kernel_idx].range(11,8) * (quant_t)in_feature_map[input_idx].range(11,8);
 						acc += (quant_t)weights[kernel_idx].range(15,12) * (quant_t)in_feature_map[input_idx].range(15,12);
 						kernel_idx++;
 						input_idx++;
-//						printf("%d + %d*4 = %d\n", z,  p*RESHP_FACTOR,z + (p*RESHP_FACTOR));
-//						if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
-						if(z + p == nbands/RESHP_FACTOR-1) {
-	//						count_t output_idx = k*(fm_width)*(fm_height) + i*(fm_height) + j;
-							if(range_idx == 0) {
-								out_feature_map[output_idx].range(3,0) = (quant_t)acc; //ver o fator de escala aqui
-//								printf("idx: %d; acc: %d; output: %d\n", output_idx, (int)(quant_t)acc, (int)(quant_t)out_feature_map[output_idx].range(3,0));
-								range_idx++;
-							}
-							else if(range_idx == 1) {
-								out_feature_map[output_idx].range(7,4) = (quant_t)acc; //ver o fator de escala aqui
-								range_idx++;
-							}
-							else if(range_idx == 2) {
-								out_feature_map[output_idx].range(11,8) = (quant_t)acc; //ver o fator de escala aqui
-								range_idx++;
-							}
-							else if(range_idx == 3) {
-								out_feature_map[output_idx].range(15,12) = (quant_t)acc; //ver o fator de escala aqui
-								range_idx = 0;
+						if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
+							acc_tmp_arr[k % 4] = (quant_t)acc;
+							if(k % 4 == 3){
+								acc_tmp.range(3,0) = acc_tmp_arr[0];
+								acc_tmp.range(7,4) = acc_tmp_arr[1];
+								acc_tmp.range(11,8) = acc_tmp_arr[2];
+								acc_tmp.range(15,12) = acc_tmp_arr[3];
+								out_feature_map[output_idx] = acc_tmp; //ver o fator de escala aqui
 								output_idx++;
 							}
 							acc = 0;
@@ -428,6 +369,8 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 	int output_idx_even = 0;
 	int output_idx_odd = 0;
 	ap_uint<3> range_idx = 0;
+	quant_reshp acc_tmp = 0;
+	quant_t acc_tmp_arr[RESHP_FACTOR];
 
 	loop_inputx:
 	for(int i = 0; i < fm_width-1; i++) {
@@ -437,9 +380,9 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 			loop_filters:
 			for(int k = 0; k < nfilters; k++) {
 				loop_bands:
-				for(int z = 0; z < nbands/RESHP_FACTOR; z+=PE) {
-#pragma HLS PIPELINE II=4
-					for(int p = 0; p < PE; p++) {
+				for(int z = 0; z < nbands; z+=PE) {
+#pragma HLS PIPELINE
+					for(int p = 0; p < PE/RESHP_FACTOR; p++) {
 						if(j == fm_height-1){
 //							printf("J MAIOR\n");
 							if(k == 0 && z == 0 && p == 0)
@@ -458,45 +401,27 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 //							printf("acc = %d * %d\n", (int)weights[kernel_idx], (int)(quant_t)in_feature_map[input_idx].range(15,12));
 							kernel_idx++;
 							input_idx++;
-							if(z + p == nbands/RESHP_FACTOR-1) {
+							if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
+								acc_tmp_arr[k % 4] = (quant_t)acc;
 								if(i % 2 == 0) {
-									if(range_idx == 0) {
-										out_feature_map[0][output_idx_even].range(3,0) = (quant_t)acc; //ver o fator de escala aqui
-//										printf("idx: %d; acc: %d; output: %d\n", output_idx_even, (int)(quant_t)acc, (int)(quant_t)out_feature_map[0][output_idx_even].range(3,0));
-										range_idx++;
-									}
-									else if(range_idx == 1) {
-										out_feature_map[0][output_idx_even].range(7,4) = (quant_t)acc; //ver o fator de escala aqui
-										range_idx++;
-									}
-									else if(range_idx == 2) {
-										out_feature_map[0][output_idx_even].range(11,8) = (quant_t)acc; //ver o fator de escala aqui
-										range_idx++;
-									}
-									else if(range_idx == 3) {
-										out_feature_map[0][output_idx_even].range(15,12) = (quant_t)acc; //ver o fator de escala aqui
-										range_idx = 0;
+									if(k % 4 == 3){
+										acc_tmp.range(3,0) = acc_tmp_arr[0];
+										acc_tmp.range(7,4) = acc_tmp_arr[1];
+										acc_tmp.range(11,8) = acc_tmp_arr[2];
+										acc_tmp.range(15,12) = acc_tmp_arr[3];
+										out_feature_map[0][output_idx_even] = acc_tmp; //ver o fator de escala aqui
 										output_idx_even++;
 									}
 	//								printf("index: [0][%d] - %d\n", output_idx_even, (int)out_feature_map[0][output_idx_even]);
 	//								printf("index: [0][%d] - %d\n", output_idx_even, (int)acc);
 								}
 								else {
-									if(range_idx == 0) {
-										out_feature_map[1][output_idx_odd].range(3,0) = (quant_t)acc; //ver o fator de escala aqui
-										range_idx++;
-									}
-									else if(range_idx == 1) {
-										out_feature_map[1][output_idx_odd].range(7,4) = (quant_t)acc; //ver o fator de escala aqui
-										range_idx++;
-									}
-									else if(range_idx == 2) {
-										out_feature_map[1][output_idx_odd].range(11,8) = (quant_t)acc; //ver o fator de escala aqui
-										range_idx++;
-									}
-									else if(range_idx == 3) {
-										out_feature_map[1][output_idx_odd].range(15,12) = (quant_t)acc; //ver o fator de escala aqui
-										range_idx = 0;
+									if(k % 4 == 3){
+										acc_tmp.range(3,0) = acc_tmp_arr[0];
+										acc_tmp.range(7,4) = acc_tmp_arr[1];
+										acc_tmp.range(11,8) = acc_tmp_arr[2];
+										acc_tmp.range(15,12) = acc_tmp_arr[3];
+										out_feature_map[1][output_idx_odd] = acc_tmp; //ver o fator de escala aqui
 										output_idx_odd++;
 									}
 	//								printf("index: [1][%d] - %d\n", output_idx_odd, (int)out_feature_map[1][output_idx_odd]);
@@ -533,6 +458,8 @@ void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 	int input_idx = 0;
 	int output_idx = 0;
 	ap_uint<3> range_idx = 0;
+	quant_reshp acc_tmp = 0;
+	quant_t acc_tmp_arr[RESHP_FACTOR];
 
 //#pragma HLS ARRAY_RESHAPE variable=in_feature_map type=cyclic factor=2
 
@@ -561,33 +488,19 @@ void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 
 						if(z + p == (nbands*2)/RESHP_FACTOR-1) {
 							acc_even += acc_odd;
-							if(range_idx == 0) {
-								out_feature_map[output_idx].range(3,0) = (quant_t)acc_even; //ver o fator de escala aqui
-								acc_even = 0;
-								acc_odd = 0;
-								range_idx++;
-							}
-							else if(range_idx == 1) {
-								out_feature_map[output_idx].range(7,4) = (quant_t)acc_even; //ver o fator de escala aqui
-								acc_even = 0;
-								acc_odd = 0;
-								range_idx++;
-							}
-							else if(range_idx == 2) {
-								out_feature_map[output_idx].range(11,8) = (quant_t)acc_even; //ver o fator de escala aqui
-								acc_even = 0;
-								acc_odd = 0;
-								range_idx++;
-							}
-							else if(range_idx == 3) {
-								out_feature_map[output_idx].range(15,12) = (quant_t)acc_even; //ver o fator de escala aqui
-								acc_even = 0;
-								acc_odd = 0;
-								range_idx = 0;
+							acc_tmp_arr[k % 4] = (quant_t)acc_even;
+							if(k % 4 == 3){
+								acc_tmp.range(3,0) = acc_tmp_arr[0];
+								acc_tmp.range(7,4) = acc_tmp_arr[1];
+								acc_tmp.range(11,8) = acc_tmp_arr[2];
+								acc_tmp.range(15,12) = acc_tmp_arr[3];
+								out_feature_map[output_idx] = acc_tmp; //ver o fator de escala aqui
 								output_idx++;
 							}
 							//aplicar função de ativação aqui
 							if(k != nfilters-1) input_idx -= nbands*2/RESHP_FACTOR;
+							acc_even = 0;
+							acc_odd = 0;
 							break;
 						}
 					}
