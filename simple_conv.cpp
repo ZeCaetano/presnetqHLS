@@ -11,7 +11,8 @@
 //#include "weights_k2_6.h"        //Weights for layer 2 k2 arranged by bands by every two pixels for 3 layers
 //#include "weights_reshaped.h"    //Weights reshaped with a factor of 4
 //#include "weights_reshaped_2.h"    //Weights reshaped with a factor of 4 with 64 bands on the last layer
-#include "weights_reshaped_4.h"    //Weights reshaped with a factor of 4 with 64 bands and 168 filters on the last layer
+#include "weights_reshaped_3.h"    //Weights reshaped with a factor of 8 with 64 bands and 168 filters on the last layer
+//#include "weights_reshaped_4.h"    //Weights reshaped with a factor of 4 with 64 bands and 168 filters on the last layer
 
 
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
@@ -30,7 +31,7 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 #pragma HLS STREAM variable=ds_ofm type=PIPO depth=4
 #pragma HLS STREAM variable=m1_feature_map type=PIPO depth=2
 #pragma HLS STREAM variable=m2_feature_map type=PIPO depth=2
-#pragma HLS STREAM variable=m3_feature_map type=PIPO depth=1
+#pragma HLS STREAM variable=m3_feature_map type=PIPO depth=2
 #pragma HLS STREAM variable=out_feature_map type=PIPO depth=2
 
 //#pragma HLS ARRAY_RESHAPE variable=in_feature_map type=cyclic factor=8
@@ -41,7 +42,7 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 //#pragma HLS ARRAY_PARTITION variable=in_feature_map type=cyclic factor=8
 //#pragma HLS ARRAY_RESHAPE variable=weights_l1 factor=2 type=cyclic
-#pragma HLS ARRAY_RESHAPE variable=weights_l2 factor=2 type=cyclic
+//#pragma HLS ARRAY_RESHAPE variable=weights_l2 factor=2 type=cyclic
 //#pragma HLS ARRAY_RESHAPE variable=weights_l3 factor=2 type=cyclic
 
 #pragma HLS DATAFLOW
@@ -49,7 +50,7 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(shortcut_fm, ds_ofm);
 	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1, 16> (in_feature_map, m1_feature_map);
 	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2, X3, weights_l2, 8> (m1_feature_map, m2_feature_map);
-	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3,16> (m2_feature_map, m3_feature_map);
+	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3,32> (m2_feature_map, m3_feature_map);
 //	conv_layer_k1<0,X1,Y1,Z1,NF1, weights_l1, 16> (in_feature_map, m1_feature_map);
 //	conv_layer_k1<1,X2,Y2,Z2,NF2, weights_l2, 16> (m1_feature_map, m2_feature_map);
 	add_shortcut<X3,Y3,NF3,ZDS>(m3_feature_map, ds_ofm, out_feature_map);
@@ -106,7 +107,7 @@ void read_ifm(hls::stream<strmio_t> &strm_in, hls::stream<quant_t> &in_feature_m
 #ifdef ARRAYS
 	//read input fm
 	for(int i = 0; i < INPUT1_MEM_SIZE/RESHP_FACTOR; i++) {
-#pragma HLS PIPELINE II=4
+#pragma HLS PIPELINE II=8
 		tmpin = strm_in.read();
 		tmp.range(3,0) = tmpin.data;
 		shortcut_ifm[i*RESHP_FACTOR] = tmpin.data;
@@ -126,26 +127,30 @@ void read_ifm(hls::stream<strmio_t> &strm_in, hls::stream<quant_t> &in_feature_m
 		tmp.range(15,12) = tmpin.data;
 		in_feature_map[i] = tmp;
 		shortcut_ifm[i*RESHP_FACTOR+3] = tmpin.data;
-//		printf("%d: %d \n", (int)tmpin.data, (int)((quant_t)in_feature_map[i].range(15,12)));
 		if(tmpin.last == 1) break;
-//		tmpin = strm_in.read();
-//		(quant_t)in_feature_map[i].range(19,16) = tmpin.data;
-//		(quant_t)shortcut_ifm[i].range(19,16) = tmpin.data;
-//		if(tmpin.last == 1) break;
-//		tmpin = strm_in.read();
-//		(quant_t)in_feature_map[i].range(23,20) = tmpin.data;
-//		(quant_t)shortcut_ifm[i].range(23,20) = tmpin.data;
-//		if(tmpin.last == 1) break;
-//		tmpin = strm_in.read();
-//		(quant_t)in_feature_map[i].range(27,24) = tmpin.data;
-//		(quant_t)shortcut_ifm[i].range(27,24) = tmpin.data;
-//		if(tmpin.last == 1) break;
-//		tmpin = strm_in.read();
-//		(quant_t)in_feature_map[i].range(31,28) = tmpin.data;
-//		(quant_t)shortcut_ifm[i].range(31,28) = tmpin.data;
+		tmpin = strm_in.read();
+		tmp.range(19,16) = tmpin.data;
+		shortcut_ifm[i*RESHP_FACTOR+4] = tmpin.data;
+//		printf("%d: %d   ", (int)tmpin.data, (int)((quant_t)in_feature_map[i].range(11,8)));
+		if(tmpin.last == 1) break;
+		tmpin = strm_in.read();
+		tmp.range(23,20) = tmpin.data;
+		shortcut_ifm[i*RESHP_FACTOR+5] = tmpin.data;
+		//printf("%d: %d   ", (int)tmpin.data, (int)((quant_t)in_feature_map[i].range(11,8)));
+		if(tmpin.last == 1) break;
+		tmpin = strm_in.read();
+		tmp.range(27,24) = tmpin.data;
+		shortcut_ifm[i*RESHP_FACTOR+6] = tmpin.data;
+		//printf("%d: %d   ", (int)tmpin.data, (int)((quant_t)in_feature_map[i].range(11,8)));
+		if(tmpin.last == 1) break;
+		tmpin = strm_in.read();
+		tmp.range(31,28) = tmpin.data;
+		in_feature_map[i] = tmp;
+		shortcut_ifm[i*RESHP_FACTOR+7] = tmpin.data;
+		//printf("%d: %d   ", (int)tmpin.data, (int)((quant_t)in_feature_map[i].range(11,8)));
+		if(tmpin.last == 1) break;
 
 //		if(layer_id == 1) printf("%f-%d\n", tmpin.data, i);
-		if(tmpin.last == 1) break;
 	}
 #else
 	quant_t tmpout;
@@ -193,7 +198,7 @@ void write_ofm(hls::stream<quant_t> &ofm, hls::stream<strmio_t> &strm_out, count
 #endif
 	//Write output fm to stream
 	for(int i = 0; i < OUTPUT_MEM_SIZE/RESHP_FACTOR; i++){
-#pragma HLS PIPELINE II=4
+#pragma HLS PIPELINE II=8
 		tmpout.data = (quant_t)ofm[i].range(3,0);
 //		printf("%d: %d   \n", (int)(quant_t)ofm[i].range(3,0), (int)tmpout.data);
 		tmpout.keep = 0xF;
@@ -210,28 +215,32 @@ void write_ofm(hls::stream<quant_t> &ofm, hls::stream<strmio_t> &strm_out, count
 		tmpout.strb = 0xF;
 		tmpout.last = 0;
 		strm_out.write(tmpout);
-		if(i == (OUTPUT_MEM_SIZE/RESHP_FACTOR) - 1) tmpout.last = 1;
-		else tmpout.last = 0;
 		tmpout.data = (quant_t)ofm[i].range(15,12);
 		tmpout.keep = 0xF;
 		tmpout.strb = 0xF;
+		tmpout.last = 0;
 		strm_out.write(tmpout);
-//		tmpout.data = (quant_t)ofm[i].range(19,16);
-//		tmpout.keep = 0xF;
-//		tmpout.strb = 0xF;
-//		strm_out.write(tmpout);
-//		tmpout.data = (quant_t)ofm[i].range(23,20);
-//		tmpout.keep = 0xF;
-//		tmpout.strb = 0xF;
-//		strm_out.write(tmpout);
-//		tmpout.data = (quant_t)ofm[i].range(27,24);
-//		tmpout.keep = 0xF;
-//		tmpout.strb = 0xF;
-//		strm_out.write(tmpout);
-//		tmpout.data = (quant_t)ofm[i].range(31,28);
-//		tmpout.keep = 0xF;
-//		tmpout.strb = 0xF;
-//		strm_out.write(tmpout);
+		tmpout.data = (quant_t)ofm[i].range(19,16);
+		tmpout.keep = 0xF;
+		tmpout.strb = 0xF;
+		tmpout.last = 0;
+		strm_out.write(tmpout);
+		tmpout.data = (quant_t)ofm[i].range(23,20);
+		tmpout.keep = 0xF;
+		tmpout.strb = 0xF;
+		tmpout.last = 0;
+		strm_out.write(tmpout);
+		tmpout.data = (quant_t)ofm[i].range(27,24);
+		tmpout.keep = 0xF;
+		tmpout.strb = 0xF;
+		tmpout.last = 0;
+		strm_out.write(tmpout);
+		if(i == (OUTPUT_MEM_SIZE/RESHP_FACTOR) - 1) tmpout.last = 1;
+		else tmpout.last = 0;
+		tmpout.data = (quant_t)ofm[i].range(31,28);
+		tmpout.keep = 0xF;
+		tmpout.strb = 0xF;
+		strm_out.write(tmpout);
 	}
 }
 
@@ -270,7 +279,7 @@ void add_shortcut(quant_reshp conv_feature_map[fm_width*fm_height*nbands_conv], 
 	for (int i = 0; i < fm_width; i++) {
 		for (int j = 0; j < fm_height; j++) {
 			for(int z = 0; z < nbands_conv/RESHP_FACTOR; z++){
-#pragma HLS PIPELINE II=4
+#pragma HLS PIPELINE II=8
 				if(z >= nbands_shortcut/RESHP_FACTOR){
 					sum = (quant_t)conv_feature_map[idx_conv].range(3,0);
 					out_feature_map[idx_conv].range(3,0) = (quant_t) sum;
@@ -280,6 +289,14 @@ void add_shortcut(quant_reshp conv_feature_map[fm_width*fm_height*nbands_conv], 
 					out_feature_map[idx_conv].range(11,8) = (quant_t) sum;
 					sum = (quant_t)conv_feature_map[idx_conv].range(15,12);
 					out_feature_map[idx_conv].range(15,12) = (quant_t) sum;
+					sum = (quant_t)conv_feature_map[idx_conv].range(19,16);
+					out_feature_map[idx_conv].range(19,16) = (quant_t) sum;
+					sum = (quant_t)conv_feature_map[idx_conv].range(23,20);
+					out_feature_map[idx_conv].range(23,20) = (quant_t) sum;
+					sum = (quant_t)conv_feature_map[idx_conv].range(27,24);
+					out_feature_map[idx_conv].range(27,24) = (quant_t) sum;
+					sum = (quant_t)conv_feature_map[idx_conv].range(31,28);
+					out_feature_map[idx_conv].range(31,28) = (quant_t) sum;
 					idx_conv++;
 				}
 				else {
@@ -294,8 +311,20 @@ void add_shortcut(quant_reshp conv_feature_map[fm_width*fm_height*nbands_conv], 
 					idx_shortcut++;
 					sum = (quant_t)conv_feature_map[idx_conv].range(15,12) + shortcut[idx_shortcut];
 					out_feature_map[idx_conv].range(15,12) = (quant_t) sum;
-					idx_conv++;
 					idx_shortcut++;
+					sum = (quant_t)conv_feature_map[idx_conv].range(19,16) + shortcut[idx_shortcut];
+					out_feature_map[idx_conv].range(19,16) = (quant_t) sum;
+					idx_shortcut++;
+					sum = (quant_t)conv_feature_map[idx_conv].range(23,20) + shortcut[idx_shortcut];
+					out_feature_map[idx_conv].range(23,20) = (quant_t) sum;
+					idx_shortcut++;
+					sum = (quant_t)conv_feature_map[idx_conv].range(27,24) + shortcut[idx_shortcut];
+					out_feature_map[idx_conv].range(27,24) = (quant_t) sum;
+					idx_shortcut++;
+					sum = (quant_t)conv_feature_map[idx_conv].range(31,28) + shortcut[idx_shortcut];
+					out_feature_map[idx_conv].range(31,28) = (quant_t) sum;
+					idx_shortcut++;
+					idx_conv++;
 				}
 			}
 		}
@@ -327,14 +356,22 @@ void conv_layer_k1(quant_reshp in_feature_map[fm_height*fm_width*nbands], quant_
 						acc += (quant_t)weights[kernel_idx].range(7,4) * (quant_t)in_feature_map[input_idx].range(7,4);
 						acc += (quant_t)weights[kernel_idx].range(11,8) * (quant_t)in_feature_map[input_idx].range(11,8);
 						acc += (quant_t)weights[kernel_idx].range(15,12) * (quant_t)in_feature_map[input_idx].range(15,12);
+						acc += (quant_t)weights[kernel_idx].range(19,16) * (quant_t)in_feature_map[input_idx].range(19,16);
+						acc += (quant_t)weights[kernel_idx].range(23,20) * (quant_t)in_feature_map[input_idx].range(23,20);
+						acc += (quant_t)weights[kernel_idx].range(27,24) * (quant_t)in_feature_map[input_idx].range(27,24);
+						acc += (quant_t)weights[kernel_idx].range(31,28) * (quant_t)in_feature_map[input_idx].range(31,28);
 						kernel_idx++;
 						input_idx++;
 						if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
-							if(k%4==0) acc_tmp.range(3,0) = (quant_t)acc;
-							else if(k%4==1) acc_tmp.range(7,4) = (quant_t)acc;
-							else if(k%4==2) acc_tmp.range(11,8) = (quant_t)acc;
+							if(k%RESHP_FACTOR==0) acc_tmp.range(3,0) = (quant_t)acc;
+							else if(k%RESHP_FACTOR==1) acc_tmp.range(7,4) = (quant_t)acc;
+							else if(k%RESHP_FACTOR==2) acc_tmp.range(11,8) = (quant_t)acc;
+							else if(k%RESHP_FACTOR==3) acc_tmp.range(15,12) = (quant_t)acc;
+							else if(k%RESHP_FACTOR==4) acc_tmp.range(19,16) = (quant_t)acc;
+							else if(k%RESHP_FACTOR==5) acc_tmp.range(23,20) = (quant_t)acc;
+							else if(k%RESHP_FACTOR==6) acc_tmp.range(27,24) = (quant_t)acc;
 							else {
-								acc_tmp.range(15,12) = (quant_t)acc;
+								acc_tmp.range(31,28) = (quant_t)acc;
 								out_feature_map[output_idx] = acc_tmp; //ver o fator de escala aqui
 								output_idx++;
 							}
@@ -443,21 +480,25 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 						}
 						else {
 							acc += weights[kernel_idx].range(3,0) * (quant_t)in_feature_map[input_idx].range(3,0);
-//							printf("idx: %d\nacc = %d * %d\n", input_idx,(int)weights[kernel_idx], (int)(quant_t)in_feature_map[input_idx].range(3,0));
 							acc += weights[kernel_idx].range(7,4) * (quant_t)in_feature_map[input_idx].range(7,4);
-//							printf("acc = %d * %d\n", (int)weights[kernel_idx], (int)(quant_t)in_feature_map[input_idx].range(7,4));
 							acc += weights[kernel_idx].range(11,8) * (quant_t)in_feature_map[input_idx].range(11,8);
-//							printf("acc = %d * %d\n", (int)weights[kernel_idx], (int)(quant_t)in_feature_map[input_idx].range(11,8));
 							acc += weights[kernel_idx].range(15,12) * (quant_t)in_feature_map[input_idx].range(15,12);
-//							printf("acc = %d * %d\n", (int)weights[kernel_idx], (int)(quant_t)in_feature_map[input_idx].range(15,12));
+							acc += weights[kernel_idx].range(19,16) * (quant_t)in_feature_map[input_idx].range(19,16);
+							acc += weights[kernel_idx].range(23,20) * (quant_t)in_feature_map[input_idx].range(23,20);
+							acc += weights[kernel_idx].range(27,24) * (quant_t)in_feature_map[input_idx].range(27,24);
+							acc += weights[kernel_idx].range(31,28) * (quant_t)in_feature_map[input_idx].range(31,28);
 							kernel_idx++;
 							input_idx++;
 							if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
-								if(k%4==0) acc_tmp.range(3,0) = (quant_t)acc;
-								else if(k%4==1) acc_tmp.range(7,4) = (quant_t)acc;
-								else if(k%4==2) acc_tmp.range(11,8) = (quant_t)acc;
+								if(k%RESHP_FACTOR==0) acc_tmp.range(3,0) = (quant_t)acc;
+								else if(k%RESHP_FACTOR==1) acc_tmp.range(7,4) = (quant_t)acc;
+								else if(k%RESHP_FACTOR==2) acc_tmp.range(11,8) = (quant_t)acc;
+								else if(k%RESHP_FACTOR==3) acc_tmp.range(15,12) = (quant_t)acc;
+								else if(k%RESHP_FACTOR==4) acc_tmp.range(19,16) = (quant_t)acc;
+								else if(k%RESHP_FACTOR==5) acc_tmp.range(23,20) = (quant_t)acc;
+								else if(k%RESHP_FACTOR==6) acc_tmp.range(27,24) = (quant_t)acc;
 								else {
-									acc_tmp.range(15,12) = (quant_t)acc;
+									acc_tmp.range(31,28) = (quant_t)acc;
 
 									if(i % 2 == 0) {
 										out_feature_map[0][output_idx_even] = acc_tmp; //ver o fator de escala aqui
@@ -522,21 +563,33 @@ void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 						acc_odd += weights[kernel_idx].range(7,4) * (quant_t)in_feature_map[1][input_idx].range(3,0);
 						acc_even += weights[kernel_idx].range(11,8) * (quant_t)in_feature_map[0][input_idx].range(7,4);
 						acc_odd += weights[kernel_idx].range(15,12) * (quant_t)in_feature_map[1][input_idx].range(7,4);
+						acc_even += weights[kernel_idx].range(19,16) * (quant_t)in_feature_map[0][input_idx].range(11,8);
+						acc_odd += weights[kernel_idx].range(23,20) * (quant_t)in_feature_map[1][input_idx].range(11,8);
+						acc_even += weights[kernel_idx].range(27,24) * (quant_t)in_feature_map[0][input_idx].range(15,12);
+						acc_odd += weights[kernel_idx].range(31,28) * (quant_t)in_feature_map[1][input_idx].range(15,12);
 						kernel_idx++;
-						acc_even += weights[kernel_idx].range(3,0) * (quant_t)in_feature_map[0][input_idx].range(11,8);
-						acc_odd += weights[kernel_idx].range(7,4) * (quant_t)in_feature_map[1][input_idx].range(11,8);
-						acc_even += weights[kernel_idx].range(11,8) * (quant_t)in_feature_map[0][input_idx].range(15,12);
-						acc_odd += weights[kernel_idx].range(15,12) * (quant_t)in_feature_map[1][input_idx].range(15,12);
+						acc_even += weights[kernel_idx].range(3,0) * (quant_t)in_feature_map[0][input_idx].range(19,16);
+						acc_odd += weights[kernel_idx].range(7,4) * (quant_t)in_feature_map[1][input_idx].range(19,16);
+						acc_even += weights[kernel_idx].range(11,8) * (quant_t)in_feature_map[0][input_idx].range(23,20);
+						acc_odd += weights[kernel_idx].range(15,12) * (quant_t)in_feature_map[1][input_idx].range(23,20);
+						acc_even += weights[kernel_idx].range(19,16) * (quant_t)in_feature_map[0][input_idx].range(27,24);
+						acc_odd += weights[kernel_idx].range(23,20) * (quant_t)in_feature_map[1][input_idx].range(27,24);
+						acc_even += weights[kernel_idx].range(27,24) * (quant_t)in_feature_map[0][input_idx].range(31,28);
+						acc_odd += weights[kernel_idx].range(31,28) * (quant_t)in_feature_map[1][input_idx].range(31,28);
 						kernel_idx++;
 						input_idx++;
 
 						if(z + (p*RESHP_FACTOR) == nbands*2-RESHP_FACTOR) {
 							acc_even += acc_odd;
-							if(k%4==0) acc_tmp.range(3,0) = (quant_t)acc_even;
-							else if(k%4==1) acc_tmp.range(7,4) = (quant_t)acc_even;
-							else if(k%4==2) acc_tmp.range(11,8) = (quant_t)acc_even;
+							if(k%RESHP_FACTOR==0) acc_tmp.range(3,0) = (quant_t)acc_even;
+							else if(k%RESHP_FACTOR==1) acc_tmp.range(7,4) = (quant_t)acc_even;
+							else if(k%RESHP_FACTOR==2) acc_tmp.range(11,8) = (quant_t)acc_even;
+							else if(k%RESHP_FACTOR==3) acc_tmp.range(15,12) = (quant_t)acc_even;
+							else if(k%RESHP_FACTOR==4) acc_tmp.range(19,16) = (quant_t)acc_even;
+							else if(k%RESHP_FACTOR==5) acc_tmp.range(23,20) = (quant_t)acc_even;
+							else if(k%RESHP_FACTOR==6) acc_tmp.range(27,24) = (quant_t)acc_even;
 							else {
-								acc_tmp.range(15,12) = (quant_t)acc_even;
+								acc_tmp.range(31,28) = (quant_t)acc_even;
 								out_feature_map[output_idx] = acc_tmp; //ver o fator de escala aqui
 								output_idx++;
 							}

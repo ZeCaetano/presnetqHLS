@@ -22,8 +22,8 @@ typedef ap_int<4> quant_t;
 typedef ap_int<5> quant_sum;
 typedef ap_int<7> quant_mult;
 typedef ap_int<16> quant_accum;
-typedef ap_int<16> quant_reshp;
-#define RESHP_FACTOR 4
+typedef ap_int<32> quant_reshp;
+#define RESHP_FACTOR 8
 
 //typedef float quant_t;
 typedef ap_uint<16> count_t;
