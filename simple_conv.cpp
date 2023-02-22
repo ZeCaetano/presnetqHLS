@@ -9,8 +9,8 @@
 //#include "weights_k2_4.h"      //Weights for layer 2 k2 arranged by bands by every two pixels for 48 filters on layer 2
 //#include "weights_k2_5.h"      //Weights for layer 2 k2 arranged by bands by every two pixels for 96 filters on layer 1 and 2
 //#include "weights_k2_6.h"        //Weights for layer 2 k2 arranged by bands by every two pixels for 3 layers
-//#include "weights_reshaped.h"    //Weights reshaped with a factor of 4
-#include "weights_reshaped_2.h"    //Weights reshaped with a factor of 4 with 64 bands on the last layer
+#include "weights_reshaped.h"    //Weights reshaped with a factor of 4
+//#include "weights_reshaped_2.h"    //Weights reshaped with a factor of 4 with 64 bands on the last layer
 
 
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
@@ -29,7 +29,7 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 #pragma HLS STREAM variable=ds_ofm type=PIPO depth=4
 #pragma HLS STREAM variable=m1_feature_map type=PIPO depth=2
 #pragma HLS STREAM variable=m2_feature_map type=PIPO depth=2
-#pragma HLS STREAM variable=m3_feature_map type=PIPO depth=2
+#pragma HLS STREAM variable=m3_feature_map type=PIPO depth=1
 #pragma HLS STREAM variable=out_feature_map type=PIPO depth=2
 
 //#pragma HLS ARRAY_RESHAPE variable=in_feature_map type=cyclic factor=8
@@ -48,7 +48,7 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(shortcut_fm, ds_ofm);
 	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1, 16> (in_feature_map, m1_feature_map);
 	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2, X3, weights_l2, 8> (m1_feature_map, m2_feature_map);
-	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3, 8> (m2_feature_map, m3_feature_map);
+	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3,8> (m2_feature_map, m3_feature_map);
 //	conv_layer_k1<0,X1,Y1,Z1,NF1, weights_l1, 16> (in_feature_map, m1_feature_map);
 //	conv_layer_k1<1,X2,Y2,Z2,NF2, weights_l2, 16> (m1_feature_map, m2_feature_map);
 	add_shortcut<X3,Y3,NF3,ZDS>(m3_feature_map, ds_ofm, out_feature_map);
@@ -349,6 +349,56 @@ void conv_layer_k1(quant_reshp in_feature_map[fm_height*fm_width*nbands], quant_
 	}
 	return;
 }
+
+//K1 convolution for 1 PE
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_reshp *weights>
+void conv_layer_k1_1PE(quant_reshp in_feature_map[fm_height*fm_width*nbands], quant_reshp out_feature_map[fm_height*fm_width*nfilters]) {
+	quant_accum acc = 0;
+	int kernel_idx = 0;
+	int input_idx = 0;
+	int output_idx = 0;
+	ap_uint<3> range_idx = 0;
+	quant_reshp acc_tmp = 0;
+	quant_t acc_tmp_arr[RESHP_FACTOR];
+
+	loop_inputx:
+	for(int i = 0; i < fm_width; i++) {
+		loop_inputy:
+		for(int j = 0; j < fm_height; j++) {
+			kernel_idx = 0;
+			loop_filters:
+			for(int k = 0; k < nfilters; k++) {
+				loop_bands:
+				for(int z = 0; z < nbands; z++) {
+#pragma HLS PIPELINE
+					if(z % 4 == 0) acc += (quant_t)weights[kernel_idx].range(3,0) * (quant_t)in_feature_map[input_idx].range(3,0);
+					else if(z % 4 == 1)	acc += (quant_t)weights[kernel_idx].range(7,4) * (quant_t)in_feature_map[input_idx].range(7,4);
+					else if(z % 4 == 2)	acc += (quant_t)weights[kernel_idx].range(11,8) * (quant_t)in_feature_map[input_idx].range(11,8);
+					else if(z % 4 == 3){
+						acc += (quant_t)weights[kernel_idx].range(15,12) * (quant_t)in_feature_map[input_idx].range(15,12);
+						kernel_idx++;
+						input_idx++;
+					}
+					if(z == nbands-1) {
+						acc_tmp_arr[k % 4] = (quant_t)acc;
+						if(k % 4 == 3){
+							acc_tmp.range(3,0) = acc_tmp_arr[0];
+							acc_tmp.range(7,4) = acc_tmp_arr[1];
+							acc_tmp.range(11,8) = acc_tmp_arr[2];
+							acc_tmp.range(15,12) = acc_tmp_arr[3];
+							out_feature_map[output_idx] = acc_tmp; //ver o fator de escala aqui
+							output_idx++;
+						}
+						acc = 0;
+						if(k != nfilters-1) input_idx -= nbands/RESHP_FACTOR;
+					}
+				}
+			}
+		}
+	}
+	return;
+}
+
 //Convolutional layer to be aplied before a convolution with kernel and stride 2, that will clear the last row and column from the outputs
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_reshp *weights, params_t PE>
 #ifdef ARRAYS
@@ -370,7 +420,7 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 	int output_idx_odd = 0;
 	ap_uint<3> range_idx = 0;
 	quant_reshp acc_tmp = 0;
-	quant_t acc_tmp_arr[RESHP_FACTOR];
+//	quant_t acc_tmp_arr[RESHP_FACTOR];
 
 	loop_inputx:
 	for(int i = 0; i < fm_width-1; i++) {
@@ -402,13 +452,17 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 							kernel_idx++;
 							input_idx++;
 							if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
-								acc_tmp_arr[k % 4] = (quant_t)acc;
+//								acc_tmp_arr[k % 4] = (quant_t)acc;
+								if(k%4==0) acc_tmp.range(3,0) = (quant_t)acc;
+								else if(k%4==1) acc_tmp.range(7,4) = (quant_t)acc;
+								else if(k%4==2) acc_tmp.range(11,8) = (quant_t)acc;
+								else acc_tmp.range(15,12) = (quant_t)acc;
 								if(i % 2 == 0) {
 									if(k % 4 == 3){
-										acc_tmp.range(3,0) = acc_tmp_arr[0];
-										acc_tmp.range(7,4) = acc_tmp_arr[1];
-										acc_tmp.range(11,8) = acc_tmp_arr[2];
-										acc_tmp.range(15,12) = acc_tmp_arr[3];
+//										acc_tmp.range(3,0) = acc_tmp_arr[0];
+//										acc_tmp.range(7,4) = acc_tmp_arr[1];
+//										acc_tmp.range(11,8) = acc_tmp_arr[2];
+//										acc_tmp.range(15,12) = acc_tmp_arr[3];
 										out_feature_map[0][output_idx_even] = acc_tmp; //ver o fator de escala aqui
 										output_idx_even++;
 									}
@@ -417,10 +471,10 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 								}
 								else {
 									if(k % 4 == 3){
-										acc_tmp.range(3,0) = acc_tmp_arr[0];
-										acc_tmp.range(7,4) = acc_tmp_arr[1];
-										acc_tmp.range(11,8) = acc_tmp_arr[2];
-										acc_tmp.range(15,12) = acc_tmp_arr[3];
+//										acc_tmp.range(3,0) = acc_tmp_arr[0];
+//										acc_tmp.range(7,4) = acc_tmp_arr[1];
+//										acc_tmp.range(11,8) = acc_tmp_arr[2];
+//										acc_tmp.range(15,12) = acc_tmp_arr[3];
 										out_feature_map[1][output_idx_odd] = acc_tmp; //ver o fator de escala aqui
 										output_idx_odd++;
 									}

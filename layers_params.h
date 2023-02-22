@@ -21,7 +21,7 @@
 #define X2 9
 #define Y2 9
 #define Z2 48
-#define NF2 64
+#define NF2 48
 #define K2 2
 #define LAYER2_WEIGHTS (NF2*Z2*K2*K2)
 #define INPUT2_MEM_SIZE (X2*Y2*Z2)
@@ -33,7 +33,7 @@
 //Kernel size: 2
 #define X3 4
 #define Y3 4
-#define Z3 64
+#define Z3 48
 #define NF3 172
 #define K3 1
 #define LAYER3_WEIGHTS (Z3*NF3*K3*K3)
