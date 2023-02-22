@@ -34,7 +34,7 @@
 #define X3 4
 #define Y3 4
 #define Z3 64
-#define NF3 172
+#define NF3 168
 #define K3 1
 #define LAYER3_WEIGHTS (Z3*NF3*K3*K3)
 #define INPUT3_MEM_SIZE (X3*Y3*Z3)

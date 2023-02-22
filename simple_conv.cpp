@@ -10,7 +10,8 @@
 //#include "weights_k2_5.h"      //Weights for layer 2 k2 arranged by bands by every two pixels for 96 filters on layer 1 and 2
 //#include "weights_k2_6.h"        //Weights for layer 2 k2 arranged by bands by every two pixels for 3 layers
 //#include "weights_reshaped.h"    //Weights reshaped with a factor of 4
-#include "weights_reshaped_2.h"    //Weights reshaped with a factor of 4 with 64 bands on the last layer
+//#include "weights_reshaped_2.h"    //Weights reshaped with a factor of 4 with 64 bands on the last layer
+#include "weights_reshaped_4.h"    //Weights reshaped with a factor of 4 with 64 bands and 168 filters on the last layer
 
 
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
@@ -514,9 +515,9 @@ void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 			loop_filters:
 			for(int k = 0; k < nfilters; k++) {
 				loop_bands:
-				for(int z = 0; z < nbands*2/RESHP_FACTOR; z+=PE) {
-#pragma HLS PIPELINE II=4
-					for(int p = 0; p < PE; p++) {
+				for(int z = 0; z < nbands*2; z+=PE) {
+#pragma HLS PIPELINE
+					for(int p = 0; p < PE/RESHP_FACTOR; p++) {
 						acc_even += weights[kernel_idx].range(3,0) * (quant_t)in_feature_map[0][input_idx].range(3,0);
 						acc_odd += weights[kernel_idx].range(7,4) * (quant_t)in_feature_map[1][input_idx].range(3,0);
 						acc_even += weights[kernel_idx].range(11,8) * (quant_t)in_feature_map[0][input_idx].range(7,4);
@@ -529,7 +530,7 @@ void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 						kernel_idx++;
 						input_idx++;
 
-						if(z + p == (nbands*2)/RESHP_FACTOR-1) {
+						if(z + (p*RESHP_FACTOR) == nbands*2-RESHP_FACTOR) {
 							acc_even += acc_odd;
 							if(k%4==0) acc_tmp.range(3,0) = (quant_t)acc_even;
 							else if(k%4==1) acc_tmp.range(7,4) = (quant_t)acc_even;

@@ -19,7 +19,7 @@ nf2 = 64
 k2 = 2
 
 z3 = 64
-nf3 = 172
+nf3 = 168
 k3 = 1
 
 reshp_factor = 4
