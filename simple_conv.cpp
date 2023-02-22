@@ -97,7 +97,7 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 
 #ifdef ARRAYS
-void read_ifm(hls::stream<strmio_t> &strm_in, quant_reshp in_feature_map[INPUT1_MEM_SIZE], quant_t shortcut_ifm[INPUT1_MEM_SIZE]){
+void read_ifm(hls::stream<strmio_t> &strm_in, quant_reshp in_feature_map[INPUT1_MEM_SIZE/RESHP_FACTOR], quant_t shortcut_ifm[INPUT1_MEM_SIZE]){
 #else
 void read_ifm(hls::stream<strmio_t> &strm_in, hls::stream<quant_t> &in_feature_map){
 #endif
@@ -272,7 +272,7 @@ void average_pool(quant_t in_feature_map[fm_width*fm_height*nbands], quant_t out
 }
 
 template<params_t fm_width, params_t fm_height, params_t nbands_conv, params_t nbands_shortcut>
-void add_shortcut(quant_reshp conv_feature_map[fm_width*fm_height*nbands_conv], quant_t shortcut[fm_width*fm_height*nbands_shortcut], quant_reshp out_feature_map[fm_width*fm_height*nbands_conv]){
+void add_shortcut(quant_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESHP_FACTOR], quant_t shortcut[fm_width*fm_height*nbands_shortcut], quant_reshp out_feature_map[fm_width*fm_height*nbands_conv/RESHP_FACTOR]){
 	int idx_conv = 0;
 	int idx_shortcut = 0;
 	quant_sum sum = 0;
@@ -332,7 +332,7 @@ void add_shortcut(quant_reshp conv_feature_map[fm_width*fm_height*nbands_conv], 
 }
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_reshp *weights, params_t PE>
-void conv_layer_k1(quant_reshp in_feature_map[fm_height*fm_width*nbands], quant_reshp out_feature_map[fm_height*fm_width*nfilters]) {
+void conv_layer_k1(quant_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], quant_reshp out_feature_map[fm_height*fm_width*nfilters/RESHP_FACTOR]) {
 	quant_accum acc = 0;
 	int kernel_idx = 0;
 	int input_idx = 0;
@@ -440,7 +440,7 @@ void conv_layer_k1_1PE(quant_reshp in_feature_map[fm_height*fm_width*nbands], qu
 //Convolutional layer to be aplied before a convolution with kernel and stride 2, that will clear the last row and column from the outputs
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, quant_reshp *weights, params_t PE>
 #ifdef ARRAYS
-void conv_layer_k1_b4k2(quant_reshp in_feature_map[fm_height*fm_width*nbands], quant_reshp out_feature_map[2][(fm_height-1)*(fm_width-1)*nfilters/2/RESHP_FACTOR]) {
+void conv_layer_k1_b4k2(quant_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], quant_reshp out_feature_map[2][(fm_height-1)*(fm_width-1)*nfilters/2/RESHP_FACTOR]) {
 #else
 void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out) {
 #endif
@@ -527,7 +527,7 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim,quant_reshp *weights, params_t PE>
 #ifdef ARRAYS
-void conv_layer_k2(quant_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP_FACTOR], quant_reshp out_feature_map[(fm_height/2)*(fm_width/2)*nfilters]) {
+void conv_layer_k2(quant_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP_FACTOR], quant_reshp out_feature_map[(fm_height/2)*(fm_width/2)*nfilters/RESHP_FACTOR]) {
 #else
 void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out) {
 #endif
