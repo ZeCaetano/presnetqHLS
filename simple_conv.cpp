@@ -9,8 +9,8 @@
 //#include "weights_k2_4.h"      //Weights for layer 2 k2 arranged by bands by every two pixels for 48 filters on layer 2
 //#include "weights_k2_5.h"      //Weights for layer 2 k2 arranged by bands by every two pixels for 96 filters on layer 1 and 2
 //#include "weights_k2_6.h"        //Weights for layer 2 k2 arranged by bands by every two pixels for 3 layers
-#include "weights_reshaped.h"    //Weights reshaped with a factor of 4
-//#include "weights_reshaped_2.h"    //Weights reshaped with a factor of 4 with 64 bands on the last layer
+//#include "weights_reshaped.h"    //Weights reshaped with a factor of 4
+#include "weights_reshaped_2.h"    //Weights reshaped with a factor of 4 with 64 bands on the last layer
 
 
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
@@ -48,7 +48,7 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(shortcut_fm, ds_ofm);
 	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1, 16> (in_feature_map, m1_feature_map);
 	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2, X3, weights_l2, 8> (m1_feature_map, m2_feature_map);
-	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3,8> (m2_feature_map, m3_feature_map);
+	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3,16> (m2_feature_map, m3_feature_map);
 //	conv_layer_k1<0,X1,Y1,Z1,NF1, weights_l1, 16> (in_feature_map, m1_feature_map);
 //	conv_layer_k1<1,X2,Y2,Z2,NF2, weights_l2, 16> (m1_feature_map, m2_feature_map);
 	add_shortcut<X3,Y3,NF3,ZDS>(m3_feature_map, ds_ofm, out_feature_map);
@@ -329,12 +329,11 @@ void conv_layer_k1(quant_reshp in_feature_map[fm_height*fm_width*nbands], quant_
 						kernel_idx++;
 						input_idx++;
 						if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
-							acc_tmp_arr[k % 4] = (quant_t)acc;
-							if(k % 4 == 3){
-								acc_tmp.range(3,0) = acc_tmp_arr[0];
-								acc_tmp.range(7,4) = acc_tmp_arr[1];
-								acc_tmp.range(11,8) = acc_tmp_arr[2];
-								acc_tmp.range(15,12) = acc_tmp_arr[3];
+							if(k%4==0) acc_tmp.range(3,0) = (quant_t)acc;
+							else if(k%4==1) acc_tmp.range(7,4) = (quant_t)acc;
+							else if(k%4==2) acc_tmp.range(11,8) = (quant_t)acc;
+							else {
+								acc_tmp.range(15,12) = (quant_t)acc;
 								out_feature_map[output_idx] = acc_tmp; //ver o fator de escala aqui
 								output_idx++;
 							}
@@ -381,6 +380,7 @@ void conv_layer_k1_1PE(quant_reshp in_feature_map[fm_height*fm_width*nbands], qu
 					}
 					if(z == nbands-1) {
 						acc_tmp_arr[k % 4] = (quant_t)acc;
+
 						if(k % 4 == 3){
 							acc_tmp.range(3,0) = acc_tmp_arr[0];
 							acc_tmp.range(7,4) = acc_tmp_arr[1];
@@ -452,35 +452,24 @@ void conv_layer_k1_b4k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &str
 							kernel_idx++;
 							input_idx++;
 							if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
-//								acc_tmp_arr[k % 4] = (quant_t)acc;
 								if(k%4==0) acc_tmp.range(3,0) = (quant_t)acc;
 								else if(k%4==1) acc_tmp.range(7,4) = (quant_t)acc;
 								else if(k%4==2) acc_tmp.range(11,8) = (quant_t)acc;
-								else acc_tmp.range(15,12) = (quant_t)acc;
-								if(i % 2 == 0) {
-									if(k % 4 == 3){
-//										acc_tmp.range(3,0) = acc_tmp_arr[0];
-//										acc_tmp.range(7,4) = acc_tmp_arr[1];
-//										acc_tmp.range(11,8) = acc_tmp_arr[2];
-//										acc_tmp.range(15,12) = acc_tmp_arr[3];
+								else {
+									acc_tmp.range(15,12) = (quant_t)acc;
+
+									if(i % 2 == 0) {
 										out_feature_map[0][output_idx_even] = acc_tmp; //ver o fator de escala aqui
 										output_idx_even++;
 									}
-	//								printf("index: [0][%d] - %d\n", output_idx_even, (int)out_feature_map[0][output_idx_even]);
-	//								printf("index: [0][%d] - %d\n", output_idx_even, (int)acc);
-								}
-								else {
-									if(k % 4 == 3){
-//										acc_tmp.range(3,0) = acc_tmp_arr[0];
-//										acc_tmp.range(7,4) = acc_tmp_arr[1];
-//										acc_tmp.range(11,8) = acc_tmp_arr[2];
-//										acc_tmp.range(15,12) = acc_tmp_arr[3];
+		//								printf("index: [0][%d] - %d\n", output_idx_even, (int)out_feature_map[0][output_idx_even]);
+		//								printf("index: [0][%d] - %d\n", output_idx_even, (int)acc);
+									else {
 										out_feature_map[1][output_idx_odd] = acc_tmp; //ver o fator de escala aqui
 										output_idx_odd++;
 									}
-	//								printf("index: [1][%d] - %d\n", output_idx_odd, (int)out_feature_map[1][output_idx_odd]);
+		//								printf("index: [1][%d] - %d\n", output_idx_odd, (int)out_feature_map[1][output_idx_odd]);
 								}
-
 								if(k != nfilters-1) input_idx -= nbands/RESHP_FACTOR;
 								acc = 0;
 								break;
@@ -542,12 +531,11 @@ void conv_layer_k2(hls::stream<quant_t> &strm_in, hls::stream<quant_t> &strm_out
 
 						if(z + p == (nbands*2)/RESHP_FACTOR-1) {
 							acc_even += acc_odd;
-							acc_tmp_arr[k % 4] = (quant_t)acc_even;
-							if(k % 4 == 3){
-								acc_tmp.range(3,0) = acc_tmp_arr[0];
-								acc_tmp.range(7,4) = acc_tmp_arr[1];
-								acc_tmp.range(11,8) = acc_tmp_arr[2];
-								acc_tmp.range(15,12) = acc_tmp_arr[3];
+							if(k%4==0) acc_tmp.range(3,0) = (quant_t)acc_even;
+							else if(k%4==1) acc_tmp.range(7,4) = (quant_t)acc_even;
+							else if(k%4==2) acc_tmp.range(11,8) = (quant_t)acc_even;
+							else {
+								acc_tmp.range(15,12) = (quant_t)acc_even;
 								out_feature_map[output_idx] = acc_tmp; //ver o fator de escala aqui
 								output_idx++;
 							}
