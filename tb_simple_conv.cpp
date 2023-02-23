@@ -349,7 +349,7 @@ int main() {
 					sw_image_out_3 +                                        /* base address */
 					i * (X3 * Y3);               /* offset (number of images) */
 
-		    sw_convolution_3D(sw_image_out_2, fp_weights, image_out_3, Z3, X3, K3, false);
+		    sw_convolution_3D(sw_image_out_2, fp_weights, image_out_3, Z3, X3, K3, true);
 		}
 
 
