@@ -2,18 +2,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static quant_t image_in[INPUT1_MEM_SIZE];
-static quant_t kernel[WEIGHTS_MEM_SIZE];
+static quant_act image_in[INPUT1_MEM_SIZE];
+static quant_wght kernel[WEIGHTS_MEM_SIZE];
 
-quant_t hw_image_out[OUTPUT_MEM_SIZE];
-quant_t sw_image_out_1[OUT1_FM_MEM_SIZE];
-quant_t sw_image_out_2[OUT2_FM_MEM_SIZE];
-quant_t sw_image_out_3[OUT3_FM_MEM_SIZE];
-quant_t sw_image_out[OUTPUT_MEM_SIZE];
-quant_t sw_image_out_ds[OUTDS_FM_MEM_SIZE];
+quant_act hw_image_out[OUTPUT_MEM_SIZE];
+quant_act sw_image_out_1[OUT1_FM_MEM_SIZE];
+quant_act sw_image_out_2[OUT2_FM_MEM_SIZE];
+quant_act sw_image_out_3[OUT3_FM_MEM_SIZE];
+quant_act sw_image_out[OUTPUT_MEM_SIZE];
+quant_act sw_image_out_ds[OUTDS_FM_MEM_SIZE];
 
 //Performs software-only matrix convolution.
-void sw_convolution_3D(quant_t *image_in, const quant_t *weights, quant_t *image_out, int nbands, int fm_size, int kernel_size, bool relu) {
+void sw_convolution_3D(quant_act *image_in, const quant_wght *weights, quant_act *image_out, int nbands, int fm_size, int kernel_size, bool relu) {
 	for (int i = 0; i < fm_size; i++) {
 		for (int j = 0; j < fm_size; j++) {
 			quant_accum accum = 0;
@@ -39,16 +39,16 @@ void sw_convolution_3D(quant_t *image_in, const quant_t *weights, quant_t *image
 			}
 //			printf("\n");
 //			printf("%X  ", accum);
-//			printf("%X\n", (quant_t)accum);
-			image_out[ i * fm_size + j] = (quant_t)accum;
+//			printf("%X\n", (quant_act)accum);
+			image_out[ i * fm_size + j] = (quant_act)accum;
 			if(relu)
-				image_out[ i * fm_size + j] = (int)image_out[ i * fm_size + j] > 0 ? image_out[ i * fm_size + j] : (quant_t)0;
+				image_out[ i * fm_size + j] = (int)image_out[ i * fm_size + j] > 0 ? image_out[ i * fm_size + j] : (quant_act)0;
 		}
 	}
 
 }
 
-void sw_convolution_3D_k2(quant_t *image_in, const quant_t *weights, quant_t *image_out, int nbands, int fm_size, int kernel_size, int output_size) {
+void sw_convolution_3D_k2(quant_act *image_in, const quant_wght *weights, quant_act *image_out, int nbands, int fm_size, int kernel_size, int output_size) {
 	//stride = 2
 	for (int i = 0; i < fm_size-1; i+=2) {
 		for (int j = 0; j < fm_size-1; j+=2) {
@@ -75,16 +75,16 @@ void sw_convolution_3D_k2(quant_t *image_in, const quant_t *weights, quant_t *im
 			}
 //			printf("\n");
 //			printf("%X  ", accum);
-//			printf("%X\n", (quant_t)accum);
+//			printf("%X\n", (quant_act)accum);
 //			printf("index %d\n", (i/2) * output_size + (j/2));
-			image_out[ (i/2) * output_size + (j/2)] = (quant_t)accum;
+			image_out[ (i/2) * output_size + (j/2)] = (quant_act)accum;
 		}
 	}
 
 }
 
 
-void average_pooling(quant_t *image_in, quant_t *image_out, int fm_size, int out_size, int nbands, int kernel_size){
+void average_pooling(quant_act *image_in, quant_act *image_out, int fm_size, int out_size, int nbands, int kernel_size){
 	int accum;
 	int avg;
 	for(int z = 0; z < nbands; z++){
@@ -99,14 +99,14 @@ void average_pooling(quant_t *image_in, quant_t *image_out, int fm_size, int out
 				avg = accum / (kernel_size*kernel_size);
 //				printf("SW idx: %d accum: %d    avg: %d\n", z*out_size*out_size + (i/2)*out_size + (j/2), accum, avg);
 
-				image_out[z*out_size*out_size + (i/2)*out_size + (j/2)] = (quant_t) avg;
+				image_out[z*out_size*out_size + (i/2)*out_size + (j/2)] = (quant_act) avg;
 			}
 		}
 	}
 
 }
 
-void sum_shorctut(quant_t *conv_fm, quant_t *shortcut, quant_t *fm_out, int fm_size, int nbands_conv, int nbands_shortcut){
+void sum_shorctut(quant_act *conv_fm, quant_act *shortcut, quant_act *fm_out, int fm_size, int nbands_conv, int nbands_shortcut){
 	int sum = 0;
 	for(int z = 0; z < nbands_conv; z++){
 		for (int i = 0; i < fm_size; i++) {
@@ -117,7 +117,7 @@ void sum_shorctut(quant_t *conv_fm, quant_t *shortcut, quant_t *fm_out, int fm_s
 				else {
 					sum = conv_fm[z*fm_size*fm_size + i*fm_size + j] + shortcut[z*fm_size*fm_size + i*fm_size + j];
 				}
-				fm_out[z*fm_size*fm_size + i*fm_size + j] = (quant_t) sum;
+				fm_out[z*fm_size*fm_size + i*fm_size + j] = (quant_act) sum;
 			}
 		}
 	}
@@ -148,10 +148,10 @@ void sum_shorctut(quant_t *conv_fm, quant_t *shortcut, quant_t *fm_out, int fm_s
 void init_fm(){
 
 	int npixels = 0;
-	quant_t values1[16] = {0,1,2,3,4,5,6,7,-1,-2,-3,-4,-5,-6,-7,-8};
-	quant_t values2[16] = {-1,-2,-3,-4,3,4,5,0,1,2,6,7,-5,-6,-7,-8};
-	quant_t values3[16] = {4,5,-6,0,1,2,3,-7,-8,6,7,-1,-2,-3,-4,-5};
-	quant_t values4[16] = {-7,-8,6,7,-1,4,5,-3,-4,-5,-6,0,1,2,3,-2};
+	quant_act values1[16] = {0,1,2,3,4,5,6,7,-1,-2,-3,-4,-5,-6,-7,-8};
+	quant_wght values2[4] = {-2,-1,0,1};
+	quant_wght values3[4] = {1,0,-1,-2};
+	quant_wght values4[4] = {-1,1,-2,0};
 
 //	printf("Input Image\n\r");
 	for(int k = 0; k < Z1; k++) {
@@ -165,11 +165,11 @@ void init_fm(){
 		}
 	}
 //	printf("Weights1\n\r");
-	for(int k = 0; k < Z1; k++) {
-		for(int i = 0; i < NF1; i++) {
+	for(int i = 0; i < NF1; i++) {
+		for(int k = 0; k < Z1; k++) {
 			for(int j = 0; j < K1; j++) {
 				for(int l = 0; l < K1; l++) {
-					kernel[(k*NF1*K1*K1)+(i * K1*K1 + (j * K1) + l)] = values2[(l+j+i+k)%16];
+					kernel[(i*Z1*K1*K1)+(k * K1*K1 + (j * K1) + l)] = values2[(l+j+i+k)%4];
 //					printf("%d ", (int)kernel[(k*NF1*K1*K1)+(i * K1*K1 + (j * K1) + l)]);
 				}
 			}
@@ -178,11 +178,11 @@ void init_fm(){
 	}
 //	printf("\n\n\n\n\n\n");
 //	printf("\n\nWeights2\n\r");
-	for(int k = 0; k < Z2; k++) {
-		for(int i = 0; i < NF2; i++) {
+	for(int i = 0; i < NF2; i++) {
+		for(int k = 0; k < Z2; k++) {
 			for(int j = 0; j < K2; j++) {
 				for(int l = 0; l < K2; l++) {
-					kernel[LAYER1_WEIGHTS + (k*NF2*K2*K2)+(i * K2*K2 + (j * K2) + l)] = values3[(l+j+i+k)%16];
+					kernel[LAYER1_WEIGHTS + (i*Z2*K2*K2)+(k * K2*K2 + (j * K2) + l)] = values3[(l+j+i+k)%4];
 //					printf("%d ", (int)kernel[LAYER1_WEIGHTS + ((k*NF2*K2*K2)+(i * K2*K2 + (j * K2) + l))]);
 				}
 			}
@@ -190,11 +190,11 @@ void init_fm(){
 //		printf("\n\r");
 	}
 //	printf("\n\nWeights3\n\r");
-	for(int k = 0; k < Z3; k++) {
-		for(int i = 0; i < NF3; i++) {
+	for(int i = 0; i < NF3; i++) {
+		for(int k = 0; k < Z3; k++) {
 			for(int j = 0; j < K3; j++) {
 				for(int l = 0; l < K3; l++) {
-					kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + ((k*NF3*K3*K3)+(i * K3*K3 + (j * K3) + l))] = values4[(l+j+i+k)%16];
+					kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + ((i*Z3*K3*K3)+(k * K3*K3 + (j * K3) + l))] = values4[(l+j+i+k)%4];
 //					printf("%d ", (int)kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + ((k*NF3*K3*K3)+(i * K3*K3 + (j * K3) + l))]);
 				}
 			}
@@ -313,11 +313,11 @@ int main() {
 	//Layer 1
 	for(int i = 0; i < NF1; i++){
 		/* Address where the convolutional weights are stored */
-		quant_t *fp_weights =
+		quant_wght *fp_weights =
 				 kernel +                                       /* start address of params */
 				i * (Z1 * K1 * K1); /* kernel of OFM(i) */
 
-		quant_t *image_out_1 =
+		quant_act *image_out_1 =
 				sw_image_out_1 +                                        /* base address */
 				i * (X2 * Y2);               /* offset (number of images) */
 
@@ -327,11 +327,11 @@ int main() {
 //	printf("---------------------SW Layer 2------------------------\n");
 	for(int i = 0; i < NF2; i++){
 		/* Address where the convolutional weights are stored */
-		quant_t *fp_weights =
+		quant_wght *fp_weights =
 				 kernel +                                       /* start address of params */
 				LAYER1_WEIGHTS + (i * (Z2 * K2 * K2)); /* kernel of OFM(i) */
 
-		quant_t *image_out_2 =
+		quant_act *image_out_2 =
 				sw_image_out_2 +                                        /* base address */
 				i * (X3 * Y3);               /* offset (number of images) */
 
@@ -341,11 +341,11 @@ int main() {
 //	printf("---------------------SW Layer 3------------------------\n");
 		for(int i = 0; i < NF3; i++){
 			/* Address where the convolutional weights are stored */
-			quant_t *fp_weights =
+			quant_wght *fp_weights =
 					 kernel +                                       /* start address of params */
 					LAYER1_WEIGHTS + LAYER2_WEIGHTS + (i * (Z3 * K3 * K3)); /* kernel of OFM(i) */
 
-			quant_t *image_out_3 =
+			quant_act *image_out_3 =
 					sw_image_out_3 +                                        /* base address */
 					i * (X3 * Y3);               /* offset (number of images) */
 
