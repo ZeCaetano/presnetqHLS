@@ -48,7 +48,7 @@ void sw_convolution_3D(quant_act *image_in, const quant_wght *weights, quant_act
 
 }
 
-void sw_convolution_3D_k2(quant_act *image_in, const quant_wght *weights, quant_act *image_out, int nbands, int fm_size, int kernel_size, int output_size) {
+void sw_convolution_3D_k2(quant_act *image_in, const quant_wght *weights, quant_act *image_out, int nbands, int fm_size, int kernel_size, int output_size, bool relu) {
 	//stride = 2
 	for (int i = 0; i < fm_size-1; i+=2) {
 		for (int j = 0; j < fm_size-1; j+=2) {
@@ -78,6 +78,8 @@ void sw_convolution_3D_k2(quant_act *image_in, const quant_wght *weights, quant_
 //			printf("%X\n", (quant_act)accum);
 //			printf("index %d\n", (i/2) * output_size + (j/2));
 			image_out[ (i/2) * output_size + (j/2)] = (quant_act)accum;
+			if(relu)
+				image_out[ (i/2) * output_size + (j/2)] = (int)image_out[ (i/2) * output_size + (j/2)] > 0 ? image_out[ (i/2) * output_size + (j/2)] : (quant_act)0;
 		}
 	}
 
@@ -321,7 +323,7 @@ int main() {
 				sw_image_out_1 +                                        /* base address */
 				i * (X2 * Y2);               /* offset (number of images) */
 
-	    sw_convolution_3D(image_in, fp_weights, image_out_1, Z1, X1, K1, false);
+	    sw_convolution_3D(image_in, fp_weights, image_out_1, Z1, X1, K1, true);
 	}
 	//Layer 2
 //	printf("---------------------SW Layer 2------------------------\n");
@@ -336,7 +338,7 @@ int main() {
 				i * (X3 * Y3);               /* offset (number of images) */
 
 //	    sw_convolution_3D(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, false);
-		sw_convolution_3D_k2(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, X3);
+		sw_convolution_3D_k2(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, X3, true);
 	}
 //	printf("---------------------SW Layer 3------------------------\n");
 		for(int i = 0; i < NF3; i++){
