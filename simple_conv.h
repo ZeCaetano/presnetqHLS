@@ -11,7 +11,7 @@
 #define WEIGHTS_WIDTH 4
 #define ACT_WIDTH 4
 #define NLAYERS 2
-#define NPATCHES 6
+#define NPATCHES 1
 
 
 //typedef ap_fixed<4,2,AP_RND> quant_t;
@@ -60,7 +60,10 @@ template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nban
 void conv_layer_k1_1PE(act_reshp in_feature_map[fm_height*fm_width*nbands], act_reshp out_feature_map[fm_height*fm_width*nfilters]);
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, wght_reshp *weights, params_t PE,bool relu>
-void conv_layer_k1_b4k2(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[2][(fm_height-1)*(fm_width-1)*nfilters/2/RESHP_FACTOR]);
+void conv_layer_k1_b4k2_x9(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[2][(fm_height-1)*(fm_width-1)*nfilters/2/RESHP_FACTOR]);
+
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, wght_reshp *weights, params_t PE,bool relu>
+void conv_layer_k1_b4k2_x4(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[2][(fm_height-1)*(fm_width-1)*nfilters/2/RESHP_FACTOR]);
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim,wght_reshp *weights, params_t PE, bool relu>
 void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP_FACTOR], act_reshp out_feature_map[(fm_height/2)*(fm_width/2)*nfilters/RESHP_FACTOR]);
@@ -68,6 +71,7 @@ void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP
 void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out);
 void read_ifm(hls::stream<strmio_t> &strm_in, act_reshp in_feature_map[X1*Y1*Z1], quant_act shortcut_ifm[X1*Y1*Z1]);
 void write_ofm(act_reshp *ofm, hls::stream<strmio_t> &strm_out);
+void write_dsofm(quant_act ofm[OUTDS_FM_MEM_SIZE], hls::stream<strmio_t> &strm_out);
 
 #else
 

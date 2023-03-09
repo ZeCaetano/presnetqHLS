@@ -41,10 +41,11 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 #pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map, shortcut_fm);
-	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(shortcut_fm, ds_ofm);
-	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1, 24, true> (in_feature_map, m1_feature_map);
+//	write_dsofm(ds_ofm, strm_out);
+	conv_layer_k1_b4k2_x4<0,X1,Y1,Z1,NF1, weights_l1, 8, true> (in_feature_map, m1_feature_map);
 	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2, X3, weights_l2, 8, true> (m1_feature_map, m2_feature_map);
-	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3,32,true> (m2_feature_map, m3_feature_map);
+	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3,8,true> (m2_feature_map, m3_feature_map);
+	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(shortcut_fm, ds_ofm);
 	add_shortcut<X3,Y3,NF3,ZDS>(m3_feature_map, ds_ofm, out_feature_map);
 	write_ofm(out_feature_map, strm_out);
 }
@@ -103,6 +104,19 @@ void read_ifm(hls::stream<strmio_t> &strm_in, act_reshp in_feature_map[INPUT1_ME
 	}
 }
 
+void write_dsofm(quant_act ofm[OUTDS_FM_MEM_SIZE], hls::stream<strmio_t> &strm_out) {
+	strmio_t tmpout;
+	//Write output fm to stream
+	for(int i = 0; i < OUTDS_FM_MEM_SIZE; i++){
+		if(i == OUTDS_FM_MEM_SIZE - 1) tmpout.last = 1;
+		else tmpout.last = 0;
+		printf("sending: %d\n", (int)ofm[i]);
+		tmpout.data = ofm[i];
+		tmpout.keep = 0xF;
+		tmpout.strb = 0xF;
+		strm_out.write(tmpout);
+	}
+}
 
 void write_ofm(act_reshp ofm[OUTPUT_MEM_SIZE/RESHP_FACTOR], hls::stream<strmio_t> &strm_out) {
 	strmio_t tmpout;
@@ -157,7 +171,7 @@ void write_ofm(act_reshp ofm[OUTPUT_MEM_SIZE/RESHP_FACTOR], hls::stream<strmio_t
 
 template<params_t fm_width, params_t fm_height, params_t output_width, params_t output_height, params_t nbands, params_t kernel_size>
 void average_pool(quant_act in_feature_map[fm_width*fm_height*nbands], quant_act out_feature_map[output_height*output_width*nbands]){
-	quant_accum accum = 0;
+	ap_int<32> accum = 0;
 	quant_act avg = 0;
 	ap_uint<3> div = kernel_size*kernel_size;
 
@@ -168,6 +182,7 @@ void average_pool(quant_act in_feature_map[fm_width*fm_height*nbands], quant_act
 					for(int l = 0; l < kernel_size; l++){
 #pragma HLS PIPELINE
 						accum += in_feature_map[(i+k)*nbands*fm_height + (j+l)*nbands + z];
+//						printf("accum: %d\n", (int)accum);
 						if(k == kernel_size-1 && l == kernel_size-1){
 							avg = accum / div;
 							out_feature_map[(i/2)*nbands*output_height+ (j/2)*nbands + z] = (quant_act) avg;
@@ -211,6 +226,7 @@ void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESH
 				else {
 					sum = (quant_act)conv_feature_map[idx_conv].range(7,0) + shortcut[idx_shortcut];
 					out_feature_map[idx_conv].range(7,0) = (quant_act) sum;
+					printf("ds out: %d\n",shortcut[idx_shortcut]);
 					idx_shortcut++;
 					sum = (quant_act)conv_feature_map[idx_conv].range(15,8) + shortcut[idx_shortcut];
 					out_feature_map[idx_conv].range(15,8) = (quant_act) sum;
@@ -305,7 +321,7 @@ void conv_layer_k1(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACT
 
 //Convolutional layer to be aplied before a convolution with kernel and stride 2, that will clear the last row and column from the outputs
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, wght_reshp *weights, params_t PE, bool relu>
-void conv_layer_k1_b4k2(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[2][(fm_height-1)*(fm_width-1)*nfilters/2/RESHP_FACTOR]) {
+void conv_layer_k1_b4k2_x9(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[2][(fm_height-1)*(fm_width-1)*nfilters/2/RESHP_FACTOR]) {
 	quant_accum acc = 0;
 	int kernel_idx = 0;
 	int input_idx = 0;
@@ -385,6 +401,78 @@ void conv_layer_k1_b4k2(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP
 	return;
 }
 
+//Convolutional layer to be aplied before a convolution with kernel and stride 2, that will clear the last row and column from the outputs
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, wght_reshp *weights, params_t PE, bool relu>
+void conv_layer_k1_b4k2_x4(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[2][(fm_height-1)*(fm_width-1)*nfilters/2/RESHP_FACTOR]) {
+	quant_accum acc = 0;
+	int kernel_idx = 0;
+	int input_idx = 0;
+	int output_idx_even = 0;
+	int output_idx_odd = 0;
+	ap_uint<3> range_idx = 0;
+	act_reshp acc_tmp = 0;
+	act_reshp tmp_in = 0;
+	wght_reshp tmp_weight = 0;
+	quant_act tmp_out = 0;
+
+	loop_inputx:
+	for(int i = 0; i < fm_width; i++) {
+		loop_inputy:
+		for(int j = 0; j < fm_height; j++) {
+			kernel_idx = 0;
+			loop_filters:
+			for(int k = 0; k < nfilters; k++) {
+				loop_bands:
+				for(int z = 0; z < nbands; z+=PE) {
+#pragma HLS PIPELINE
+					for(int p = 0; p < PE/RESHP_FACTOR; p++) {
+						tmp_in = in_feature_map[input_idx];
+						tmp_weight = weights[kernel_idx];
+						acc += (quant_wght)tmp_weight.range(1,0) * (quant_act)tmp_in.range(7,0);
+						acc += (quant_wght)tmp_weight.range(3,2) * (quant_act)tmp_in.range(15,8);
+						acc += (quant_wght)tmp_weight.range(5,4) * (quant_act)tmp_in.range(23,16);
+						acc += (quant_wght)tmp_weight.range(7,6) * (quant_act)tmp_in.range(31,24);
+						acc += (quant_wght)tmp_weight.range(9,8) * (quant_act)tmp_in.range(39,32);
+						acc += (quant_wght)tmp_weight.range(11,10) * (quant_act)tmp_in.range(47,40);
+						acc += (quant_wght)tmp_weight.range(13,12) * (quant_act)tmp_in.range(55,48);
+						acc += (quant_wght)tmp_weight.range(15,14) * (quant_act)tmp_in.range(63,56);
+						kernel_idx++;
+						input_idx++;
+						if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
+							if(relu) tmp_out = (ap_int<1>)((quant_act)acc[3]) == 0 ? tmp_out : (quant_act)0;
+							if(k%RESHP_FACTOR==0) acc_tmp.range(7,0) = tmp_out;
+							else if(k%RESHP_FACTOR==1) acc_tmp.range(15,8) = tmp_out;
+							else if(k%RESHP_FACTOR==2) acc_tmp.range(23,16) = tmp_out;
+							else if(k%RESHP_FACTOR==3) acc_tmp.range(31,24) = tmp_out;
+							else if(k%RESHP_FACTOR==4) acc_tmp.range(39,32) = tmp_out;
+							else if(k%RESHP_FACTOR==5) acc_tmp.range(47,40) = tmp_out;
+							else if(k%RESHP_FACTOR==6) acc_tmp.range(55,48) = tmp_out;
+							else {
+								acc_tmp.range(63,56) = tmp_out;
+
+								if(i % 2 == 0) {
+									out_feature_map[0][output_idx_even] = acc_tmp; //ver o fator de escala aqui
+									output_idx_even++;
+								}
+	//								printf("index: [0][%d] - %d\n", output_idx_even, (int)out_feature_map[0][output_idx_even]);
+	//								printf("index: [0][%d] - %d\n", output_idx_even, (int)acc);
+								else {
+									out_feature_map[1][output_idx_odd] = acc_tmp; //ver o fator de escala aqui
+									output_idx_odd++;
+								}
+	//								printf("index: [1][%d] - %d\n", output_idx_odd, (int)out_feature_map[1][output_idx_odd]);
+							}
+							if(k != nfilters-1) input_idx -= nbands/RESHP_FACTOR;
+							acc = 0;
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+	return;
+}
 //Convolution with stride 2
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim,wght_reshp *weights, params_t PE, bool relu>
 void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP_FACTOR], act_reshp out_feature_map[(fm_height/2)*(fm_width/2)*nfilters/RESHP_FACTOR]) {
