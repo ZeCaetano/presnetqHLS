@@ -14,7 +14,8 @@
 //#include "weights_reshaped_3.h"    //Weights reshaped with a factor of 8 with 64 bands and 168 filters on the last layer
 //#include "weights_reshaped_4.h"    //Weights reshaped with a factor of 4 with 64 bands and 168 filters on the last layer
 //#include "weights_reshaped_5.h"    //Weights reshaped for 8x2 quantization with a factor of 8 with 64 bands and 168 filters on the last layer
-#include "weights_reshaped_6.h"    //Weights reshaped for 8x2 quantization with a factor of 8 with 64 bands and 168 filters on the last layer
+//#include "weights_reshaped_6.h"    //Weights reshaped for 8x2 quantization with a factor of 8 with 64 bands and 168 filters on the last layer
+#include "weights.h"
 
 
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
@@ -41,11 +42,31 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 #pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map, shortcut_fm);
+
+	conv_layer_k1<0,X1,Y1,Z1,NF1, weights_l1,8,false> (in_feature_map, l1_fm);
+
+	conv_layer_k1<1,X2,Y2,Z2,NF2, weights_l2,8,true> (l1_fm, l2_fm);
+	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3,8,true> (l2_fm, l3_fm);
+	conv_layer_k1<3,X4,Y4,Z4,NF4, weights_l4,8,false> (l3_fm, l4_fm);
+
+	conv_layer_k1<4,X2,Y2,Z2,NF2, weights_l2,8,true> (l4_fm, l5_fm);
+	conv_layer_k1<5,X3,Y3,Z3,NF3, weights_l3,8,true> (l5_fm, l6_fm);
+	conv_layer_k1<6,X4,Y4,Z4,NF4, weights_l4,8,false> (l6_fm, l7_fm);
+
+	conv_layer_k1<7,X2,Y2,Z2,NF2, weights_l2,8,true> (l7_fm, l8_fm);
+	conv_layer_k1<8,X3,Y3,Z3,NF3, weights_l3,8,true> (l8_fm, l9_fm);
+	conv_layer_k1<9,X4,Y4,Z4,NF4, weights_l4,8,false> (l9_fm, l10_fm);
+
+
+
+
+
 	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(shortcut_fm, ds_ofm);
 	conv_layer_k1_b4k2<0,X1,Y1,Z1,NF1, weights_l1, 24> (in_feature_map, m1_feature_map);
 	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2, X3, weights_l2, 8> (m1_feature_map, m2_feature_map);
 	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3,32,true> (m2_feature_map, m3_feature_map);
 	add_shortcut<X3,Y3,NF3,ZDS>(m3_feature_map, ds_ofm, out_feature_map);
+
 	write_ofm(out_feature_map, strm_out);
 }
 
@@ -304,7 +325,7 @@ void conv_layer_k1(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACT
 }
 
 //Convolutional layer to be aplied before a convolution with kernel and stride 2, that will clear the last row and column from the outputs
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, wght_reshp *weights, params_t PE>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, wght_reshp *weights, params_t PE, bool relu>
 void conv_layer_k1_b4k2(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[2][(fm_height-1)*(fm_width-1)*nfilters/2/RESHP_FACTOR]) {
 	quant_accum acc = 0;
 	int kernel_idx = 0;
@@ -350,6 +371,7 @@ void conv_layer_k1_b4k2(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP
 							input_idx++;
 							if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
 								tmp_out = (quant_act)acc;
+								if(relu) tmp_out = (ap_int<1>)((quant_act)acc[3]) == 0 ? tmp_out : (quant_act)0;
 								if(k%RESHP_FACTOR==0) acc_tmp.range(7,0) = tmp_out;
 								else if(k%RESHP_FACTOR==1) acc_tmp.range(15,8) = tmp_out;
 								else if(k%RESHP_FACTOR==2) acc_tmp.range(23,16) = tmp_out;
@@ -386,7 +408,7 @@ void conv_layer_k1_b4k2(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP
 }
 
 //Convolution with stride 2
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim,wght_reshp *weights, params_t PE>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim,wght_reshp *weights, params_t PE, bool relu>
 void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP_FACTOR], act_reshp out_feature_map[(fm_height/2)*(fm_width/2)*nfilters/RESHP_FACTOR]) {
 	quant_accum acc_even = 0, acc_odd = 0;
 	ap_uint<2> kernel_size = 2;
@@ -437,6 +459,7 @@ void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP
 						if(z + (p*RESHP_FACTOR) == nbands*2-RESHP_FACTOR) {
 							acc_even += acc_odd;
 							tmp_out = (quant_act)acc_even;
+							if(relu) tmp_out = (ap_int<1>)((quant_act)acc_even[3]) == 0 ? tmp_out : (quant_act)0;
 							if(k%RESHP_FACTOR==0) acc_tmp.range(7,0) = tmp_out;
 							else if(k%RESHP_FACTOR==1) acc_tmp.range(15,8) = tmp_out;
 							else if(k%RESHP_FACTOR==2) acc_tmp.range(23,16) = tmp_out;
