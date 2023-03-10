@@ -6,9 +6,10 @@ datatype = "wght_reshp"
 #values2[4] = {-2,-1,0,1}
 #values3[4] = {1,0,-1,-2}
 #values4[4] = {-1,1,-2,0}
-values2 = ['10','11','00','01']
-values3 = ['01','00','11','10']
-values4 = ['11','01','10','00']
+values2 = ['10','11','01']
+values3 = ['01','11','10']
+values4 = ['11','01','10']
+
 z1 = 32
 nf1 = 48
 k1 = 1
@@ -22,51 +23,64 @@ z3 = 64
 nf3 = 168
 k3 = 1
 
-reshp_factor = 4
+reshp_factor = 8
 
 weights = []
 
 
 #Init weights
 f.write('#include "simple_conv.h"\n\n')
-for k in range(z1):
-    for i in range(nf1):
+for i in range(nf1):
+    for k in range(z1):
         for j in range(k1):
             for l in range(k1):
 #                weights[(k*nf1*k1*k1)+(i * k1*k1 + (j * k1) + l)] = values2[(l+j+i+k)%16]
-                weights.append(values2[(l+j+i+k)%16])
+                weights.append(values2[(l+j+i+k)%3])
 
-for k in range(z2):
-    for i in range(nf2):
+for i in range(nf2):
+    for k in range(z2):
         for j in range(k2):
             for l in range(k2):
 #                weights[z1*nf1 + (k*nf2*k2*k2)+(i * k2*k2 + (j * k2) + l)] = values3[(l+j+i+k)%16]
-                weights.append(values3[(l+j+i+k)%16])
+                weights.append(values3[(l+j+i+k)%3])
 
-for k in range(z3):
-    for i in range(nf3):
+for i in range(nf3):
+    for k in range(z3):
         for j in range(k3):
             for l in range(k3):
 #                weights[z1*nf1 + (k*nf2*k2*k2)+(i * k2*k2 + (j * k2) + l)] = values3[(l+j+i+k)%16]
-                weights.append(values4[(l+j+i+k)%16])
+                weights.append(values4[(l+j+i+k)%3])
 #                print(values4[(l+j+i+k)%16])
 
 #Write weights in header file
 #Weights generation for reshaped weights
 f.write(datatype + " weights_l1[{}] = {{".format(z1*nf1*k1*k1//reshp_factor))
 for j in range(nf1):
-    for i in range(0,z1,4):
+    for i in range(0,z1,reshp_factor):
         for x in range(k1*k1):
             n0 = weights[(i*k1*k1) + (j*z1*k1*k1) + x]
+            print(str(((i+0)*k1*k1) + (j*z1*k1*k1) + x))
             n1 = weights[((i+1)*k1*k1) + (j*z1*k1*k1) + x]
+            print(str(((i+1)*k1*k1) + (j*z1*k1*k1) + x))
             n2 = weights[((i+2)*k1*k1) + (j*z1*k1*k1) + x]
+            print(str(((i+2)*k1*k1) + (j*z1*k1*k1) + x))
             n3 = weights[((i+3)*k1*k1) + (j*z1*k1*k1) + x]
-            cat = '{}{}{}{}'.format(n3,n2,n1,n0)
-            val = aux.bin_2_signed_int(int(cat,2),16)            
+            print(str(((i+3)*k1*k1) + (j*z1*k1*k1) + x))
+            n4 = weights[((i+4)*k1*k1) + (j*z1*k1*k1) + x]
+            print(str(((i+4)*k1*k1) + (j*z1*k1*k1) + x))
+            n5 = weights[((i+5)*k1*k1) + (j*z1*k1*k1) + x]
+            print(str(((i+5)*k1*k1) + (j*z1*k1*k1) + x))
+            n6 = weights[((i+6)*k1*k1) + (j*z1*k1*k1) + x]
+            print(str(((i+6)*k1*k1) + (j*z1*k1*k1) + x))
+            n7 = weights[((i+7)*k1*k1) + (j*z1*k1*k1) + x]
+            print(str(((i+7)*k1*k1) + (j*z1*k1*k1) + x))
+
+            cat = '{}{}{}{}{}{}{}{}'.format(n7,n6,n5,n4,n3,n2,n1,n0)
+            val = aux.bin_2_signed_int(int(cat,2),32)            
             f.write(str(val))
 #            f.write(str(weights[(i*k1*k1) + (j*z1*k1*k1) + x]))
 #            print(str((i*k1*k1) + (j*z1*k1*k1) + x))
-            if not((i == z1-4 and j == nf1-1 and x == k1*k1-1)):
+            if not((i == z1-reshp_factor and j == nf1-1 and x == k1*k1-1)):
                 f.write(', ')
 
 f.write('};\n')
@@ -99,7 +113,7 @@ f.write('};\n')
 f.write(datatype + " weights_l2[{}] = {{".format(z2*nf2*k2*k2//reshp_factor))
 for j in range(nf2):
     for x in range(k2):
-        for i in range(0,z2,2):
+        for i in range(0,z2,4):
 #            for y in range(k2//(reshp_factor//2)):
             n0 = weights[z1*nf1 + (i*k2*k2) + (j*z2*k2*k2) + x]
 #            print(str((i*k2*k2) + (j*z2*k2*k2) + x))
@@ -109,12 +123,21 @@ for j in range(nf2):
 #            print(str(((i+1)*k2*k2) + (j*z2*k2*k2) + x))
             n3 = weights[z1*nf1 + ((i+1)*k2*k2) + (j*z2*k2*k2) + x+2]
 #            print(str(((i+1)*k2*k2) + (j*z2*k2*k2) + x+2))
-            cat = '{}{}{}{}'.format(n3,n2,n1,n0)
-            val = aux.bin_2_signed_int(int(cat,2),16)            
+            n4 = weights[z1*nf1 + ((i+2)*k2*k2) + (j*z2*k2*k2) + x]
+#            print(str(((i+2)*k2*k2) + (j*z2*k2*k2) + x))
+            n5 = weights[z1*nf1 + ((i+2)*k2*k2) + (j*z2*k2*k2) + x+2]
+#            print(str(((i+2)*k2*k2) + (j*z2*k2*k2) + x+2))
+            n6 = weights[z1*nf1 + ((i+3)*k2*k2) + (j*z2*k2*k2) + x]
+#            print(str(((i+3)*k2*k2) + (j*z2*k2*k2) + x))
+            n7 = weights[z1*nf1 + ((i+3)*k2*k2) + (j*z2*k2*k2) + x+2]
+#            print(str(((i+3)*k2*k2) + (j*z2*k2*k2) + x+2))
+
+            cat = '{}{}{}{}{}{}{}{}'.format(n7,n6,n5,n4,n3,n2,n1,n0)
+            val = aux.bin_2_signed_int(int(cat,2),32)            
             f.write(str(val))
 #                f.write(str(weights[z1*nf1 + (i*k2*k2) + (j*z2*k2*k2) + x+(y*2)]))
 #                print(str((i*k2*k2) + (j*z2*k2*k2) + x+(y*2)))
-            if not((i == z2-2 and j == nf2-1 and x == k2-1)):
+            if not((i == z2-4 and j == nf2-1 and x == k2-1)):
                 f.write(', ')
 f.write('};\n')
 
@@ -133,18 +156,23 @@ f.write('};\n')
 #Weights generation for 3rd layer with kernel size 1 for RESHAPED values
 f.write(datatype + " weights_l3[{}] = {{".format(z3*nf3*k3*k3//reshp_factor))
 for j in range(nf3):
-    for i in range(0,z3,4):
+    for i in range(0,z3,reshp_factor):
         for x in range(k3*k3):
             n0 = weights[(z1*nf1+z2*nf2*k2*k2) + (i*k3*k3) + (j*z3*k3*k3) + x]
             n1 = weights[(z1*nf1+z2*nf2*k2*k2) + ((i+1)*k3*k3) + (j*z3*k3*k3) + x]
             n2 = weights[(z1*nf1+z2*nf2*k2*k2) + ((i+2)*k3*k3) + (j*z3*k3*k3) + x]
             n3 = weights[(z1*nf1+z2*nf2*k2*k2) + ((i+3)*k3*k3) + (j*z3*k3*k3) + x]
-            cat = '{}{}{}{}'.format(n3,n2,n1,n0)
-            val = aux.bin_2_signed_int(int(cat,2),16)            
+            n4 = weights[(z1*nf1+z2*nf2*k2*k2) + ((i+4)*k3*k3) + (j*z3*k3*k3) + x]
+            n5 = weights[(z1*nf1+z2*nf2*k2*k2) + ((i+5)*k3*k3) + (j*z3*k3*k3) + x]
+            n6 = weights[(z1*nf1+z2*nf2*k2*k2) + ((i+6)*k3*k3) + (j*z3*k3*k3) + x]
+            n7 = weights[(z1*nf1+z2*nf2*k2*k2) + ((i+7)*k3*k3) + (j*z3*k3*k3) + x]
+
+            cat = '{}{}{}{}{}{}{}{}'.format(n7,n6,n5,n4,n3,n2,n1,n0)
+            val = aux.bin_2_signed_int(int(cat,2),32)            
             f.write(str(val))
 #            f.write(str(weights[(z1*nf1+z2*nf2*k2*k2) + (i*k3*k3) + (j*z3*k3*k3) + x]))
 #            print(str((i*k1*k1) + (j*z1*k1*k1) + x))
-            if not((i == z3-4 and j == nf3-1 and x == k3*k3-1)):
+            if not((i == z3-reshp_factor and j == nf3-1 and x == k3*k3-1)):
                 f.write(', ')
 
 f.write('};\n')
