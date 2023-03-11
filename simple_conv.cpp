@@ -25,7 +25,8 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 	act_reshp in_feature_map[INPUT1_MEM_SIZE/RESHP_FACTOR], out_feature_map[OUTPUT_MEM_SIZE/RESHP_FACTOR], m2_feature_map[OUT2_FM_MEM_SIZE/RESHP_FACTOR], m3_feature_map[OUT3_FM_MEM_SIZE/RESHP_FACTOR];//
 	quant_act shortcut_fm[X1*Y1*Z1], ds_ofm[XDS*YDS*ZDS];
 //	quant_act m1_feature_map[(X2)*(Y2)*Z2];
-	act_reshp m1_feature_map[2][((X2-1)*(Y2-1)*Z2/2)/RESHP_FACTOR];
+//	act_reshp m1_feature_map[2][((X2-1)*(Y2-1)*Z2/2)/RESHP_FACTOR];
+	act_reshp m1_feature_map[2][((X2)*(Y2)*Z2/2)/RESHP_FACTOR];
 
 #pragma HLS BIND_STORAGE variable=m1_feature_map type=RAM_1P
 #pragma HLS BIND_STORAGE variable=in_feature_map type=RAM_1P
@@ -43,8 +44,8 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 	read_ifm(strm_in, in_feature_map, shortcut_fm);
 	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(shortcut_fm, ds_ofm);
 //	write_dsofm(ds_ofm, strm_out);
-	conv_layer_k1_b4k2_x9<0,X1,Y1,Z1,NF1, weights_l1, 8, false> (in_feature_map, m1_feature_map);
-	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2, X3, weights_l2, 8, false> (m1_feature_map, m2_feature_map);
+	conv_layer_k1_b4k2_x4<0,X1,Y1,Z1,NF1, weights_l1, 8, false> (in_feature_map, m1_feature_map);
+	conv_layer_k2<1,X2,Y2,Z2,NF2, X3, weights_l2, 8, false> (m1_feature_map, m2_feature_map);
 	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3,8, false> (m2_feature_map, m3_feature_map);
 	add_shortcut<X3,Y3,NF3,ZDS>(m3_feature_map, ds_ofm, out_feature_map);
 	write_ofm(out_feature_map, strm_out);
@@ -406,7 +407,7 @@ void conv_layer_k1_b4k2_x9(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 
 //Convolutional layer to be aplied before a convolution with kernel and stride 2, that will clear the last row and column from the outputs
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, wght_reshp *weights, params_t PE, bool relu>
-void conv_layer_k1_b4k2_x4(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[2][(fm_height-1)*(fm_width-1)*nfilters/2/RESHP_FACTOR]) {
+void conv_layer_k1_b4k2_x4(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[2][(fm_height)*(fm_width)*nfilters/2/RESHP_FACTOR]) {
 	quant_accum acc = 0;
 	int kernel_idx = 0;
 	int input_idx = 0;
