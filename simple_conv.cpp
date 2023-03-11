@@ -41,11 +41,11 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 #pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map, shortcut_fm);
-//	write_dsofm(ds_ofm, strm_out);
-	conv_layer_k1_b4k2_x4<0,X1,Y1,Z1,NF1, weights_l1, 8, true> (in_feature_map, m1_feature_map);
-	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2, X3, weights_l2, 8, true> (m1_feature_map, m2_feature_map);
-	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3,8,true> (m2_feature_map, m3_feature_map);
 	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(shortcut_fm, ds_ofm);
+//	write_dsofm(ds_ofm, strm_out);
+	conv_layer_k1_b4k2_x9<0,X1,Y1,Z1,NF1, weights_l1, 8, false> (in_feature_map, m1_feature_map);
+	conv_layer_k2<1,X2-1,Y2-1,Z2,NF2, X3, weights_l2, 8, false> (m1_feature_map, m2_feature_map);
+	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3,8, false> (m2_feature_map, m3_feature_map);
 	add_shortcut<X3,Y3,NF3,ZDS>(m3_feature_map, ds_ofm, out_feature_map);
 	write_ofm(out_feature_map, strm_out);
 }
@@ -110,7 +110,7 @@ void write_dsofm(quant_act ofm[OUTDS_FM_MEM_SIZE], hls::stream<strmio_t> &strm_o
 	for(int i = 0; i < OUTDS_FM_MEM_SIZE; i++){
 		if(i == OUTDS_FM_MEM_SIZE - 1) tmpout.last = 1;
 		else tmpout.last = 0;
-		printf("sending: %d\n", (int)ofm[i]);
+//		printf("sending: %d\n", (int)ofm[i]);
 		tmpout.data = ofm[i];
 		tmpout.keep = 0xF;
 		tmpout.strb = 0xF;
@@ -199,7 +199,7 @@ template<params_t fm_width, params_t fm_height, params_t nbands_conv, params_t n
 void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESHP_FACTOR], quant_act shortcut[fm_width*fm_height*nbands_shortcut], act_reshp out_feature_map[fm_width*fm_height*nbands_conv/RESHP_FACTOR]){
 	int idx_conv = 0;
 	int idx_shortcut = 0;
-	quant_sum sum = 0;
+	quant_accum sum = 0;
 	for (int i = 0; i < fm_width; i++) {
 		for (int j = 0; j < fm_height; j++) {
 			for(int z = 0; z < nbands_conv/RESHP_FACTOR; z++){
@@ -226,7 +226,7 @@ void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESH
 				else {
 					sum = (quant_act)conv_feature_map[idx_conv].range(7,0) + shortcut[idx_shortcut];
 					out_feature_map[idx_conv].range(7,0) = (quant_act) sum;
-					printf("ds out: %d\n",shortcut[idx_shortcut]);
+//					printf("ds out: %d\n",shortcut[idx_shortcut]);
 					idx_shortcut++;
 					sum = (quant_act)conv_feature_map[idx_conv].range(15,8) + shortcut[idx_shortcut];
 					out_feature_map[idx_conv].range(15,8) = (quant_act) sum;
@@ -293,8 +293,8 @@ void conv_layer_k1(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACT
 						kernel_idx++;
 						input_idx++;
 						if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
-//							tmp_out = (quant_act)acc;
-							if(relu) tmp_out = (ap_int<1>)((quant_act)acc[3]) == 0 ? tmp_out : (quant_act)0;
+							tmp_out = (quant_act)acc;
+							if(relu) tmp_out = (ap_int<1>)((quant_act)acc[7]) == 0 ? tmp_out : (quant_act)0;
 							if(k%RESHP_FACTOR==0) acc_tmp.range(7,0) = tmp_out;
 							else if(k%RESHP_FACTOR==1) acc_tmp.range(15,8) = tmp_out;
 							else if(k%RESHP_FACTOR==2) acc_tmp.range(23,16) = tmp_out;
@@ -305,6 +305,7 @@ void conv_layer_k1(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACT
 							else {
 								acc_tmp.range(63,56) = tmp_out;
 								out_feature_map[output_idx] = acc_tmp; //ver o fator de escala aqui
+//								printf("acc_tmp: %ld\n", (long)acc_tmp);
 								output_idx++;
 							}
 							acc = 0;
@@ -365,7 +366,9 @@ void conv_layer_k1_b4k2_x9(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 							kernel_idx++;
 							input_idx++;
 							if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
-								if(relu) tmp_out = (ap_int<1>)((quant_act)acc[3]) == 0 ? tmp_out : (quant_act)0;
+								tmp_out = (quant_act)acc;
+								if(relu) tmp_out = (ap_int<1>)((quant_act)acc[7]) == 0 ? tmp_out : (quant_act)0;
+//								printf("tmp_out: %d\n", (int)tmp_out);
 								if(k%RESHP_FACTOR==0) acc_tmp.range(7,0) = tmp_out;
 								else if(k%RESHP_FACTOR==1) acc_tmp.range(15,8) = tmp_out;
 								else if(k%RESHP_FACTOR==2) acc_tmp.range(23,16) = tmp_out;
@@ -375,7 +378,7 @@ void conv_layer_k1_b4k2_x9(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 								else if(k%RESHP_FACTOR==6) acc_tmp.range(55,48) = tmp_out;
 								else {
 									acc_tmp.range(63,56) = tmp_out;
-
+//									printf("acc_tmp k1b4k2: %ld\n", (long)acc_tmp);
 									if(i % 2 == 0) {
 										out_feature_map[0][output_idx_even] = acc_tmp; //ver o fator de escala aqui
 										output_idx_even++;
@@ -439,7 +442,8 @@ void conv_layer_k1_b4k2_x4(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 						kernel_idx++;
 						input_idx++;
 						if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
-							if(relu) tmp_out = (ap_int<1>)((quant_act)acc[3]) == 0 ? tmp_out : (quant_act)0;
+							tmp_out = (quant_act)acc;
+							if(relu) tmp_out = (ap_int<1>)((quant_act)acc[7]) == 0 ? tmp_out : (quant_act)0;
 							if(k%RESHP_FACTOR==0) acc_tmp.range(7,0) = tmp_out;
 							else if(k%RESHP_FACTOR==1) acc_tmp.range(15,8) = tmp_out;
 							else if(k%RESHP_FACTOR==2) acc_tmp.range(23,16) = tmp_out;
@@ -524,7 +528,8 @@ void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP
 
 						if(z + (p*RESHP_FACTOR) == nbands*2-RESHP_FACTOR) {
 							acc_even += acc_odd;
-							if(relu) tmp_out = (ap_int<1>)((quant_act)acc_even[3]) == 0 ? tmp_out : (quant_act)0;
+							tmp_out = (quant_act)acc_even;
+							if(relu) tmp_out = (ap_int<1>)((quant_act)acc_even[7]) == 0 ? tmp_out : (quant_act)0;
 							if(k%RESHP_FACTOR==0) acc_tmp.range(7,0) = tmp_out;
 							else if(k%RESHP_FACTOR==1) acc_tmp.range(15,8) = tmp_out;
 							else if(k%RESHP_FACTOR==2) acc_tmp.range(23,16) = tmp_out;

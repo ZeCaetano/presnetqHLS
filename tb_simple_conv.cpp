@@ -150,10 +150,10 @@ void sum_shorctut(quant_act *conv_fm, quant_act *shortcut, quant_act *fm_out, in
 void init_fm(){
 
 	int npixels = 0;
-	quant_act values1[16] = {0,1,2,3,4,5,6,7,-1,-2,-3,-4,-5,-6,-7,-8};
-	quant_wght values2[4] = {-2,-1,0,1};
-	quant_wght values3[4] = {1,0,-1,-2};
-	quant_wght values4[4] = {-1,1,-2,0};
+	quant_act values1[16] = {200,142,222,133,247,35,96,72,11,231,194,166,55,182,175,89};
+	quant_wght values2[4] = {-2,-1,1};
+	quant_wght values3[4] = {1,-1,-2};
+	quant_wght values4[4] = {-1,1,-2};
 
 //	printf("Input Image\n\r");
 	for(int k = 0; k < Z1; k++) {
@@ -171,7 +171,7 @@ void init_fm(){
 		for(int k = 0; k < Z1; k++) {
 			for(int j = 0; j < K1; j++) {
 				for(int l = 0; l < K1; l++) {
-					kernel[(i*Z1*K1*K1)+(k * K1*K1 + (j * K1) + l)] = values2[(l+j+i+k)%4];
+					kernel[(i*Z1*K1*K1)+(k * K1*K1 + (j * K1) + l)] = values2[(l+j+i+k)%3];
 //					printf("%d ", (int)kernel[(k*NF1*K1*K1)+(i * K1*K1 + (j * K1) + l)]);
 				}
 			}
@@ -184,7 +184,7 @@ void init_fm(){
 		for(int k = 0; k < Z2; k++) {
 			for(int j = 0; j < K2; j++) {
 				for(int l = 0; l < K2; l++) {
-					kernel[LAYER1_WEIGHTS + (i*Z2*K2*K2)+(k * K2*K2 + (j * K2) + l)] = values3[(l+j+i+k)%4];
+					kernel[LAYER1_WEIGHTS + (i*Z2*K2*K2)+(k * K2*K2 + (j * K2) + l)] = values3[(l+j+i+k)%3];
 //					printf("%d ", (int)kernel[LAYER1_WEIGHTS + ((k*NF2*K2*K2)+(i * K2*K2 + (j * K2) + l))]);
 				}
 			}
@@ -196,7 +196,7 @@ void init_fm(){
 		for(int k = 0; k < Z3; k++) {
 			for(int j = 0; j < K3; j++) {
 				for(int l = 0; l < K3; l++) {
-					kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + ((i*Z3*K3*K3)+(k * K3*K3 + (j * K3) + l))] = values4[(l+j+i+k)%4];
+					kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + ((i*Z3*K3*K3)+(k * K3*K3 + (j * K3) + l))] = values4[(l+j+i+k)%3];
 //					printf("%d ", (int)kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + ((k*NF3*K3*K3)+(i * K3*K3 + (j * K3) + l))]);
 				}
 			}
@@ -304,6 +304,14 @@ int main() {
 				if(vout.last == 1) break;
 			}
 		}
+//		for(int l = 0; l < XDS*YDS; l++) {
+//					for(int j = 0; j < ZDS; j++) {
+//						vout = so.read();
+//						hw_image_out[(j*XDS*YDS) + l] = vout.data;
+//		//				printf("idx-%d  %d\n", (j*X3*Y3) + l, (int)vout.data);
+//						if(vout.last == 1) break;
+//					}
+//				}
     }
     for(int i = 0; i < OUT2_FM_MEM_SIZE; i++){
     	sw_image_out_2[i] = 0;
@@ -323,7 +331,7 @@ int main() {
 				sw_image_out_1 +                                        /* base address */
 				i * (X2 * Y2);               /* offset (number of images) */
 
-	    sw_convolution_3D(image_in, fp_weights, image_out_1, Z1, X1, K1, true);
+	    sw_convolution_3D(image_in, fp_weights, image_out_1, Z1, X1, K1, false);
 	}
 	//Layer 2
 //	printf("---------------------SW Layer 2------------------------\n");
@@ -338,7 +346,7 @@ int main() {
 				i * (X3 * Y3);               /* offset (number of images) */
 
 //	    sw_convolution_3D(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, false);
-		sw_convolution_3D_k2(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, X3, true);
+		sw_convolution_3D_k2(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, X3, false);
 	}
 //	printf("---------------------SW Layer 3------------------------\n");
 		for(int i = 0; i < NF3; i++){
@@ -351,7 +359,7 @@ int main() {
 					sw_image_out_3 +                                        /* base address */
 					i * (X3 * Y3);               /* offset (number of images) */
 
-		    sw_convolution_3D(sw_image_out_2, fp_weights, image_out_3, Z3, X3, K3, true);
+		    sw_convolution_3D(sw_image_out_2, fp_weights, image_out_3, Z3, X3, K3, false);
 		}
 
 
@@ -379,9 +387,19 @@ int main() {
 //		}
 //		printf("\n\r");
 //	}
-//
+//	printf("HARDWARE Output DS Image\n\r");
+//	for(int k = 0; k < ZDS; k++) {
+//		for (int i = 0; i < XDS; i++) {
+//			for (int j = 0; j < YDS; j++) {
+//				printf("%d ", (int)hw_image_out[(k*X3*Y3) + (i*Y3) + j]);
+//			}
+//			printf("\n\r");
+//		}
+//		printf("%d\n\r", k);
+//	}
+
 //	    printf("HARDWARE Output Image\n\r");
-//	    for(int k = 0; k < Z3; k++) {
+//	    for(int k = 0; k < NF3; k++) {
 //			for (int i = 0; i < X3; i++) {
 //				for (int j = 0; j < Y3; j++) {
 //					printf("%d ", (int)hw_image_out[(k*X3*Y3) + (i*Y3) + j]);
@@ -401,11 +419,11 @@ int main() {
 //		}
 //		printf("%d\n\r", k);
 //    }
-//    printf("SOFTWARE Output Image 3\n\r");
-//        for(int k = 0; k < Z3; k++) {
+//    printf("SOFTWARE Output Image\n\r");
+//        for(int k = 0; k < NF3; k++) {
 //    		for (int i = 0; i < X3; i++) {
 //    			for (int j = 0; j < Y3; j++) {
-//    				printf("%d ", (int)sw_image_out_3[(k*X3*Y3) + (i*Y3) + j]);
+//    				printf("%d ", (int)sw_image_out[(k*X3*Y3) + (i*Y3) + j]);
 //    			}
 //    			printf("\n\r");
 //    		}

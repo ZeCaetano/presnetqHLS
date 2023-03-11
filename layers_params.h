@@ -5,8 +5,8 @@
 //Input: 9,9,32
 //Number of filters: 43
 //Kernel size: 1
-#define X1 4
-#define Y1 4
+#define X1 9
+#define Y1 9
 #define Z1 32
 #define NF1 48
 #define K1 1
@@ -18,8 +18,8 @@
 //Input: 9,9,43
 //Number of filters: 43
 //Kernel size: 2
-#define X2 4
-#define Y2 4
+#define X2 9
+#define Y2 9
 #define Z2 48
 #define NF2 64
 #define K2 2
@@ -31,8 +31,8 @@
 //Input: 4,4,43
 //Number of filters: 172
 //Kernel size: 2
-#define X3 2
-#define Y3 2
+#define X3 4
+#define Y3 4
 #define Z3 64
 #define NF3 168
 #define K3 1
@@ -46,8 +46,8 @@
 //Input: LAYER 1
 //Output: 4,4,32
 //Kernel size: 2
-#define XDS 2
-#define YDS 2
+#define XDS 4
+#define YDS 4
 #define ZDS 32
 #define KDS 2
 #define OUTDS_FM_MEM_SIZE (XDS*YDS*ZDS)
