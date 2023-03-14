@@ -4,12 +4,15 @@
 
 static quant_act image_in[INPUT1_MEM_SIZE];
 static quant_wght kernel[WEIGHTS_MEM_SIZE];
+static quant_act bias[NCLASSES];
 
 quant_act hw_image_out[OUTPUT_MEM_SIZE];
 quant_act sw_image_out_1[OUT1_FM_MEM_SIZE];
 quant_act sw_image_out_2[OUT2_FM_MEM_SIZE];
 quant_act sw_image_out_3[OUT3_FM_MEM_SIZE];
-quant_act sw_image_out[OUTPUT_MEM_SIZE];
+quant_act sw_image_out_4[OUT3_FM_MEM_SIZE];
+quant_act sw_image_out_5[OUTDS2_FM_MEM_SIZE];
+quant_act sw_image_out[NCLASSES];
 quant_act sw_image_out_ds[OUTDS_FM_MEM_SIZE];
 
 //Performs software-only matrix convolution.
@@ -125,6 +128,18 @@ void sum_shorctut(quant_act *conv_fm, quant_act *shortcut, quant_act *fm_out, in
 	}
 }
 
+void fully_connected(quant_act *input_fm, quant_act *output_fm, quant_wght *weights, quant_bias *bias, int input_size, int nfilters) {
+	int accum = 0, tmp = 0;
+	for(int i = 0; i < nfilters; i++) {
+		for(int j = 0; j < input_size; j++) {
+			accum += input_fm[j]*weights[i*input_size + j];
+		}
+		tmp = (quant_act)accum + bias[i];
+		output_fm[i] = (quant_act) tmp;
+		accum = 0;
+	}
+}
+
 
 //void init_weights_from_file(){
 //	FILE *fweights;
@@ -197,12 +212,22 @@ void init_fm(){
 			for(int j = 0; j < K3; j++) {
 				for(int l = 0; l < K3; l++) {
 					kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + ((i*Z3*K3*K3)+(k * K3*K3 + (j * K3) + l))] = values4[(l+j+i+k)%3];
-//					printf("%d ", (int)kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + ((k*NF3*K3*K3)+(i * K3*K3 + (j * K3) + l))]);
+//					printf("%d ", (int)kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + ((i*Z3*K3*K3)+(k * K3*K3 + (j * K3) + l))]);
 				}
 			}
 		}
-//		printf("\n\r");
 	}
+////	printf("\n\r");
+//	for(int i = 0; i < NCLASSES; i++) {
+//		for(int j = 0; j < NF3; j++) {
+//			kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + LAYER3_WEIGHTS + (i*NF3) +j ] = values4[(j+i)%3];
+////			printf("%d ", (int)kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + LAYER3_WEIGHTS + (i*NF3) +j ]);
+//		}
+//	}
+////	printf("\n\r");
+//	for(int i = 0; i < NCLASSES; i++) {
+//		bias[i] = values1[i];
+//	}
 
 }
 
@@ -304,6 +329,12 @@ int main() {
 				if(vout.last == 1) break;
 			}
 		}
+//		for(int j = 0; j < NCLASSES; j++) {
+//			vout = so.read();
+//			hw_image_out[j] = vout.data;
+////				printf("idx-%d  %d\n", (j*X3*Y3) + l, (int)vout.data);
+//			if(vout.last == 1) break;
+//		}
 //		for(int l = 0; l < XDS*YDS; l++) {
 //					for(int j = 0; j < ZDS; j++) {
 //						vout = so.read();
@@ -365,7 +396,11 @@ int main() {
 
 	average_pooling(image_in, sw_image_out_ds, X1, XDS, Z1, KDS);
 
-	sum_shorctut(sw_image_out_3, sw_image_out_ds, sw_image_out, X3, NF3, Z1);
+	sum_shorctut(sw_image_out_3, sw_image_out_ds, sw_image_out_4, X3, NF3, Z1);
+
+//	average_pooling(sw_image_out_4, sw_image_out_5, X3, XDS2, NF3, KDS);
+//	quant_wght *fp_weights_fc = kernel + LAYER1_WEIGHTS + LAYER2_WEIGHTS + LAYER3_WEIGHTS;
+//	fully_connected(sw_image_out_4, sw_image_out, fp_weights_fc, bias, NF3, NCLASSES);
 
 //	printf("Input SW:\n");
 //	for(int k = 0; k < Z1; k++) {
@@ -421,14 +456,19 @@ int main() {
 //    }
 //    printf("SOFTWARE Output Image\n\r");
 //        for(int k = 0; k < NF3; k++) {
-//    		for (int i = 0; i < X3; i++) {
-//    			for (int j = 0; j < Y3; j++) {
-//    				printf("%d ", (int)sw_image_out[(k*X3*Y3) + (i*Y3) + j]);
+//    		for (int i = 0; i < XDS2; i++) {
+//    			for (int j = 0; j < YDS2; j++) {
+//    				printf("%d ", (int)sw_image_out_5[(k*X3*Y3) + (i*Y3) + j]);
 //    			}
 //    			printf("\n\r");
 //    		}
 //    		printf("%d\n\r", k);
 //        }
+//	printf("Sofware output image after fully connected layer");
+//	for(int i = 0; i < NCLASSES; i++) {
+//		printf("%d ", (int)sw_image_out[i]);
+//	}
+//	printf("\n");
 
 
 	//--------------------------------------------------------------------------------------------------//
@@ -438,12 +478,19 @@ int main() {
     for(int k = 0; k < NF3; k++) {
 		for (int i = 0; i < X3; i++)
 			for (int j = 0; j < Y3; j++)
-				if (hw_image_out[(k*X3*Y3) + (i*Y3) + j] != sw_image_out[(k*X3*Y3) + (i*Y3) + j]) {
+				if (hw_image_out[(k*X3*Y3) + (i*Y3) + j] != sw_image_out_4[(k*X3*Y3) + (i*Y3) + j]) {
 					err_cnt++;
 					printf("%d - %d,%d: %d != %d\n\r",
-						   k, i, j, (int)hw_image_out[(k*X3*Y3) + (i*Y3) + j], (int)sw_image_out[(k*X3*Y3) + (i*Y3) + j]);
+						   k, i, j, (int)hw_image_out[(k*X3*Y3) + (i*Y3) + j], (int)sw_image_out_4[(k*X3*Y3) + (i*Y3) + j]);
 				}
     }
+//    for(int k = 0; k < NCLASSES; k++) {
+//			if (hw_image_out[k] != sw_image_out[k]) {
+//				err_cnt++;
+//				printf("%d - %d,%d: %d != %d\n\r",
+//					   k, (int)hw_image_out[k], (int)sw_image_out[k]);
+//			}
+//	}
 //    for(int k = 0; k < ZDS; k++) {
 //   		for (int i = 0; i < XDS; i++)
 //   			for (int j = 0; j < YDS; j++)

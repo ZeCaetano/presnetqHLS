@@ -15,6 +15,7 @@
 //#include "weights_reshaped_4.h"    //Weights reshaped with a factor of 4 with 64 bands and 168 filters on the last layer
 //#include "weights_reshaped_5.h"    //Weights reshaped for 8x2 quantization with a factor of 8 with 64 bands and 168 filters on the last layer
 #include "weights_reshaped_7.h"    //Weights reshaped for 8x2 quantization with a factor of 8 with 64 bands and 168 filters on the last layer
+//#include "weights_reshaped_8.h"    //Weights reshaped with fully connected layer for 8x2 quantization with a factor of 8 with 64 bands and 168 filters on the last layer
 
 
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
@@ -22,7 +23,8 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 #pragma HLS INTERFACE axis port=strm_in
 #pragma HLS INTERFACE axis port=strm_out
 
-	act_reshp in_feature_map[INPUT1_MEM_SIZE/RESHP_FACTOR], out_feature_map[OUTPUT_MEM_SIZE/RESHP_FACTOR], m2_feature_map[OUT2_FM_MEM_SIZE/RESHP_FACTOR], m3_feature_map[OUT3_FM_MEM_SIZE/RESHP_FACTOR];//
+	act_reshp in_feature_map[INPUT1_MEM_SIZE/RESHP_FACTOR], m4_feature_map[OUTPUT_MEM_SIZE/RESHP_FACTOR], m2_feature_map[OUT2_FM_MEM_SIZE/RESHP_FACTOR], m3_feature_map[OUT3_FM_MEM_SIZE/RESHP_FACTOR];//
+	act_reshp m5_feature_map[OUTDS2_FM_MEM_SIZE/RESHP_FACTOR], out_feature_map[NCLASSES/RESHP_FACTOR];
 	quant_act shortcut_fm[X1*Y1*Z1], ds_ofm[XDS*YDS*ZDS];
 //	quant_act m1_feature_map[(X2)*(Y2)*Z2];
 //	act_reshp m1_feature_map[2][((X2-1)*(Y2-1)*Z2/2)/RESHP_FACTOR];
@@ -47,8 +49,10 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 	conv_layer_k1_b4k2_x4<0,X1,Y1,Z1,NF1, weights_l1, 8, false> (in_feature_map, m1_feature_map);
 	conv_layer_k2<1,X2,Y2,Z2,NF2, X3, weights_l2, 8, false> (m1_feature_map, m2_feature_map);
 	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3,8, false> (m2_feature_map, m3_feature_map);
-	add_shortcut<X3,Y3,NF3,ZDS>(m3_feature_map, ds_ofm, out_feature_map);
-	write_ofm(out_feature_map, strm_out);
+	add_shortcut<X3,Y3,NF3,ZDS>(m3_feature_map, ds_ofm, m4_feature_map);
+//	average_pool<X3,Y3,XDS2,YDS2,NF3,KDS>(m4_feature_map, m5_feature_map);
+//	fully_connected<NF3,NCLASSES, weights_fc, bias_fc>(m5_feature_map, out_feature_map);
+	write_ofm(m4_feature_map, strm_out);
 }
 
 
@@ -76,7 +80,7 @@ void read_ifm(hls::stream<strmio_t> &strm_in, act_reshp in_feature_map[INPUT1_ME
 		if(tmpin.last == 1) break;
 		tmpin = strm_in.read();
 		tmp.range(31,24) = tmpin.data;
-		in_feature_map[i] = tmp;
+//		in_feature_map[i] = tmp;
 		shortcut_ifm[i*RESHP_FACTOR+3] = tmpin.data;
 		if(tmpin.last == 1) break;
 		tmpin = strm_in.read();
@@ -555,3 +559,46 @@ void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP
 	}
 	return;
 }
+
+template<params_t input_size, params_t nfilters, wght_reshp *weights, quant_act *bias>
+void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], act_reshp output_fm[nfilters/RESHP_FACTOR]) {
+	quant_accum acc = 0;
+	act_reshp tmp_in = 0, tmp_acc = 0;
+	wght_reshp tmp_weight = 0;
+	int kernel_idx = 0, output_idx = 0;
+	ap_int<9> tmp_out = 0;
+
+	for(int i = 0; i < nfilters; i++) {
+		for(int j = 0; j < input_size/RESHP_FACTOR; j++) {
+			tmp_in = input_fm[j];
+			tmp_weight = weights[kernel_idx];
+			acc += (quant_wght)tmp_weight.range(1,0) * (quant_act)tmp_in.range(7,0);
+			acc += (quant_wght)tmp_weight.range(3,2) * (quant_act)tmp_in.range(15,8);
+			acc += (quant_wght)tmp_weight.range(5,4) * (quant_act)tmp_in.range(23,16);
+			acc += (quant_wght)tmp_weight.range(7,6) * (quant_act)tmp_in.range(31,24);
+			acc += (quant_wght)tmp_weight.range(9,8) * (quant_act)tmp_in.range(39,32);
+			acc += (quant_wght)tmp_weight.range(11,10) * (quant_act)tmp_in.range(47,40);
+			acc += (quant_wght)tmp_weight.range(13,12) * (quant_act)tmp_in.range(55,48);
+			acc += (quant_wght)tmp_weight.range(15,14) * (quant_act)tmp_in.range(63,56);
+			kernel_idx++;
+
+			if(j == input_size/RESHP_FACTOR-1) {
+				tmp_out = (quant_act)acc + bias[i];
+				if(i%RESHP_FACTOR == 0) tmp_acc.range(7,0) = (quant_act)tmp_out;
+				else if(i%RESHP_FACTOR == 1) tmp_acc.range(15,8) = (quant_act)tmp_out;
+				else if(i%RESHP_FACTOR == 2) tmp_acc.range(23,16) = (quant_act)tmp_out;
+				else if(i%RESHP_FACTOR == 3) tmp_acc.range(31,24) = (quant_act)tmp_out;
+				else if(i%RESHP_FACTOR == 4) tmp_acc.range(39,32) = (quant_act)tmp_out;
+				else if(i%RESHP_FACTOR == 5) tmp_acc.range(47,40) = (quant_act)tmp_out;
+				else if(i%RESHP_FACTOR == 6) tmp_acc.range(55,48) = (quant_act)tmp_out;
+				else {
+					tmp_acc.range(63,56) = (quant_act) tmp_out;
+					output_fm[output_idx] = tmp_acc;
+					output_idx++;
+				}
+				acc = 0;
+			}
+		}
+	}
+}
+

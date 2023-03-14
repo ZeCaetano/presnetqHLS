@@ -20,11 +20,14 @@
 
 typedef ap_int<8> quant_act;
 typedef ap_int<2> quant_wght;
-typedef ap_int<4> quant_t;
+typedef ap_int<8> quant_bias;
+
+//typedef ap_int<4> quant_t;
 
 typedef ap_int<5> quant_sum;
 typedef ap_int<7> quant_mult;
-typedef ap_int<16> quant_accum;
+//typedef ap_int<16> quant_accum;
+typedef ap_int<21> quant_accum;
 
 typedef ap_int<32> quant_reshp;
 typedef ap_int<16> wght_reshp;
@@ -67,6 +70,9 @@ void conv_layer_k1_b4k2_x4(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim,wght_reshp *weights, params_t PE, bool relu>
 void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP_FACTOR], act_reshp out_feature_map[(fm_height/2)*(fm_width/2)*nfilters/RESHP_FACTOR]);
+
+template<params_t input_size, params_t nfilters, wght_reshp *weights, quant_act *bias>
+void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], act_reshp output_fm[nfilters/RESHP_FACTOR]);
 
 void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out);
 void read_ifm(hls::stream<strmio_t> &strm_in, act_reshp in_feature_map[X1*Y1*Z1], quant_act shortcut_ifm[X1*Y1*Z1]);

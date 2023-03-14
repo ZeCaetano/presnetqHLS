@@ -40,8 +40,10 @@
 #define INPUT3_MEM_SIZE (X3*Y3*Z3)
 #define OUT3_FM_MEM_SIZE ((X3*Y3*NF3))
 
-#define WEIGHTS_MEM_SIZE (LAYER1_WEIGHTS+LAYER2_WEIGHTS+LAYER3_WEIGHTS)
+#define NCLASSES 16
+#define WEIGHTS_MEM_SIZE (LAYER1_WEIGHTS+LAYER2_WEIGHTS+LAYER3_WEIGHTS)//+(NF3*NCLASSES))
 #define OUTPUT_MEM_SIZE (X3*Y3*NF3)
+
 //-------DOWNSAMPLING LAYER--------//
 //Input: LAYER 1
 //Output: 4,4,32
@@ -51,6 +53,9 @@
 #define ZDS 32
 #define KDS 2
 #define OUTDS_FM_MEM_SIZE (XDS*YDS*ZDS)
+#define XDS2 1
+#define YDS2 1
+#define OUTDS2_FM_MEM_SIZE (XDS2*YDS2*NF3)
 
 ////////////------------------------------ 2 Layers: 1st k=1 s=1, 1nd k=1 s=1 --------------------------------//////////
 ////-------LAYER 1--------//
