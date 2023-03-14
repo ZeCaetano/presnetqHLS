@@ -48,10 +48,10 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 #ifdef ARRAYS
 
 template<params_t fm_width, params_t fm_height, params_t output_width, params_t output_height, params_t nbands, params_t kernel_size>
-void average_pool(quant_act in_feature_map[fm_width*fm_height*nbands], quant_act out_feature_map[output_height*output_width*nbands]);
+void average_pool(act_reshp in_feature_map[fm_width*fm_height*nbands/RESHP_FACTOR], act_reshp out_feature_map[output_height*output_width*nbands/RESHP_FACTOR]);
 
 template<params_t fm_width, params_t fm_height, params_t nbands_conv, params_t nbands_shortcut>
-void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESHP_FACTOR], quant_act shortcut[fm_width*fm_height*nbands_shortcut], act_reshp out_feature_map[fm_width*fm_height*nbands_conv/RESHP_FACTOR]);
+void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESHP_FACTOR], act_reshp shortcut[fm_width*fm_height*nbands_shortcut/RESHP_FACTOR], act_reshp out_feature_map[fm_width*fm_height*nbands_conv/RESHP_FACTOR]);
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, wght_reshp *weights, params_t PE, bool relu>
 void conv_layer_k1(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[fm_height*fm_width*nfilters/RESHP_FACTOR]);
@@ -75,7 +75,7 @@ template<params_t input_size, params_t nfilters, wght_reshp *weights, quant_act 
 void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], act_reshp output_fm[nfilters/RESHP_FACTOR]);
 
 void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out);
-void read_ifm(hls::stream<strmio_t> &strm_in, act_reshp in_feature_map[X1*Y1*Z1], quant_act shortcut_ifm[X1*Y1*Z1]);
+void read_ifm(hls::stream<strmio_t> &strm_in, act_reshp in_feature_map[X1*Y1*Z1/RESHP_FACTOR], act_reshp shortcut_ifm[X1*Y1*Z1/RESHP_FACTOR]);
 void write_ofm(act_reshp *ofm, hls::stream<strmio_t> &strm_out);
 void write_dsofm(quant_act ofm[OUTDS_FM_MEM_SIZE], hls::stream<strmio_t> &strm_out);
 

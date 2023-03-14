@@ -25,7 +25,7 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 	act_reshp in_feature_map[INPUT1_MEM_SIZE/RESHP_FACTOR], m4_feature_map[OUTPUT_MEM_SIZE/RESHP_FACTOR], m2_feature_map[OUT2_FM_MEM_SIZE/RESHP_FACTOR], m3_feature_map[OUT3_FM_MEM_SIZE/RESHP_FACTOR];//
 	act_reshp m5_feature_map[OUTDS2_FM_MEM_SIZE/RESHP_FACTOR], out_feature_map[NCLASSES/RESHP_FACTOR];
-	quant_act shortcut_fm[X1*Y1*Z1], ds_ofm[XDS*YDS*ZDS];
+	act_reshp shortcut_fm[X1*Y1*Z1/RESHP_FACTOR], ds_ofm[XDS*YDS*ZDS/RESHP_FACTOR];
 //	quant_act m1_feature_map[(X2)*(Y2)*Z2];
 //	act_reshp m1_feature_map[2][((X2-1)*(Y2-1)*Z2/2)/RESHP_FACTOR];
 	act_reshp m1_feature_map[2][((X2)*(Y2)*Z2/2)/RESHP_FACTOR];
@@ -56,7 +56,7 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 }
 
 
-void read_ifm(hls::stream<strmio_t> &strm_in, act_reshp in_feature_map[INPUT1_MEM_SIZE/RESHP_FACTOR], quant_act shortcut_ifm[INPUT1_MEM_SIZE]){
+void read_ifm(hls::stream<strmio_t> &strm_in, act_reshp in_feature_map[INPUT1_MEM_SIZE/RESHP_FACTOR], act_reshp shortcut_ifm[INPUT1_MEM_SIZE/RESHP_FACTOR]){
 	strmio_t tmpin;
 	act_reshp tmp = 0;
 
@@ -65,43 +65,35 @@ void read_ifm(hls::stream<strmio_t> &strm_in, act_reshp in_feature_map[INPUT1_ME
 #pragma HLS PIPELINE II=8
 		tmpin = strm_in.read();
 		tmp.range(7,0) = tmpin.data;
-		shortcut_ifm[i*RESHP_FACTOR] = tmpin.data;
 //		printf("%d   ", (int)(quant_act)(in_feature_map[i].range(7,0)));
 		if(tmpin.last == 1) break;
 		tmpin = strm_in.read();
 		tmp.range(15,8) = tmpin.data;
-		shortcut_ifm[i*RESHP_FACTOR+1] = tmpin.data;
 //		printf("%d: %d   ", (int)tmpin.data, (int)((quant_act)in_feature_map[i].range(15,8)));
 		if(tmpin.last == 1) break;
 		tmpin = strm_in.read();
 		tmp.range(23,16) = tmpin.data;
-		shortcut_ifm[i*RESHP_FACTOR+2] = tmpin.data;
 //		printf("%d: %d   ", (int)tmpin.data, (int)((quant_act)in_feature_map[i].range(23,16)));
 		if(tmpin.last == 1) break;
 		tmpin = strm_in.read();
 		tmp.range(31,24) = tmpin.data;
-//		in_feature_map[i] = tmp;
-		shortcut_ifm[i*RESHP_FACTOR+3] = tmpin.data;
 		if(tmpin.last == 1) break;
 		tmpin = strm_in.read();
 		tmp.range(39,32) = tmpin.data;
-		shortcut_ifm[i*RESHP_FACTOR+4] = tmpin.data;
 //		printf("%d: %d   ", (int)tmpin.data, (int)((quant_act)in_feature_map[i].range(23,16)));
 		if(tmpin.last == 1) break;
 		tmpin = strm_in.read();
 		tmp.range(47,40) = tmpin.data;
-		shortcut_ifm[i*RESHP_FACTOR+5] = tmpin.data;
 		//printf("%d: %d   ", (int)tmpin.data, (int)((quant_act)in_feature_map[i].range(23,16)));
 		if(tmpin.last == 1) break;
 		tmpin = strm_in.read();
 		tmp.range(55,48) = tmpin.data;
-		shortcut_ifm[i*RESHP_FACTOR+6] = tmpin.data;
 		//printf("%d: %d   ", (int)tmpin.data, (int)((quant_act)in_feature_map[i].range(23,16)));
 		if(tmpin.last == 1) break;
 		tmpin = strm_in.read();
 		tmp.range(63,56) = tmpin.data;
 		in_feature_map[i] = tmp;
-		shortcut_ifm[i*RESHP_FACTOR+7] = tmpin.data;
+		shortcut_ifm[i] = tmp;
 		//printf("%d: %d   ", (int)tmpin.data, (int)((quant_act)in_feature_map[i].range(23,16)));
 		if(tmpin.last == 1) break;
 
@@ -175,22 +167,42 @@ void write_ofm(act_reshp ofm[OUTPUT_MEM_SIZE/RESHP_FACTOR], hls::stream<strmio_t
 
 
 template<params_t fm_width, params_t fm_height, params_t output_width, params_t output_height, params_t nbands, params_t kernel_size>
-void average_pool(quant_act in_feature_map[fm_width*fm_height*nbands], quant_act out_feature_map[output_height*output_width*nbands]){
+void average_pool(act_reshp in_feature_map[fm_width*fm_height*nbands/RESHP_FACTOR], act_reshp out_feature_map[output_height*output_width*nbands/RESHP_FACTOR]){
 	ap_int<32> accum = 0;
 	quant_act avg = 0;
 	ap_uint<3> div = kernel_size*kernel_size;
+	int in_idx = 0, out_idx = 0;
+	quant_act pixel = 0;
 
 	for(int z = 0; z < nbands; z++){
 		for (int i = 0; i < fm_width-1; i+=2) {
 			for (int j = 0; j < fm_height-1; j+=2) {
 				for(int k = 0; k < kernel_size; k++){
 					for(int l = 0; l < kernel_size; l++){
-#pragma HLS PIPELINE
-						accum += in_feature_map[(i+k)*nbands*fm_height + (j+l)*nbands + z];
+#pragma HLS PIPELINE II=8
+						in_idx = ((i+k)*nbands*fm_height + (j+l)*nbands + z);
+						if(in_idx % RESHP_FACTOR == 0) pixel = in_feature_map[in_idx/RESHP_FACTOR].range(7,0);
+						else if(in_idx % RESHP_FACTOR == 1) pixel = in_feature_map[in_idx/RESHP_FACTOR].range(15,8);
+						else if(in_idx % RESHP_FACTOR == 2) pixel = in_feature_map[in_idx/RESHP_FACTOR].range(23,16);
+						else if(in_idx % RESHP_FACTOR == 3) pixel = in_feature_map[in_idx/RESHP_FACTOR].range(31,24);
+						else if(in_idx % RESHP_FACTOR == 4) pixel = in_feature_map[in_idx/RESHP_FACTOR].range(39,32);
+						else if(in_idx % RESHP_FACTOR == 5) pixel = in_feature_map[in_idx/RESHP_FACTOR].range(47,40);
+						else if(in_idx % RESHP_FACTOR == 6) pixel = in_feature_map[in_idx/RESHP_FACTOR].range(55,48);
+						else if(in_idx % RESHP_FACTOR == 7) pixel = in_feature_map[in_idx/RESHP_FACTOR].range(63,56);
+
+						accum += pixel;
 //						printf("accum: %d\n", (int)accum);
 						if(k == kernel_size-1 && l == kernel_size-1){
 							avg = accum / div;
-							out_feature_map[(i/2)*nbands*output_height+ (j/2)*nbands + z] = (quant_act) avg;
+							out_idx = (i/2)*nbands*output_height+ (j/2)*nbands + z;
+							if(out_idx % RESHP_FACTOR == 0) out_feature_map[out_idx/RESHP_FACTOR].range(7,0) = (quant_act) avg;
+							else if(out_idx % RESHP_FACTOR == 1) out_feature_map[out_idx/RESHP_FACTOR].range(15,8) = (quant_act) avg;
+							else if(out_idx % RESHP_FACTOR == 2) out_feature_map[out_idx/RESHP_FACTOR].range(23,16) = (quant_act) avg;
+							else if(out_idx % RESHP_FACTOR == 3) out_feature_map[out_idx/RESHP_FACTOR].range(31,24) = (quant_act) avg;
+							else if(out_idx % RESHP_FACTOR == 4) out_feature_map[out_idx/RESHP_FACTOR].range(39,32) = (quant_act) avg;
+							else if(out_idx % RESHP_FACTOR == 5) out_feature_map[out_idx/RESHP_FACTOR].range(47,40) = (quant_act) avg;
+							else if(out_idx % RESHP_FACTOR == 6) out_feature_map[out_idx/RESHP_FACTOR].range(55,48) = (quant_act) avg;
+							else if(out_idx % RESHP_FACTOR == 7) out_feature_map[out_idx/RESHP_FACTOR].range(63,56) = (quant_act) avg;
 							accum = 0;
 						}
 					}
@@ -201,7 +213,7 @@ void average_pool(quant_act in_feature_map[fm_width*fm_height*nbands], quant_act
 }
 
 template<params_t fm_width, params_t fm_height, params_t nbands_conv, params_t nbands_shortcut>
-void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESHP_FACTOR], quant_act shortcut[fm_width*fm_height*nbands_shortcut], act_reshp out_feature_map[fm_width*fm_height*nbands_conv/RESHP_FACTOR]){
+void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESHP_FACTOR], act_reshp shortcut[fm_width*fm_height*nbands_shortcut/RESHP_FACTOR], act_reshp out_feature_map[fm_width*fm_height*nbands_conv/RESHP_FACTOR]){
 	int idx_conv = 0;
 	int idx_shortcut = 0;
 	quant_accum sum = 0;
@@ -229,29 +241,22 @@ void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESH
 					idx_conv++;
 				}
 				else {
-					sum = (quant_act)conv_feature_map[idx_conv].range(7,0) + shortcut[idx_shortcut];
+					sum = (quant_act)conv_feature_map[idx_conv].range(7,0) + shortcut[idx_shortcut].range(7,0);
 					out_feature_map[idx_conv].range(7,0) = (quant_act) sum;
 //					printf("ds out: %d\n",shortcut[idx_shortcut]);
-					idx_shortcut++;
-					sum = (quant_act)conv_feature_map[idx_conv].range(15,8) + shortcut[idx_shortcut];
+					sum = (quant_act)conv_feature_map[idx_conv].range(15,8) + shortcut[idx_shortcut].range(15,8);
 					out_feature_map[idx_conv].range(15,8) = (quant_act) sum;
-					idx_shortcut++;
-					sum = (quant_act)conv_feature_map[idx_conv].range(23,16) + shortcut[idx_shortcut];
+					sum = (quant_act)conv_feature_map[idx_conv].range(23,16) + shortcut[idx_shortcut].range(23,16);
 					out_feature_map[idx_conv].range(23,16) = (quant_act) sum;
-					idx_shortcut++;
-					sum = (quant_act)conv_feature_map[idx_conv].range(31,24) + shortcut[idx_shortcut];
+					sum = (quant_act)conv_feature_map[idx_conv].range(31,24) + shortcut[idx_shortcut].range(31,24);
 					out_feature_map[idx_conv].range(31,24) = (quant_act) sum;
-					idx_shortcut++;
-					sum = (quant_act)conv_feature_map[idx_conv].range(39,32) + shortcut[idx_shortcut];
+					sum = (quant_act)conv_feature_map[idx_conv].range(39,32) + shortcut[idx_shortcut].range(39,32);
 					out_feature_map[idx_conv].range(39,32) = (quant_act) sum;
-					idx_shortcut++;
-					sum = (quant_act)conv_feature_map[idx_conv].range(47,40) + shortcut[idx_shortcut];
+					sum = (quant_act)conv_feature_map[idx_conv].range(47,40) + shortcut[idx_shortcut].range(47,40);
 					out_feature_map[idx_conv].range(47,40) = (quant_act) sum;
-					idx_shortcut++;
-					sum = (quant_act)conv_feature_map[idx_conv].range(55,48) + shortcut[idx_shortcut];
+					sum = (quant_act)conv_feature_map[idx_conv].range(55,48) + shortcut[idx_shortcut].range(55,48);
 					out_feature_map[idx_conv].range(55,48) = (quant_act) sum;
-					idx_shortcut++;
-					sum = (quant_act)conv_feature_map[idx_conv].range(63,56) + shortcut[idx_shortcut];
+					sum = (quant_act)conv_feature_map[idx_conv].range(63,56) + shortcut[idx_shortcut].range(63,56);
 					out_feature_map[idx_conv].range(63,56) = (quant_act) sum;
 					idx_shortcut++;
 					idx_conv++;
