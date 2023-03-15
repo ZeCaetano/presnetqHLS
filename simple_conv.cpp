@@ -14,8 +14,8 @@
 //#include "weights_reshaped_3.h"    //Weights reshaped with a factor of 8 with 64 bands and 168 filters on the last layer
 //#include "weights_reshaped_4.h"    //Weights reshaped with a factor of 4 with 64 bands and 168 filters on the last layer
 //#include "weights_reshaped_5.h"    //Weights reshaped for 8x2 quantization with a factor of 8 with 64 bands and 168 filters on the last layer
-#include "weights_reshaped_7.h"    //Weights reshaped for 8x2 quantization with a factor of 8 with 64 bands and 168 filters on the last layer
-//#include "weights_reshaped_8.h"    //Weights reshaped with fully connected layer for 8x2 quantization with a factor of 8 with 64 bands and 168 filters on the last layer
+//#include "weights_reshaped_7.h"    //Weights reshaped for 8x2 quantization with a factor of 8 with 64 bands and 168 filters on the last layer
+#include "weights_reshaped_8.h"    //Weights reshaped with fully connected layer for 8x2 quantization with a factor of 8 with 64 bands and 168 filters on the last layer
 
 
 void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
@@ -50,9 +50,9 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 	conv_layer_k2<1,X2,Y2,Z2,NF2, X3, weights_l2, 8, false> (m1_feature_map, m2_feature_map);
 	conv_layer_k1<2,X3,Y3,Z3,NF3, weights_l3,8, false> (m2_feature_map, m3_feature_map);
 	add_shortcut<X3,Y3,NF3,ZDS>(m3_feature_map, ds_ofm, m4_feature_map);
-//	average_pool<X3,Y3,XDS2,YDS2,NF3,KDS>(m4_feature_map, m5_feature_map);
-//	fully_connected<NF3,NCLASSES, weights_fc, bias_fc>(m5_feature_map, out_feature_map);
-	write_ofm(m4_feature_map, strm_out);
+	average_pool<X3,Y3,XDS2,YDS2,NF3,KDS>(m4_feature_map, m5_feature_map);
+	fully_connected<NF3,NCLASSES, weights_fc, bias_fc>(m5_feature_map, out_feature_map);
+	write_ofm(out_feature_map, strm_out);
 }
 
 
@@ -115,10 +115,10 @@ void write_dsofm(quant_act ofm[OUTDS_FM_MEM_SIZE], hls::stream<strmio_t> &strm_o
 	}
 }
 
-void write_ofm(act_reshp ofm[OUTPUT_MEM_SIZE/RESHP_FACTOR], hls::stream<strmio_t> &strm_out) {
+void write_ofm(act_reshp ofm[NCLASSES/RESHP_FACTOR], hls::stream<strmio_t> &strm_out) {
 	strmio_t tmpout;
 	//Write output fm to stream
-	for(int i = 0; i < OUTPUT_MEM_SIZE/RESHP_FACTOR; i++){
+	for(int i = 0; i < NCLASSES/RESHP_FACTOR; i++){
 #pragma HLS PIPELINE II=8
 		tmpout.data = (quant_act)ofm[i].range(7,0);
 //		printf("%d: %d   \n", (int)(quant_act)ofm[i].range(7,0), (int)tmpout.data);
