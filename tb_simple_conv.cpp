@@ -4,7 +4,7 @@
 
 static quant_act image_in[INPUT1_MEM_SIZE];
 static quant_wght kernel[WEIGHTS_MEM_SIZE];
-static quant_act bias[NCLASSES];
+static quant_bias bias[NCLASSES];
 
 //quant_act hw_image_out[OUTPUT_MEM_SIZE];
 quant_act hw_image_out[NCLASSES];
@@ -166,7 +166,8 @@ void fully_connected(quant_act *input_fm, quant_act *output_fm, quant_wght *weig
 void init_fm(){
 
 	int npixels = 0;
-	quant_act values1[16] = {200,142,222,133,247,35,96,72,11,231,194,166,55,182,175,89};
+//	quant_act values1[16] = {200,142,222,133,247,35,96,72,11,231,194,166,55,182,175,89};
+	quant_act values1[16] = {-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7};
 	quant_wght values2[4] = {-2,-1,1};
 	quant_wght values3[4] = {1,-1,-2};
 	quant_wght values4[4] = {-1,1,-2};
@@ -472,11 +473,11 @@ int main() {
 //	}
 //	printf("\n");
 //
-//	printf("HARDWARE output image\n");
-//	for(int i = 0; i < NCLASSES; i++) {
-//		printf("%d ", (int)hw_image_out[i]);
-//	}
-//	printf("\n");
+	printf("HARDWARE output image\n");
+	for(int i = 0; i < NCLASSES; i++) {
+		printf("%d ", (int)hw_image_out[i]);
+	}
+	printf("\n");
 
 	//--------------------------------------------------------------------------------------------------//
 	//-----------------------------------------Results Verification-------------------------------------//

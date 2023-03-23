@@ -18,7 +18,7 @@
 //typedef ap_fixed<8,4,AP_RND> quant_mult;
 //typedef ap_fixed<9,4,AP_RND> quant_accum;
 
-typedef ap_int<8> quant_act;
+typedef ap_int<4> quant_act;
 typedef ap_int<2> quant_wght;
 typedef ap_int<8> quant_bias;
 
@@ -31,7 +31,7 @@ typedef ap_int<21> quant_accum;
 
 typedef ap_int<32> quant_reshp;
 typedef ap_int<16> wght_reshp;
-typedef ap_int<64> act_reshp;
+typedef ap_int<32> act_reshp;
 #define RESHP_FACTOR 8
 
 //typedef float quant_t;
@@ -53,7 +53,7 @@ void average_pool(act_reshp in_feature_map[fm_width*fm_height*nbands/RESHP_FACTO
 template<params_t fm_width, params_t fm_height, params_t nbands_conv, params_t nbands_shortcut>
 void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESHP_FACTOR], act_reshp shortcut[fm_width*fm_height*nbands_shortcut/RESHP_FACTOR], act_reshp out_feature_map[fm_width*fm_height*nbands_conv/RESHP_FACTOR]);
 
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, wght_reshp *weights, params_t PE, bool relu>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t SFI, params_t SFW, params_t SFO, wght_reshp *weights, params_t PE, bool relu>
 void conv_layer_k1(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[fm_height*fm_width*nfilters/RESHP_FACTOR]);
 
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, wght_reshp *weights, params_t PE>
@@ -71,7 +71,7 @@ void conv_layer_k1_b4k2_x4(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim,wght_reshp *weights, params_t PE, bool relu>
 void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP_FACTOR], act_reshp out_feature_map[(fm_height/2)*(fm_width/2)*nfilters/RESHP_FACTOR]);
 
-template<params_t input_size, params_t nfilters, wght_reshp *weights, quant_act *bias>
+template<params_t input_size, params_t nfilters, wght_reshp *weights, quant_bias *bias>
 void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], act_reshp output_fm[nfilters/RESHP_FACTOR]);
 
 void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out);
