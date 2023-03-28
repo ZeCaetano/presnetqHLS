@@ -62,16 +62,16 @@ void conv_layer_k1_relu(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP
 template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, wght_reshp *weights>
 void conv_layer_k1_1PE(act_reshp in_feature_map[fm_height*fm_width*nbands], act_reshp out_feature_map[fm_height*fm_width*nfilters]);
 
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, wght_reshp *weights, params_t PE,bool relu>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t SFI, params_t SFW, params_t SFO, wght_reshp *weights, params_t PE,bool relu>
 void conv_layer_k1_b4k2_x9(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[2][(fm_height-1)*(fm_width-1)*nfilters/2/RESHP_FACTOR]);
 
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, wght_reshp *weights, params_t PE,bool relu>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t SFI, params_t SFW, params_t SFO, wght_reshp *weights, params_t PE,bool relu>
 void conv_layer_k1_b4k2_x4(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[2][(fm_height)*(fm_width)*nfilters/2/RESHP_FACTOR]);
 
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim,wght_reshp *weights, params_t PE, bool relu>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim, params_t SFI, params_t SFW, params_t SFO,wght_reshp *weights, params_t PE, bool relu>
 void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP_FACTOR], act_reshp out_feature_map[(fm_height/2)*(fm_width/2)*nfilters/RESHP_FACTOR]);
 
-template<params_t input_size, params_t nfilters, wght_reshp *weights, quant_bias *bias>
+template<params_t input_size, params_t nfilters, wght_reshp *weights, quant_bias *bias, params_t SFI, params_t SFB, params_t SFW, params_t SFO>
 void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], act_reshp output_fm[nfilters/RESHP_FACTOR]);
 
 void dataflow_func(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out);

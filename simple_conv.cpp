@@ -43,18 +43,18 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 #pragma HLS STREAM variable=m3_feature_map type=PIPO depth=2
 #pragma HLS STREAM variable=out_feature_map type=PIPO depth=2
 
-	const params_t SFI = 5, SFW = 1, SFO = 8;
+	const params_t SFI = 1, SFW = 1, SFO = 2, SFB = 2;
 
 #pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map, shortcut_fm);
 	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(shortcut_fm, ds_ofm);
 //	write_dsofm(ds_ofm, strm_out);
-	conv_layer_k1_b4k2_x4<0,X1,Y1,Z1,NF1, weights_l1, 8, false> (in_feature_map, m1_feature_map);
-	conv_layer_k2<1,X2,Y2,Z2,NF2, X3, weights_l2, 8, false> (m1_feature_map, m2_feature_map);
+	conv_layer_k1_b4k2_x4<0,X1,Y1,Z1,NF1,SFI,SFW,SFO, weights_l1, 8, false> (in_feature_map, m1_feature_map);
+	conv_layer_k2<1,X2,Y2,Z2,NF2, X3,SFI,SFW,SFO, weights_l2, 8, false> (m1_feature_map, m2_feature_map);
 	conv_layer_k1<2,X3,Y3,Z3,NF3,SFI,SFW,SFO, weights_l3,8, false> (m2_feature_map, m3_feature_map);
 	add_shortcut<X3,Y3,NF3,ZDS>(m3_feature_map, ds_ofm, m4_feature_map);
 	average_pool<X3,Y3,XDS2,YDS2,NF3,KDS>(m4_feature_map, m5_feature_map);
-	fully_connected<NF3,NCLASSES, weights_fc, bias_fc>(m5_feature_map, out_feature_map);
+	fully_connected<NF3,NCLASSES, weights_fc, bias_fc, SFI,SFW,SFB,SFO>(m5_feature_map, out_feature_map);
 	write_ofm(out_feature_map, strm_out);
 }
 
@@ -306,9 +306,9 @@ void conv_layer_k1(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACT
 						kernel_idx++;
 						input_idx++;
 						if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
-//							acc = acc>>((SFW+SFI)-SFO);
-//							tmp_out = acc.range(3,0);
-							tmp_out = (quant_act)acc;
+//							tmp_out = (quant_act)acc;
+							acc = acc>>((SFW+SFI)-SFO);
+							tmp_out = acc.range(3,0);
 //							printf("%X\n\n\n",tmp_out);
 							if(relu) tmp_out = (ap_int<1>)((quant_act)acc[7]) == 0 ? tmp_out : (quant_act)0;
 							if(k%RESHP_FACTOR==0) acc_tmp.range(3,0) = tmp_out;
@@ -337,7 +337,7 @@ void conv_layer_k1(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACT
 }
 
 //Convolutional layer to be aplied before a convolution with kernel and stride 2, that will clear the last row and column from the outputs
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, wght_reshp *weights, params_t PE, bool relu>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t SFI, params_t SFW, params_t SFO, wght_reshp *weights, params_t PE, bool relu>
 void conv_layer_k1_b4k2_x9(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[2][(fm_height-1)*(fm_width-1)*nfilters/2/RESHP_FACTOR]) {
 	quant_accum acc = 0;
 	int kernel_idx = 0;
@@ -382,7 +382,9 @@ void conv_layer_k1_b4k2_x9(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 							kernel_idx++;
 							input_idx++;
 							if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
-								tmp_out = (quant_act)acc;
+//								tmp_out = (quant_act)acc;
+								acc = acc>>((SFW+SFI)-SFO);
+								tmp_out = acc.range(3,0);
 								if(relu) tmp_out = (ap_int<1>)((quant_act)acc[7]) == 0 ? tmp_out : (quant_act)0;
 //								printf("tmp_out: %d\n", (int)tmp_out);
 								if(k%RESHP_FACTOR==0) acc_tmp.range(3,0) = tmp_out;
@@ -421,7 +423,7 @@ void conv_layer_k1_b4k2_x9(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 }
 
 //Convolutional layer to be aplied before a convolution with kernel and stride 2, that will clear the last row and column from the outputs
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, wght_reshp *weights, params_t PE, bool relu>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t SFI, params_t SFW, params_t SFO, wght_reshp *weights, params_t PE, bool relu>
 void conv_layer_k1_b4k2_x4(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[2][(fm_height)*(fm_width)*nfilters/2/RESHP_FACTOR]) {
 	quant_accum acc = 0;
 	int kernel_idx = 0;
@@ -458,7 +460,12 @@ void conv_layer_k1_b4k2_x4(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 						kernel_idx++;
 						input_idx++;
 						if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
-							tmp_out = (quant_act)acc;
+//							tmp_out = (quant_act)acc;
+//							printf("%X -> ", acc);
+							acc = acc>>((SFW+SFI)-SFO);
+							tmp_out = acc.range(3,0);
+//							printf("%X -> ", acc);
+//							printf("%X\n\n",tmp_out);
 							if(relu) tmp_out = (ap_int<1>)((quant_act)acc[7]) == 0 ? tmp_out : (quant_act)0;
 							if(k%RESHP_FACTOR==0) acc_tmp.range(3,0) = tmp_out;
 							else if(k%RESHP_FACTOR==1) acc_tmp.range(7,4) = tmp_out;
@@ -469,7 +476,6 @@ void conv_layer_k1_b4k2_x4(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 							else if(k%RESHP_FACTOR==6) acc_tmp.range(27,24) = tmp_out;
 							else {
 								acc_tmp.range(31,28) = tmp_out;
-
 								if(i % 2 == 0) {
 									out_feature_map[0][output_idx_even] = acc_tmp; //ver o fator de escala aqui
 									output_idx_even++;
@@ -494,7 +500,7 @@ void conv_layer_k1_b4k2_x4(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 	return;
 }
 //Convolution with stride 2
-template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim,wght_reshp *weights, params_t PE, bool relu>
+template<params_t layer_id, params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim, params_t SFI, params_t SFW, params_t SFO,wght_reshp *weights, params_t PE, bool relu>
 void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP_FACTOR], act_reshp out_feature_map[(fm_height/2)*(fm_width/2)*nfilters/RESHP_FACTOR]) {
 	quant_accum acc_even = 0, acc_odd = 0;
 	ap_uint<2> kernel_size = 2;
@@ -543,8 +549,10 @@ void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP
 						input_idx++;
 
 						if(z + (p*RESHP_FACTOR) == nbands*2-RESHP_FACTOR) {
-							acc_even += acc_odd;
-							tmp_out = (quant_act)acc_even;
+//							acc_even += acc_odd;
+//							tmp_out = (quant_act)acc_even;
+							acc_even = acc_even>>((SFW+SFI)-SFO);
+							tmp_out = acc_even.range(3,0);
 							if(relu) tmp_out = (ap_int<1>)((quant_act)acc_even[7]) == 0 ? tmp_out : (quant_act)0;
 							if(k%RESHP_FACTOR==0) acc_tmp.range(3,0) = tmp_out;
 							else if(k%RESHP_FACTOR==1) acc_tmp.range(7,4) = tmp_out;
@@ -571,13 +579,14 @@ void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP
 	return;
 }
 
-template<params_t input_size, params_t nfilters, wght_reshp *weights, quant_bias *bias>
+template<params_t input_size, params_t nfilters, wght_reshp *weights, quant_bias *bias, params_t SFI, params_t SFW, params_t SFB, params_t SFO>
 void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], act_reshp output_fm[nfilters/RESHP_FACTOR]) {
-	quant_accum acc = 0;
+	quant_accum acc = 0, sum = 0;
 	act_reshp tmp_in = 0, tmp_acc = 0;
 	wght_reshp tmp_weight = 0;
-	int kernel_idx = 0, output_idx = 0;
+	int kernel_idx = 0, output_idx = 0, sf = SFI;
 	ap_int<9> tmp_out = 0;
+	quant_bias tmp_bias = 0;
 
 	for(int i = 0; i < nfilters; i++) {
 		for(int j = 0; j < input_size/RESHP_FACTOR; j++) {
@@ -594,7 +603,19 @@ void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], act_reshp outp
 			kernel_idx++;
 
 			if(j == input_size/RESHP_FACTOR-1) {
-				tmp_out = (quant_act)acc + bias[i];
+//				acc = acc>>((SFW+SFI)-SFO);
+//				acc = acc.range(3,0);
+				tmp_bias = bias[i];
+				if(SFB > (SFI+SFW)) {
+					acc = acc<<(SFB-(SFI+SFW));
+					sf = SFB;
+				} else if( (SFI+SFW) > SFB) {
+					tmp_bias = tmp_bias<<((SFI+SFW)-SFB);
+					sf = SFI+SFW;
+				}
+				sum = acc + tmp_bias;
+				sum = sum >> sf - SFO;
+				tmp_out = sum.range(3,0);
 				if(i%RESHP_FACTOR == 0) tmp_acc.range(3,0) = (quant_act)tmp_out;
 				else if(i%RESHP_FACTOR == 1) tmp_acc.range(7,4) = (quant_act)tmp_out;
 				else if(i%RESHP_FACTOR == 2) tmp_acc.range(11,8) = (quant_act)tmp_out;
