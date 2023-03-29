@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 static quant_act image_in[INPUT1_MEM_SIZE];
-static quant_wght kernel[WEIGHTS_MEM_SIZE];
+static quant_wght kernel[LAYER1_WEIGHTS+LAYER3_WEIGHTS+LAYER2_WEIGHTS];
 static quant_bias bias[NCLASSES];
 
 //quant_act hw_image_out[OUTPUT_MEM_SIZE];
@@ -12,9 +12,9 @@ quant_act sw_image_out_1[OUT1_FM_MEM_SIZE];
 quant_act sw_image_out_2[OUT2_FM_MEM_SIZE];
 quant_act sw_image_out_3[OUT3_FM_MEM_SIZE];
 quant_act sw_image_out_4[OUT3_FM_MEM_SIZE];
-quant_act sw_image_out_5[OUTDS2_FM_MEM_SIZE];
+quant_act sw_image_out_5[OUT3_FM_MEM_SIZE];
 quant_act sw_image_out[NCLASSES];
-quant_act sw_image_out_ds[OUTDS_FM_MEM_SIZE];
+quant_act sw_image_out_ds[OUT3_FM_MEM_SIZE];
 
 //Performs software-only matrix convolution.
 void sw_convolution_3D(quant_act *image_in, const quant_wght *weights, quant_act *image_out, int nbands, int fm_size, int kernel_size, bool relu) {
@@ -396,11 +396,11 @@ int main() {
 		}
 
 
-	average_pooling(image_in, sw_image_out_ds, X1, XDS, Z1, KDS);
+	average_pooling(image_in, sw_image_out_ds, X1, X13, Z13, 2);
 
 	sum_shorctut(sw_image_out_3, sw_image_out_ds, sw_image_out_4, X3, NF3, Z1);
 
-	average_pooling(sw_image_out_4, sw_image_out_5, X3, XDS2, NF3, KDS);
+	average_pooling(sw_image_out_4, sw_image_out_5, X3, X13, NF13, 2);
 	quant_wght *fp_weights_fc = kernel + LAYER1_WEIGHTS + LAYER2_WEIGHTS + LAYER3_WEIGHTS;
 	fully_connected(sw_image_out_5, sw_image_out, fp_weights_fc, bias, NF3, NCLASSES);
 
