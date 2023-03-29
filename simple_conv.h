@@ -47,7 +47,7 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 #ifdef ARRAYS
 
-template<params_t fm_width, params_t fm_height, params_t output_width, params_t output_height, params_t nbands, params_t kernel_size>
+template<params_t fm_width, params_t fm_height, params_t output_width, params_t output_height, params_t nbands, params_t kernel_size, params_t SFI, params_t SFO>
 void average_pool(act_reshp in_feature_map[fm_width*fm_height*nbands/RESHP_FACTOR], act_reshp out_feature_map[output_height*output_width*nbands/RESHP_FACTOR]);
 
 template<params_t fm_width, params_t fm_height, params_t nbands_conv, params_t nbands_shortcut, params_t SF_conv, params_t SF_shortcut, params_t SFO>

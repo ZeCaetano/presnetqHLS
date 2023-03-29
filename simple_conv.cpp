@@ -47,13 +47,13 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 
 #pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map, shortcut_fm);
-	average_pool<X1,Y1,XDS,YDS,Z1,KDS>(shortcut_fm, ds_ofm);
+	average_pool<X1,Y1,XDS,YDS,Z1,KDS,SFI,SFO>(shortcut_fm, ds_ofm);
 //	write_dsofm(ds_ofm, strm_out);
 	conv_layer_k1_b4k2_x4<0,X1,Y1,Z1,NF1,SFI,SFW,SFO, weights_l1, 8, false> (in_feature_map, m1_feature_map);
 	conv_layer_k2<1,X2,Y2,Z2,NF2, X3,SFI,SFW,SFO, weights_l2, 8, false> (m1_feature_map, m2_feature_map);
 	conv_layer_k1<2,X3,Y3,Z3,NF3,SFI,SFW,SFO, weights_l3,8, false> (m2_feature_map, m3_feature_map);
 	add_shortcut<X3,Y3,NF3,ZDS,SF_conv,SF_shortcut,SFO>(m3_feature_map, ds_ofm, m4_feature_map);
-	average_pool<X3,Y3,XDS2,YDS2,NF3,KDS>(m4_feature_map, m5_feature_map);
+	average_pool<X3,Y3,XDS2,YDS2,NF3,KDS,SFI,SFO>(m4_feature_map, m5_feature_map);
 	fully_connected<NF3,NCLASSES, weights_fc, bias_fc, SFI,SFW,SFB,SFO>(m5_feature_map, out_feature_map);
 	write_ofm(out_feature_map, strm_out);
 }
@@ -169,7 +169,7 @@ void write_ofm(act_reshp ofm[NCLASSES/RESHP_FACTOR], hls::stream<strmio_t> &strm
 }
 
 
-template<params_t fm_width, params_t fm_height, params_t output_width, params_t output_height, params_t nbands, params_t kernel_size>
+template<params_t fm_width, params_t fm_height, params_t output_width, params_t output_height, params_t nbands, params_t kernel_size, params_t SFI, params_t SFO>
 void average_pool(act_reshp in_feature_map[fm_width*fm_height*nbands/RESHP_FACTOR], act_reshp out_feature_map[output_height*output_width*nbands/RESHP_FACTOR]){
 	ap_int<32> accum = 0;
 	quant_act avg = 0;
@@ -197,15 +197,17 @@ void average_pool(act_reshp in_feature_map[fm_width*fm_height*nbands/RESHP_FACTO
 //						printf("accum: %d\n", (int)accum);
 						if(k == kernel_size-1 && l == kernel_size-1){
 							avg = accum / div;
+							avg = avg >> SFI-SFO;
+							avg = avg.range(3,0);
 							out_idx = (i/2)*nbands*output_height+ (j/2)*nbands + z;
-							if(out_idx % RESHP_FACTOR == 0) out_feature_map[out_idx/RESHP_FACTOR].range(3,0) = (quant_act) avg;
-							else if(out_idx % RESHP_FACTOR == 1) out_feature_map[out_idx/RESHP_FACTOR].range(7,4) = (quant_act) avg;
-							else if(out_idx % RESHP_FACTOR == 2) out_feature_map[out_idx/RESHP_FACTOR].range(11,8) = (quant_act) avg;
-							else if(out_idx % RESHP_FACTOR == 3) out_feature_map[out_idx/RESHP_FACTOR].range(15,12) = (quant_act) avg;
-							else if(out_idx % RESHP_FACTOR == 4) out_feature_map[out_idx/RESHP_FACTOR].range(19,16) = (quant_act) avg;
-							else if(out_idx % RESHP_FACTOR == 5) out_feature_map[out_idx/RESHP_FACTOR].range(23,20) = (quant_act) avg;
-							else if(out_idx % RESHP_FACTOR == 6) out_feature_map[out_idx/RESHP_FACTOR].range(27,24) = (quant_act) avg;
-							else if(out_idx % RESHP_FACTOR == 7) out_feature_map[out_idx/RESHP_FACTOR].range(31,28) = (quant_act) avg;
+							if(out_idx % RESHP_FACTOR == 0) out_feature_map[out_idx/RESHP_FACTOR].range(3,0) = avg;
+							else if(out_idx % RESHP_FACTOR == 1) out_feature_map[out_idx/RESHP_FACTOR].range(7,4) = avg;
+							else if(out_idx % RESHP_FACTOR == 2) out_feature_map[out_idx/RESHP_FACTOR].range(11,8) = avg;
+							else if(out_idx % RESHP_FACTOR == 3) out_feature_map[out_idx/RESHP_FACTOR].range(15,12) = avg;
+							else if(out_idx % RESHP_FACTOR == 4) out_feature_map[out_idx/RESHP_FACTOR].range(19,16) = avg;
+							else if(out_idx % RESHP_FACTOR == 5) out_feature_map[out_idx/RESHP_FACTOR].range(23,20) = avg;
+							else if(out_idx % RESHP_FACTOR == 6) out_feature_map[out_idx/RESHP_FACTOR].range(27,24) = avg;
+							else if(out_idx % RESHP_FACTOR == 7) out_feature_map[out_idx/RESHP_FACTOR].range(31,28) = avg;
 							accum = 0;
 						}
 					}
