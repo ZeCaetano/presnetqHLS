@@ -11,7 +11,12 @@
 #define K1 1
 #define LAYER1_WEIGHTS (NF1*Z1*K1*K1)
 #define INPUT1_MEM_SIZE (X1*Y1*Z1)
-#define OUT1_FM_MEM_SIZE (X1*Y1*NF1)
+#define OUT1_MEM_SIZE (X1*Y1*NF1)
+#define SFI1 1
+#define SFO1 1
+#define SFW1 1
+
+
 //-------LAYER 2--------//
 //Input: 9,9,32
 //Number of filters: 40
@@ -23,7 +28,10 @@
 #define K2 1
 #define LAYER2_WEIGHTS (NF2*Z2*K2*K2)
 #define INPUT2_MEM_SIZE (X2*Y2*Z2)
-#define OUT2_FM_MEM_SIZE (X3*Y3*NF2)
+#define OUT2_MEM_SIZE (X3*Y3*NF2)
+#define SFI2 1
+#define SFO2 1
+#define SFW2 1
 //-------LAYER 3--------//
 //Input: 9,9,40
 //Number of filters: 40
@@ -35,7 +43,10 @@
 #define K3 1
 #define LAYER3_WEIGHTS (NF3*Z3*K3*K3)
 #define INPUT3_MEM_SIZE (X3*Y3*Z3)
-#define OUT3_FM_MEM_SIZE (X4*Y4*NF3)
+#define OUT3_MEM_SIZE (X4*Y4*NF3)
+#define SFI3 1
+#define SFO3 1
+#define SFW3 1
 //-------LAYER 4--------//
 //Input: 9,9,40
 //Number of filters: 160
@@ -47,7 +58,14 @@
 #define K4 1
 #define LAYER4_WEIGHTS (NF4*Z4*K4*K4)
 #define INPUT4_MEM_SIZE (X4*Y4*Z4)
-#define OUT4_FM_MEM_SIZE (X5*Y5*NF4)
+#define OUT4_MEM_SIZE (X5*Y5*NF4)
+#define SFI4 1
+#define SFO4 1
+#define SFW4 1
+#define SFBLK1 1
+
+
+
 //-------LAYER 5--------//
 //Input: 9,9,160
 //Number of filters: 48
@@ -59,7 +77,10 @@
 #define K5 1
 #define LAYER5_WEIGHTS (NF5*Z5*K5*K5)
 #define INPUT5_MEM_SIZE (X5*Y5*Z5)
-#define OUT5_FM_MEM_SIZE (X6*Y6*NF5)
+#define OUT5_MEM_SIZE (X6*Y6*NF5)
+#define SFI5 1
+#define SFO5 1
+#define SFW5 1
 //-------LAYER 6--------//
 //Input: 9,9,48
 //Number of filters: 48
@@ -71,7 +92,10 @@
 #define K6 1
 #define LAYER6_WEIGHTS (NF6*Z6*K6*K6)
 #define INPUT6_MEM_SIZE (X6*Y6*Z6)
-#define OUT6_FM_MEM_SIZE (X7*Y7*NF6)
+#define OUT6_MEM_SIZE (X7*Y7*NF6)
+#define SFI6 1
+#define SFO6 1
+#define SFW6 1
 //-------LAYER 7--------//
 //Input: 9,9,48
 //Number of filters: 192
@@ -83,7 +107,14 @@
 #define K7 1
 #define LAYER7_WEIGHTS (NF7*Z7*K7*K7)
 #define INPUT7_MEM_SIZE (X7*Y7*Z7)
-#define OUT7_FM_MEM_SIZE (X8*Y8*NF7)
+#define OUT7_MEM_SIZE (X8*Y8*NF7)
+#define SFI7 1
+#define SFO7 1
+#define SFW7 1
+#define SFBLK2 1
+
+
+
 //-------LAYER 8--------//
 //Input: 9,9,192
 //Number of filters: 64
@@ -95,7 +126,10 @@
 #define K8 1
 #define LAYER8_WEIGHTS (NF8*Z8*K8*K8)
 #define INPUT8_MEM_SIZE (X8*Y8*Z8)
-#define OUT8_FM_MEM_SIZE (X9*Y9*NF8)
+#define OUT8_MEM_SIZE (X9*Y9*NF8)
+#define SFI8 1
+#define SFO8 1
+#define SFW8 1
 //-------LAYER 9--------//
 //Input: 9,9,64
 //Number of filters: 72
@@ -107,7 +141,10 @@
 #define K9 1
 #define LAYER9_WEIGHTS (NF9*Z9*K9*K9)
 #define INPUT9_MEM_SIZE (X9*Y9*Z9)
-#define OUT9_FM_MEM_SIZE (X10*Y10*NF9)
+#define OUT9_MEM_SIZE (X10*Y10*NF9)
+#define SFI9 1
+#define SFO9 1
+#define SFW9 1
 //-------LAYER 10--------//
 //Input: 9,9,72
 //Number of filters: 240
@@ -119,7 +156,14 @@
 #define K10 1
 #define LAYER10_WEIGHTS (NF10*Z10*K10*K10)
 #define INPUT10_MEM_SIZE (X10*Y10*Z10)
-#define OUT10_FM_MEM_SIZE (X11*Y11*NF10)
+#define OUT10_MEM_SIZE (X11*Y11*NF10)
+#define SFI10 1
+#define SFO10 1
+#define SFW10 1
+#define SFBLK3 1
+
+
+
 //-------LAYER 11--------//
 //Input: 9,9,240
 //Number of filters: 64
@@ -131,7 +175,10 @@
 #define K11 1
 #define LAYER11_WEIGHTS (NF11*Z11*K11*K11)
 #define INPUT11_MEM_SIZE (X11*Y11*Z11)
-#define OUT11_FM_MEM_SIZE (X12*Y12*NF11)
+#define OUT11_MEM_SIZE (X12*Y12*NF11)
+#define SFI11 1
+#define SFO11 1
+#define SFW11 1
 //-------LAYER 12--------//
 //Input: 9,9,64
 //Number of filters: 72
@@ -143,7 +190,10 @@
 #define K12 2
 #define LAYER12_WEIGHTS (NF12*Z12*K12*K12)
 #define INPUT12_MEM_SIZE (X12*Y12*Z12)
-#define OUT12_FM_MEM_SIZE (X13*Y13*NF12)
+#define OUT12_MEM_SIZE (X13*Y13*NF12)
+#define SFI12 1
+#define SFO12 1
+#define SFW12 1
 //-------LAYER 13--------//
 //Input: 4,4,,72
 //Number of filters: 304
@@ -155,7 +205,22 @@
 #define K13 1
 #define LAYER13_WEIGHTS (NF13*Z13*K13*K13)
 #define INPUT13_MEM_SIZE (X13*Y13*Z13)
-#define OUT13_FM_MEM_SIZE (X14*Y14*NF13)
+#define OUT13_MEM_SIZE (X14*Y14*NF13)
+#define SFI13 1
+#define SFO13 1
+#define SFW13 1
+//--------Downsampling 1--------//
+//Input: 9,9,240
+//Output: 4,4,240
+//Kernel size: 2
+#define XDS1 4
+#define YDS1 4
+#define KDS1 2
+#define SFDS1 1
+#define SFBLK4 1
+
+
+
 //-------LAYER 14--------//
 //Input: 4,4,304
 //Number of filters: 88
@@ -167,31 +232,44 @@
 #define K14 1
 #define LAYER14_WEIGHTS (NF14*Z14*K14*K14)
 #define INPUT14_MEM_SIZE (X14*Y14*Z14)
-#define OUT14_FM_MEM_SIZE (X15*Y15*NF14)
+#define OUT14_MEM_SIZE (X15*Y15*NF14)
+#define SFI14 1
+#define SFO14 1
+#define SFW14 1
 //-------LAYER 15--------//
 //Input: 4,4,88
 //Number of filters: 88
 //Kernel size: 1
 #define X15 4
 #define Y15 4
-#define Z15 200
-#define NF15
+#define Z15 88
+#define NF15 88
 #define K15 1
 #define LAYER15_WEIGHTS (NF15*Z15*K15*K15)
 #define INPUT15_MEM_SIZE (X15*Y15*Z15)
-#define OUT15_FM_MEM_SIZE (X16*Y16*NF15)
+#define OUT15_MEM_SIZE (X16*Y16*NF15)
+#define SFI15 1
+#define SFO15 1
+#define SFW15 1
 //-------LAYER 16--------//
 //Input: 4,4,88
 //Number of filters: 352
 //Kernel size: 1
 #define X16 4
 #define Y16 4
-#define Z16 86
+#define Z16 88
 #define NF16 352
 #define K16 1
 #define LAYER16_WEIGHTS (NF16*Z16*K16*K16)
 #define INPUT16_MEM_SIZE (X16*Y16*Z16)
-#define OUT16_FM_MEM_SIZE (X17*Y17*NF16)
+#define OUT16_MEM_SIZE (X17*Y17*NF16)
+#define SFI16 1
+#define SFO16 1
+#define SFW16 1
+#define SFBLK5 1
+
+
+
 //-------LAYER 17--------//
 //Input: 4,4,352
 //Number of filters: 96
@@ -203,7 +281,10 @@
 #define K17 1
 #define LAYER17_WEIGHTS (NF17*Z17*K17*K17)
 #define INPUT17_MEM_SIZE (X17*Y17*Z17)
-#define OUT17_FM_MEM_SIZE (X18*Y18*NF17)
+#define OUT17_MEM_SIZE (X18*Y18*NF17)
+#define SFI17 1
+#define SFO17 1
+#define SFW17 1
 //-------LAYER 18--------//
 //Input: 4,4,96
 //Number of filters: 96
@@ -215,7 +296,10 @@
 #define K18 1
 #define LAYER18_WEIGHTS (NF18*Z18*K18*K18)
 #define INPUT18_MEM_SIZE (X18*Y18*Z18)
-#define OUT18_FM_MEM_SIZE (X19*Y19*NF18)
+#define OUT18_MEM_SIZE (X19*Y19*NF18)
+#define SFI18 1
+#define SFO18 1
+#define SFW18 1
 //-------LAYER 19--------//
 //Input: 4,4,96
 //Number of filters: 400
@@ -227,7 +311,14 @@
 #define K19 1
 #define LAYER19_WEIGHTS (NF19*Z19*K19*K19)
 #define INPUT19_MEM_SIZE (X19*Y19*Z19)
-#define OUT19_FM_MEM_SIZE (X20*Y20*NF19)
+#define OUT19_MEM_SIZE (X20*Y20*NF19)
+#define SFI19 1
+#define SFO19 1
+#define SFW19 1
+#define SFBLK6 1
+
+
+
 //-------LAYER 20--------//
 //Input: 4,4,400
 //Number of filters: 96
@@ -235,11 +326,14 @@
 #define X20 4
 #define Y20 4
 #define Z20 200
-#define NF20
+#define NF20 96
 #define K20 1
 #define LAYER20_WEIGHTS (NF20*Z20*K20*K20)
 #define INPUT20_MEM_SIZE (X20*Y20*Z20)
-#define OUT20_FM_MEM_SIZE (X21*Y21*NF20)
+#define OUT20_MEM_SIZE (X21*Y21*NF20)
+#define SFI20 1
+#define SFO20 1
+#define SFW20 1
 //-------LAYER 21--------//
 //Input: 4,4,96
 //Number of filters: 104
@@ -251,7 +345,10 @@
 #define K21 2
 #define LAYER21_WEIGHTS (NF21*Z21*K21*K21)
 #define INPUT21_MEM_SIZE (X21*Y21*Z21)
-#define OUT21_FM_MEM_SIZE (X22*Y22*NF21)
+#define OUT21_MEM_SIZE (X22*Y22*NF21)
+#define SFI21 1
+#define SFO21 1
+#define SFW21 1
 //-------LAYER 22--------//
 //Input: 2,2,104
 //Number of filters: 440
@@ -263,7 +360,22 @@
 #define K22 1
 #define LAYER22_WEIGHTS (NF22*Z22*K22*K22)
 #define INPUT22_MEM_SIZE (X22*Y22*Z22)
-#define OUT22_FM_MEM_SIZE (X23*Y23*NF22)
+#define OUT22_MEM_SIZE (X23*Y23*NF22)
+#define SFI22 1
+#define SFO22 1
+#define SFW22 1
+//--------Downsampling 2--------//
+//Input: 4,4,200
+//Output: 2,2,200
+//Kernel size: 2
+#define XDS2 2
+#define YDS2 2
+#define KDS2 2
+#define SFDS2 1
+#define SFBLK7 1
+
+
+
 //-------LAYER 23--------//
 //Input: 2,2,440
 //Number of filters: 120
@@ -275,7 +387,10 @@
 #define K23 1
 #define LAYER23_WEIGHTS (NF23*Z23*K23*K23)
 #define INPUT23_MEM_SIZE (X23*Y23*Z23)
-#define OUT23_FM_MEM_SIZE (X24*Y24*NF23)
+#define OUT23_MEM_SIZE (X24*Y24*NF23)
+#define SFI23 1
+#define SFO23 1
+#define SFW23 1
 //-------LAYER 24--------//
 //Input: 2,2,120
 //Number of filters: 120
@@ -287,7 +402,10 @@
 #define K24 1
 #define LAYER24_WEIGHTS (NF24*Z24*K24*K24)
 #define INPUT24_MEM_SIZE (X24*Y24*Z24)
-#define OUT24_FM_MEM_SIZE (X25*Y25*NF24)
+#define OUT24_MEM_SIZE (X25*Y25*NF24)
+#define SFI24 1
+#define SFO24 1
+#define SFW24 1
 //-------LAYER 25--------//
 //Input: 2,2,120
 //Number of filters: 480
@@ -299,7 +417,14 @@
 #define K25 1
 #define LAYER25_WEIGHTS (NF25*Z25*K25*K25)
 #define INPUT25_MEM_SIZE (X25*Y25*Z25)
-#define OUT25_FM_MEM_SIZE (X26*Y26*NF25)
+#define OUT25_MEM_SIZE (X26*Y26*NF25)
+#define SFI25 1
+#define SFO25 1
+#define SFW25 1
+#define SFBLK8 1
+
+
+
 //-------LAYER 26--------//
 //Input: 2,2,480
 //Number of filters: 128
@@ -311,7 +436,10 @@
 #define K26 1
 #define LAYER26_WEIGHTS (NF26*Z26*K26*K26)
 #define INPUT26_MEM_SIZE (X26*Y26*Z26)
-#define OUT26_FM_MEM_SIZE (X27*Y27*NF26)
+#define OUT26_MEM_SIZE (X27*Y27*NF26)
+#define SFI26 1
+#define SFO26 1
+#define SFW26 1
 //-------LAYER 27--------//
 //Input: 2,2,128
 //Number of filters: 128
@@ -323,7 +451,10 @@
 #define K27 1
 #define LAYER27_WEIGHTS (NF27*Z27*K27*K27)
 #define INPUT27_MEM_SIZE (X27*Y27*Z27)
-#define OUT27_FM_MEM_SIZE (X28*Y28*NF27)
+#define OUT27_MEM_SIZE (X28*Y28*NF27)
+#define SFI27 1
+#define SFO27 1
+#define SFW27 1
 //-------LAYER 28--------//
 //Input: 2,2,128
 //Number of filters: 528
@@ -335,5 +466,21 @@
 #define K28 1
 #define LAYER28_WEIGHTS (NF28*Z28*K28*K28)
 #define INPUT28_MEM_SIZE (X28*Y28*Z28)
-#define OUT28_FM_MEM_SIZE (X28*Y28*NF28)
+#define OUT28_MEM_SIZE (X28*Y28*NF28)
+#define SFI28 1
+#define SFO28 11
+#define SFW28 1
+#define SFBLK9 1
+
+
+//----------Final Downsampling------//
+#define XDS3 1
+#define YDS3 1
+#define KDS3 2
+#define SFDS3 1
+
+//-------Fully Connected---------//
+#define SFW_FC 1
+#define SFB_FC 1
+#define SFO_FC 1
 

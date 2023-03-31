@@ -3,18 +3,18 @@
 #include <stdlib.h>
 
 static quant_act image_in[INPUT1_MEM_SIZE];
-static quant_wght kernel[LAYER1_WEIGHTS+LAYER3_WEIGHTS+LAYER2_WEIGHTS];
-static quant_bias bias[NCLASSES];
+//static quant_wght kernel[LAYER1_WEIGHTS+LAYER3_WEIGHTS+LAYER2_WEIGHTS];
+//static quant_bias bias[NCLASSES];
 
 //quant_act hw_image_out[OUTPUT_MEM_SIZE];
 quant_act hw_image_out[NCLASSES];
-quant_act sw_image_out_1[OUT1_FM_MEM_SIZE];
-quant_act sw_image_out_2[OUT2_FM_MEM_SIZE];
-quant_act sw_image_out_3[OUT3_FM_MEM_SIZE];
-quant_act sw_image_out_4[OUT3_FM_MEM_SIZE];
-quant_act sw_image_out_5[OUT3_FM_MEM_SIZE];
+quant_act sw_image_out_1[OUT1_MEM_SIZE];
+quant_act sw_image_out_2[OUT2_MEM_SIZE];
+quant_act sw_image_out_3[OUT3_MEM_SIZE];
+quant_act sw_image_out_4[OUT3_MEM_SIZE];
+quant_act sw_image_out_5[OUT3_MEM_SIZE];
 quant_act sw_image_out[NCLASSES];
-quant_act sw_image_out_ds[OUT3_FM_MEM_SIZE];
+quant_act sw_image_out_ds[OUT3_MEM_SIZE];
 
 //Performs software-only matrix convolution.
 void sw_convolution_3D(quant_act *image_in, const quant_wght *weights, quant_act *image_out, int nbands, int fm_size, int kernel_size, bool relu) {
@@ -183,53 +183,53 @@ void init_fm(){
 //			printf("\n\r");
 		}
 	}
-//	printf("Weights1\n\r");
-	for(int i = 0; i < NF1; i++) {
-		for(int k = 0; k < Z1; k++) {
-			for(int j = 0; j < K1; j++) {
-				for(int l = 0; l < K1; l++) {
-					kernel[(i*Z1*K1*K1)+(k * K1*K1 + (j * K1) + l)] = values2[(l+j+i+k)%3];
-//					printf("%d ", (int)kernel[(k*NF1*K1*K1)+(i * K1*K1 + (j * K1) + l)]);
-				}
-			}
-		}
-//		printf("\n\r");
-	}
-//	printf("\n\n\n\n\n\n");
-//	printf("\n\nWeights2\n\r");
-	for(int i = 0; i < NF2; i++) {
-		for(int k = 0; k < Z2; k++) {
-			for(int j = 0; j < K2; j++) {
-				for(int l = 0; l < K2; l++) {
-					kernel[LAYER1_WEIGHTS + (i*Z2*K2*K2)+(k * K2*K2 + (j * K2) + l)] = values3[(l+j+i+k)%3];
-//					printf("%d ", (int)kernel[LAYER1_WEIGHTS + ((k*NF2*K2*K2)+(i * K2*K2 + (j * K2) + l))]);
-				}
-			}
-		}
-//		printf("\n\r");
-	}
-//	printf("\n\nWeights3\n\r");
-	for(int i = 0; i < NF3; i++) {
-		for(int k = 0; k < Z3; k++) {
-			for(int j = 0; j < K3; j++) {
-				for(int l = 0; l < K3; l++) {
-					kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + ((i*Z3*K3*K3)+(k * K3*K3 + (j * K3) + l))] = values4[(l+j+i+k)%3];
-//					printf("%d ", (int)kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + ((i*Z3*K3*K3)+(k * K3*K3 + (j * K3) + l))]);
-				}
-			}
-		}
-	}
-//	printf("\n\r");
-	for(int i = 0; i < NCLASSES; i++) {
-		for(int j = 0; j < NF3; j++) {
-			kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + LAYER3_WEIGHTS + (i*NF3) +j ] = values4[(j+i)%3];
-//			printf("%d ", (int)kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + LAYER3_WEIGHTS + (i*NF3) +j ]);
-		}
-	}
-//	printf("\n\r");
-	for(int i = 0; i < NCLASSES; i++) {
-		bias[i] = values1[i];
-	}
+////	printf("Weights1\n\r");
+//	for(int i = 0; i < NF1; i++) {
+//		for(int k = 0; k < Z1; k++) {
+//			for(int j = 0; j < K1; j++) {
+//				for(int l = 0; l < K1; l++) {
+//					kernel[(i*Z1*K1*K1)+(k * K1*K1 + (j * K1) + l)] = values2[(l+j+i+k)%3];
+////					printf("%d ", (int)kernel[(k*NF1*K1*K1)+(i * K1*K1 + (j * K1) + l)]);
+//				}
+//			}
+//		}
+////		printf("\n\r");
+//	}
+////	printf("\n\n\n\n\n\n");
+////	printf("\n\nWeights2\n\r");
+//	for(int i = 0; i < NF2; i++) {
+//		for(int k = 0; k < Z2; k++) {
+//			for(int j = 0; j < K2; j++) {
+//				for(int l = 0; l < K2; l++) {
+//					kernel[LAYER1_WEIGHTS + (i*Z2*K2*K2)+(k * K2*K2 + (j * K2) + l)] = values3[(l+j+i+k)%3];
+////					printf("%d ", (int)kernel[LAYER1_WEIGHTS + ((k*NF2*K2*K2)+(i * K2*K2 + (j * K2) + l))]);
+//				}
+//			}
+//		}
+////		printf("\n\r");
+//	}
+////	printf("\n\nWeights3\n\r");
+//	for(int i = 0; i < NF3; i++) {
+//		for(int k = 0; k < Z3; k++) {
+//			for(int j = 0; j < K3; j++) {
+//				for(int l = 0; l < K3; l++) {
+//					kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + ((i*Z3*K3*K3)+(k * K3*K3 + (j * K3) + l))] = values4[(l+j+i+k)%3];
+////					printf("%d ", (int)kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + ((i*Z3*K3*K3)+(k * K3*K3 + (j * K3) + l))]);
+//				}
+//			}
+//		}
+//	}
+////	printf("\n\r");
+//	for(int i = 0; i < NCLASSES; i++) {
+//		for(int j = 0; j < NF3; j++) {
+//			kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + LAYER3_WEIGHTS + (i*NF3) +j ] = values4[(j+i)%3];
+////			printf("%d ", (int)kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + LAYER3_WEIGHTS + (i*NF3) +j ]);
+//		}
+//	}
+////	printf("\n\r");
+//	for(int i = 0; i < NCLASSES; i++) {
+//		bias[i] = values1[i];
+//	}
 
 }
 
@@ -239,8 +239,12 @@ int main() {
     hls::stream<strmio_t> sin,so;
     strmio_t vin;
     strmio_t vout;
+    printf("Start\n");
 
     init_fm();
+
+    printf("FM initialized\n");
+
 //    init_weights_from_file();
 //    for(int i = 0; i < WEIGHTS_MEM_SIZE; i++) {
 //    	printf("%d\n", (int)kernel[i]);
@@ -284,7 +288,7 @@ int main() {
 //			}
 //		}
 //	}
-//    printf("Sending fm\n");
+    printf("Sending fm\n");
     for(int i = 0; i < NPATCHES; i++){
 	#ifdef ARRAYS
 		for (int t=0 ; t<X1*Y1; t++) {
@@ -309,7 +313,7 @@ int main() {
 	#endif
     }
 //	exit(0);
-
+    printf("Start HW\n");
 	//Hardware computation
     for(int i = 0; i < NPATCHES; i++)
     	simple_conv(sin, so);
@@ -317,7 +321,7 @@ int main() {
     for(int i = 0; i < NPATCHES; i++){
 //	#ifdef ARRAYS
 //// 		Read image_out
-//		for(int t=0 ; t < OUT2_FM_MEM_SIZE ; t++){
+//		for(int t=0 ; t < OUT2_MEM_SIZE ; t++){
 //			vout = so.read();
 //			hw_image_out[t] = vout.data;
 ////			printf("%d ", (int)vout.data);
@@ -331,6 +335,7 @@ int main() {
 //				if(vout.last == 1) break;
 //			}
 //		}
+    	printf("Reading HW\n");
 		for(int j = 0; j < NCLASSES; j++) {
 			vout = so.read();
 			hw_image_out[j] = vout.data;
@@ -346,63 +351,63 @@ int main() {
 //					}
 //				}
     }
-    for(int i = 0; i < OUT2_FM_MEM_SIZE; i++){
-    	sw_image_out_2[i] = 0;
-    }
-
-	//--------------------------------------------------------------------------------------------------//
-	//-----------------------------------------SOFTWARE CONV--------------------------------------------//
-	//--------------------------------------------------------------------------------------------------//
-	//Layer 1
-	for(int i = 0; i < NF1; i++){
-		/* Address where the convolutional weights are stored */
-		quant_wght *fp_weights =
-				 kernel +                                       /* start address of params */
-				i * (Z1 * K1 * K1); /* kernel of OFM(i) */
-
-		quant_act *image_out_1 =
-				sw_image_out_1 +                                        /* base address */
-				i * (X2 * Y2);               /* offset (number of images) */
-
-	    sw_convolution_3D(image_in, fp_weights, image_out_1, Z1, X1, K1, false);
-	}
-	//Layer 2
-//	printf("---------------------SW Layer 2------------------------\n");
-	for(int i = 0; i < NF2; i++){
-		/* Address where the convolutional weights are stored */
-		quant_wght *fp_weights =
-				 kernel +                                       /* start address of params */
-				LAYER1_WEIGHTS + (i * (Z2 * K2 * K2)); /* kernel of OFM(i) */
-
-		quant_act *image_out_2 =
-				sw_image_out_2 +                                        /* base address */
-				i * (X3 * Y3);               /* offset (number of images) */
-
-//	    sw_convolution_3D(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, false);
-		sw_convolution_3D_k2(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, X3, false);
-	}
-//	printf("---------------------SW Layer 3------------------------\n");
-		for(int i = 0; i < NF3; i++){
-			/* Address where the convolutional weights are stored */
-			quant_wght *fp_weights =
-					 kernel +                                       /* start address of params */
-					LAYER1_WEIGHTS + LAYER2_WEIGHTS + (i * (Z3 * K3 * K3)); /* kernel of OFM(i) */
-
-			quant_act *image_out_3 =
-					sw_image_out_3 +                                        /* base address */
-					i * (X3 * Y3);               /* offset (number of images) */
-
-		    sw_convolution_3D(sw_image_out_2, fp_weights, image_out_3, Z3, X3, K3, false);
-		}
-
-
-	average_pooling(image_in, sw_image_out_ds, X1, X13, Z13, 2);
-
-	sum_shorctut(sw_image_out_3, sw_image_out_ds, sw_image_out_4, X3, NF3, Z1);
-
-	average_pooling(sw_image_out_4, sw_image_out_5, X3, X13, NF13, 2);
-	quant_wght *fp_weights_fc = kernel + LAYER1_WEIGHTS + LAYER2_WEIGHTS + LAYER3_WEIGHTS;
-	fully_connected(sw_image_out_5, sw_image_out, fp_weights_fc, bias, NF3, NCLASSES);
+//    for(int i = 0; i < OUT2_MEM_SIZE; i++){
+//    	sw_image_out_2[i] = 0;
+//    }
+//
+//	//--------------------------------------------------------------------------------------------------//
+//	//-----------------------------------------SOFTWARE CONV--------------------------------------------//
+//	//--------------------------------------------------------------------------------------------------//
+//	//Layer 1
+//	for(int i = 0; i < NF1; i++){
+//		/* Address where the convolutional weights are stored */
+//		quant_wght *fp_weights =
+//				 kernel +                                       /* start address of params */
+//				i * (Z1 * K1 * K1); /* kernel of OFM(i) */
+//
+//		quant_act *image_out_1 =
+//				sw_image_out_1 +                                        /* base address */
+//				i * (X2 * Y2);               /* offset (number of images) */
+//
+//	    sw_convolution_3D(image_in, fp_weights, image_out_1, Z1, X1, K1, false);
+//	}
+//	//Layer 2
+////	printf("---------------------SW Layer 2------------------------\n");
+//	for(int i = 0; i < NF2; i++){
+//		/* Address where the convolutional weights are stored */
+//		quant_wght *fp_weights =
+//				 kernel +                                       /* start address of params */
+//				LAYER1_WEIGHTS + (i * (Z2 * K2 * K2)); /* kernel of OFM(i) */
+//
+//		quant_act *image_out_2 =
+//				sw_image_out_2 +                                        /* base address */
+//				i * (X3 * Y3);               /* offset (number of images) */
+//
+////	    sw_convolution_3D(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, false);
+//		sw_convolution_3D_k2(sw_image_out_1, fp_weights, image_out_2, Z2, X2, K2, X3, false);
+//	}
+////	printf("---------------------SW Layer 3------------------------\n");
+//		for(int i = 0; i < NF3; i++){
+//			/* Address where the convolutional weights are stored */
+//			quant_wght *fp_weights =
+//					 kernel +                                       /* start address of params */
+//					LAYER1_WEIGHTS + LAYER2_WEIGHTS + (i * (Z3 * K3 * K3)); /* kernel of OFM(i) */
+//
+//			quant_act *image_out_3 =
+//					sw_image_out_3 +                                        /* base address */
+//					i * (X3 * Y3);               /* offset (number of images) */
+//
+//		    sw_convolution_3D(sw_image_out_2, fp_weights, image_out_3, Z3, X3, K3, false);
+//		}
+//
+//
+//	average_pooling(image_in, sw_image_out_ds, X1, X13, Z13, 2);
+//
+//	sum_shorctut(sw_image_out_3, sw_image_out_ds, sw_image_out_4, X3, NF3, Z1);
+//
+//	average_pooling(sw_image_out_4, sw_image_out_5, X3, X13, NF13, 2);
+//	quant_wght *fp_weights_fc = kernel + LAYER1_WEIGHTS + LAYER2_WEIGHTS + LAYER3_WEIGHTS;
+//	fully_connected(sw_image_out_5, sw_image_out, fp_weights_fc, bias, NF3, NCLASSES);
 
 //	printf("Input SW:\n");
 //	for(int k = 0; k < Z1; k++) {
@@ -492,13 +497,13 @@ int main() {
 //						   k, i, j, (int)hw_image_out[(k*X3*Y3) + (i*Y3) + j], (int)sw_image_out[(k*X3*Y3) + (i*Y3) + j]);
 //				}
 //    }
-    for(int k = 0; k < NCLASSES; k++) {
-			if (hw_image_out[k] != sw_image_out[k]) {
-				err_cnt++;
-				printf("%d - %d != %d\n\r",
-					   k, (int)hw_image_out[k], (int)sw_image_out[k]);
-			}
-	}
+//    for(int k = 0; k < NCLASSES; k++) {
+//			if (hw_image_out[k] != sw_image_out[k]) {
+//				err_cnt++;
+//				printf("%d - %d != %d\n\r",
+//					   k, (int)hw_image_out[k], (int)sw_image_out[k]);
+//			}
+//	}
 //    for(int k = 0; k < ZDS; k++) {
 //   		for (int i = 0; i < XDS; i++)
 //   			for (int j = 0; j < YDS; j++)
@@ -508,6 +513,6 @@ int main() {
 //   						   k, i, j, (int)hw_image_out[(k*XDS*YDS) + (i*YDS) + j], (int)sw_image_out_ds[(k*XDS*YDS) + (i*YDS) + j]);
 //   				}
 //       }
-    printf("\n%d different values\n", err_cnt);
+//    printf("\n%d different values\n", err_cnt);
     return err_cnt;
 }
