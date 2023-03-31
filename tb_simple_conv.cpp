@@ -7,7 +7,7 @@ static quant_act image_in[INPUT1_MEM_SIZE];
 //static quant_bias bias[NCLASSES];
 
 //quant_act hw_image_out[OUTPUT_MEM_SIZE];
-quant_act hw_image_out[NCLASSES];
+quant_accum hw_image_out[NCLASSES];
 quant_act sw_image_out_1[OUT1_MEM_SIZE];
 quant_act sw_image_out_2[OUT2_MEM_SIZE];
 quant_act sw_image_out_3[OUT3_MEM_SIZE];
@@ -129,14 +129,14 @@ void sum_shorctut(quant_act *conv_fm, quant_act *shortcut, quant_act *fm_out, in
 	}
 }
 
-void fully_connected(quant_act *input_fm, quant_act *output_fm, quant_wght *weights, quant_bias *bias, int input_size, int nfilters) {
+void fully_connected(quant_act *input_fm, quant_accum *output_fm, quant_wght *weights, quant_bias *bias, int input_size, int nfilters) {
 	int accum = 0, tmp = 0;
 	for(int i = 0; i < nfilters; i++) {
 		for(int j = 0; j < input_size; j++) {
 			accum += input_fm[j]*weights[i*input_size + j];
 		}
-		tmp = (quant_act)accum + bias[i];
-		output_fm[i] = (quant_act) tmp;
+		tmp = accum + bias[i];
+		output_fm[i] = tmp;
 		accum = 0;
 	}
 }
@@ -236,9 +236,10 @@ void init_fm(){
 
 int main() {
 
-    hls::stream<strmio_t> sin,so;
-    strmio_t vin;
-    strmio_t vout;
+    hls::stream<strmi_t> sin;
+    hls::stream<strmo_t> so;
+    strmi_t vin;
+    strmo_t vout;
     printf("Start\n");
 
     init_fm();

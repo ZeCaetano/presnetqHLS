@@ -21,7 +21,7 @@
 #include "weights.h"
 
 
-void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out) {
+void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) {
 
 #pragma HLS INTERFACE axis port=strm_in
 #pragma HLS INTERFACE axis port=strm_out
@@ -42,7 +42,7 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 	act_reshp in_blk6_fm[INPUT17_MEM_SIZE/RESHP_FACTOR],in_blk7_fm[INPUT20_MEM_SIZE/RESHP_FACTOR], in_blk8_fm[INPUT23_MEM_SIZE/RESHP_FACTOR], in_blk9_fm[INPUT26_MEM_SIZE/RESHP_FACTOR];
 	act_reshp final_relu[OUT28_MEM_SIZE/RESHP_FACTOR];
 	act_reshp ds_1_fm[XDS1*YDS1*NF10/RESHP_FACTOR], ds_2_fm[XDS2*XDS3*NF19/RESHP_FACTOR], final_ds[XDS3*YDS3*NF28];
-	act_reshp output_fm[NCLASSES/RESHP_FACTOR];
+	quant_accum output_fm[NCLASSES];
 
 //#pragma HLS BIND_STORAGE variable=m1_feature_map type=RAM_1P
 //#pragma HLS BIND_STORAGE variable=in_feature_map type=RAM_1P
@@ -158,8 +158,8 @@ void simple_conv(hls::stream<strmio_t> &strm_in, hls::stream<strmio_t> &strm_out
 }
 
 
-void read_ifm(hls::stream<strmio_t> &strm_in, act_reshp in_feature_map[INPUT1_MEM_SIZE/RESHP_FACTOR], act_reshp shortcut_ifm[INPUT1_MEM_SIZE/RESHP_FACTOR]){
-	strmio_t tmpin;
+void read_ifm(hls::stream<strmi_t> &strm_in, act_reshp in_feature_map[INPUT1_MEM_SIZE/RESHP_FACTOR], act_reshp shortcut_ifm[INPUT1_MEM_SIZE/RESHP_FACTOR]){
+	strmi_t tmpin;
 	act_reshp tmp = 0;
 
 	//read input fm
@@ -203,53 +203,61 @@ void read_ifm(hls::stream<strmio_t> &strm_in, act_reshp in_feature_map[INPUT1_ME
 	}
 }
 
-void write_ofm(act_reshp ofm[NCLASSES/RESHP_FACTOR], hls::stream<strmio_t> &strm_out) {
-	strmio_t tmpout;
+void write_ofm(quant_accum ofm[NCLASSES], hls::stream<strmo_t> &strm_out) {
+	strmo_t tmpout;
 	//Write output fm to stream
-	for(int i = 0; i < NCLASSES/RESHP_FACTOR; i++){
-#pragma HLS PIPELINE II=8
-		tmpout.data = (quant_act)ofm[i].range(3,0);
-//		printf("%d: %d   \n", (int)(quant_act)ofm[i].range(3,0), (int)tmpout.data);
-		tmpout.keep = 0xF;
-		tmpout.strb = 0xF;
-		tmpout.last = 0;
-		strm_out.write(tmpout);
-		tmpout.data = (quant_act)ofm[i].range(7,4);
-		tmpout.keep = 0xF;
-		tmpout.strb = 0xF;
-		tmpout.last = 0;
-		strm_out.write(tmpout);
-		tmpout.data = (quant_act)ofm[i].range(11,8);
-		tmpout.keep = 0xF;
-		tmpout.strb = 0xF;
-		tmpout.last = 0;
-		strm_out.write(tmpout);
-		tmpout.data = (quant_act)ofm[i].range(15,12);
-		tmpout.keep = 0xF;
-		tmpout.strb = 0xF;
-		tmpout.last = 0;
-		strm_out.write(tmpout);
-		tmpout.data = (quant_act)ofm[i].range(19,16);
-		tmpout.keep = 0xF;
-		tmpout.strb = 0xF;
-		tmpout.last = 0;
-		strm_out.write(tmpout);
-		tmpout.data = (quant_act)ofm[i].range(23,20);
-		tmpout.keep = 0xF;
-		tmpout.strb = 0xF;
-		tmpout.last = 0;
-		strm_out.write(tmpout);
-		tmpout.data = (quant_act)ofm[i].range(27,24);
-		tmpout.keep = 0xF;
-		tmpout.strb = 0xF;
-		tmpout.last = 0;
-		strm_out.write(tmpout);
-		if(i == (NCLASSES/RESHP_FACTOR) - 1) tmpout.last = 1;
+	for(int i = 0; i < NCLASSES; i++){
+		if(i == (NCLASSES) - 1) tmpout.last = 1;
 		else tmpout.last = 0;
-		tmpout.data = (quant_act)ofm[i].range(31,28);
+		tmpout.data = ofm[i];
 		tmpout.keep = 0xF;
 		tmpout.strb = 0xF;
 		strm_out.write(tmpout);
+
+
+//#pragma HLS PIPELINE II=8
+//		tmpout.data = (quant_act)ofm[i].range(3,0);
+////		printf("%d: %d   \n", (int)(quant_act)ofm[i].range(3,0), (int)tmpout.data);
+//		tmpout.keep = 0xF;
+//		tmpout.strb = 0xF;
+//		tmpout.last = 0;
+//		strm_out.write(tmpout);
+//		tmpout.data = (quant_act)ofm[i].range(7,4);
+//		tmpout.keep = 0xF;
+//		tmpout.strb = 0xF;
+//		tmpout.last = 0;
+//		strm_out.write(tmpout);
+//		tmpout.data = (quant_act)ofm[i].range(11,8);
+//		tmpout.keep = 0xF;
+//		tmpout.strb = 0xF;
+//		tmpout.last = 0;
+//		strm_out.write(tmpout);
+//		tmpout.data = (quant_act)ofm[i].range(15,12);
+//		tmpout.keep = 0xF;
+//		tmpout.strb = 0xF;
+//		tmpout.last = 0;
+//		strm_out.write(tmpout);
+//		tmpout.data = (quant_act)ofm[i].range(19,16);
+//		tmpout.keep = 0xF;
+//		tmpout.strb = 0xF;
+//		tmpout.last = 0;
+//		strm_out.write(tmpout);
+//		tmpout.data = (quant_act)ofm[i].range(23,20);
+//		tmpout.keep = 0xF;
+//		tmpout.strb = 0xF;
+//		tmpout.last = 0;
+//		strm_out.write(tmpout);
+//		tmpout.data = (quant_act)ofm[i].range(27,24);
+//		tmpout.keep = 0xF;
+//		tmpout.strb = 0xF;
+//		tmpout.last = 0;
+//		strm_out.write(tmpout);
+//		if(i == (NCLASSES/RESHP_FACTOR) - 1) tmpout.last = 1;
+//		else tmpout.last = 0;
+//		tmpout.data = (quant_act)ofm[i].range(31,28);
+//		tmpout.keep = 0xF;
+//		tmpout.strb = 0xF;
+//		strm_out.write(tmpout);
 	}
 }
 
@@ -676,13 +684,11 @@ void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP
 }
 
 template<params_t input_size, params_t nfilters, wght_reshp *weights, quant_bias *bias, params_t sf_i, params_t sf_weights, params_t sf_bias, params_t sf_o>
-void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], act_reshp output_fm[nfilters/RESHP_FACTOR]) {
-	quant_accum acc = 0, sum = 0;
+void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], quant_accum output_fm[nfilters]) {
+	quant_accum acc = 0;
 	act_reshp tmp_in = 0, tmp_acc = 0;
 	wght_reshp tmp_weight = 0;
 	int kernel_idx = 0, output_idx = 0, sf = sf_i;
-	ap_int<9> tmp_out = 0;
-	quant_bias tmp_bias = 0;
 
 	for(int i = 0; i < nfilters; i++) {
 		for(int j = 0; j < input_size/RESHP_FACTOR; j++) {
@@ -699,31 +705,7 @@ void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], act_reshp outp
 			kernel_idx++;
 
 			if(j == input_size/RESHP_FACTOR-1) {
-//				acc = acc>>((sf_weights+sf_i)-sf_o);
-//				acc = acc.range(3,0);
-				tmp_bias = bias[i];
-				if(sf_bias > (sf_i+sf_weights)) {
-					acc = acc<<(sf_bias-(sf_i+sf_weights));
-					sf = sf_bias;
-				} else if( (sf_i+sf_weights) > sf_bias) {
-					tmp_bias = tmp_bias<<((sf_i+sf_weights)-sf_bias);
-					sf = sf_i+sf_weights;
-				}
-				sum = acc + tmp_bias;
-				sum = sum >> sf - sf_o;
-				tmp_out = sum.range(3,0);
-				if(i%RESHP_FACTOR == 0) tmp_acc.range(3,0) = (quant_act)tmp_out;
-				else if(i%RESHP_FACTOR == 1) tmp_acc.range(7,4) = (quant_act)tmp_out;
-				else if(i%RESHP_FACTOR == 2) tmp_acc.range(11,8) = (quant_act)tmp_out;
-				else if(i%RESHP_FACTOR == 3) tmp_acc.range(15,12) = (quant_act)tmp_out;
-				else if(i%RESHP_FACTOR == 4) tmp_acc.range(19,16) = (quant_act)tmp_out;
-				else if(i%RESHP_FACTOR == 5) tmp_acc.range(23,20) = (quant_act)tmp_out;
-				else if(i%RESHP_FACTOR == 6) tmp_acc.range(27,24) = (quant_act)tmp_out;
-				else {
-					tmp_acc.range(31,28) = (quant_act) tmp_out;
-					output_fm[output_idx] = tmp_acc;
-					output_idx++;
-				}
+				output_fm[i] = acc + bias[i];
 				acc = 0;
 			}
 		}
