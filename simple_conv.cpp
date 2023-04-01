@@ -129,7 +129,7 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 	conv_layer_k2<X21,Y21,Z21,NF21,X22,SFI21,SFW21,SFO21, weights_l21, 8, true> (l20_fm, l21_fm);
 	conv_layer_k1<X22,Y2,Z22,NF22,SFI22,SFW22,SFO22, weights_l22,8,false> (l21_fm, l22_fm);
 
-	add_shortcut<X22,Y22,NF2,Z20,SFO22,SFO20,SFBLK7>(l21_fm, ds_2_fm, sum_7);
+	add_shortcut<X22,Y22,NF2,Z20,SFO22,SFO20,SFBLK7>(l22_fm, ds_2_fm, sum_7);
 	gen_shortcut<X22,Y22,NF22>(sum_7, in_blk8_fm, shortcut_8_fm);
 
 	conv_layer_k1<X23,Y23,Z23,NF23,SFI23,SFW23,SFO23, weights_l23,8,true> (in_blk8_fm, l23_fm);
@@ -290,7 +290,7 @@ void average_pool(act_reshp in_feature_map[fm_width*fm_height*nbands/RESHP_FACTO
 //						printf("accum: %d\n", (int)accum);
 						if(k == kernel_size-1 && l == kernel_size-1){
 							avg = accum / div;
-							avg = avg >> sf_i-sf_o;
+							avg = avg >> (sf_i-sf_o);
 							avg = avg.range(3,0);
 							out_idx = (i/2)*nbands*output_height+ (j/2)*nbands + z;
 							if(out_idx % RESHP_FACTOR == 0) out_feature_map[out_idx/RESHP_FACTOR].range(3,0) = avg;
@@ -320,6 +320,7 @@ void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESH
 	for (int i = 0; i < fm_width; i++) {
 		for (int j = 0; j < fm_height; j++) {
 			for(int z = 0; z < nbands_conv; z++){
+#pragma HLS PIPELINE II=2
 				if(z%RESHP_FACTOR == 0) tmp_conv = (quant_act)conv_feature_map[idx_conv].range(3,0);
 				else if(z%RESHP_FACTOR == 1) tmp_conv = (quant_act)conv_feature_map[idx_conv].range(7,4);
 				else if(z%RESHP_FACTOR == 2) tmp_conv = (quant_act)conv_feature_map[idx_conv].range(11,8);
@@ -354,7 +355,7 @@ void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESH
 					sum = tmp_conv + tmp_shortcut;
 				}
 
-				sum = sum >> scale_factor-sf_o;
+				sum = sum >> (scale_factor-sf_o);
 				sum = sum.range(3,0);
 
 				if(z%RESHP_FACTOR == 0) out_feature_map[idx_conv].range(3,0) = sum;
