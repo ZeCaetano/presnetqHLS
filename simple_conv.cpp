@@ -20,6 +20,27 @@
 //#include "weights_reshaped_6.h"    //Weights reshaped for 8x2 quantization with a factor of 8 with 64 bands and 168 filters on the last layer
 #include "weights.h"
 
+void print_fm(params_t x, params_t y, params_t z, act_reshp *fm){
+
+	for(int i = 0; i < x; i++) {
+		for(int j = 0; j < y; j++) {
+			for(int k = 0; k < z/RESHP_FACTOR; k++){
+				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(3,0)));
+				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(7,4)));
+				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(11,8)));
+				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(15,12)));
+				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(19,16)));
+				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(23,20)));
+				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(27,24)));
+				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(31,28)));
+			}
+			printf("\n");
+		}
+		printf("\n");
+	}
+	printf("\n\n\n");
+}
+
 
 void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) {
 
@@ -74,7 +95,6 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 	conv_layer_k1<X1,Y1,Z1,NF1,SFI1,SFW1,SFO1, weights_l1,8,false> (in_feature_map, l1_fm);
 
 
-
 	conv_layer_k1<X2,Y2,Z2,NF2,SFI2,SFW2,SFO2, weights_l2,8,true> (l1_fm, l2_fm);
 	conv_layer_k1<X3,Y3,Z3,NF3,SFI3,SFW3,SFO3, weights_l3,8,true> (l2_fm, l3_fm);
 	conv_layer_k1<X4,Y4,Z4,NF4,SFI4,SFW4,SFO4, weights_l4,8,false> (l3_fm, l4_fm);
@@ -97,13 +117,11 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 	gen_shortcut<X10,Y10,NF10>(sum_3, in_blk4_fm, shortcut_4_fm);
 
 
-
 	average_pool<X10,Y10,XDS1,YDS1,NF10,KDS1,SFBLK3,SFDS1>(shortcut_4_fm, ds_1_fm);
 
 	conv_layer_k1_b4k2_x9<X11,Y11,Z11,NF11,SFI11,SFW11,SFO11, weights_l11, 8, true> (in_blk4_fm, l11_fm);
 	conv_layer_k2<X12-1,Y12-1,Z12,NF12,X13,SFI12,SFW12,SFO12, weights_l12, 8, true> (l11_fm, l12_fm);
 	conv_layer_k1<X13,Y13,Z13,NF13,SFI13,SFW13,SFO13, weights_l13,8,false> (l12_fm, l13_fm);
-
 	add_shortcut<X13,Y13,NF13,Z11,SFO13,SFO11,SFBLK4>(l13_fm, ds_1_fm, sum_4);
 	gen_shortcut<X13,Y13,NF13>(sum_4, in_blk5_fm, shortcut_5_fm);
 
@@ -120,15 +138,13 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 
 	add_shortcut<X19,Y19,NF19,Z17,SFO19,SFO17,SFBLK6>(l19_fm, shortcut_6_fm, sum_6);
 	gen_shortcut<X19,Y19,NF19>(sum_6, in_blk7_fm, shortcut_7_fm);
-//
-//
-//
+
+
 	average_pool<X19,Y19,XDS2,YDS2,NF19,KDS2,SFBLK6,SFDS2>(shortcut_7_fm, ds_2_fm);
 
 	conv_layer_k1_b4k2_x4<X20,Y20,Z20,NF20,SFI20,SFW20,SFO20, weights_l20, 8, true> (in_blk7_fm, l20_fm);
 	conv_layer_k2<X21,Y21,Z21,NF21,X22,SFI21,SFW21,SFO21, weights_l21, 8, true> (l20_fm, l21_fm);
 	conv_layer_k1<X22,Y2,Z22,NF22,SFI22,SFW22,SFO22, weights_l22,8,false> (l21_fm, l22_fm);
-
 	add_shortcut<X22,Y22,NF2,Z20,SFO22,SFO20,SFBLK7>(l22_fm, ds_2_fm, sum_7);
 	gen_shortcut<X22,Y22,NF22>(sum_7, in_blk8_fm, shortcut_8_fm);
 
@@ -411,7 +427,14 @@ void conv_layer_k1(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACT
 						kernel_idx++;
 						input_idx++;
 						if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
-							if(relu) acc = (ap_int<1>)acc[20] == 0 ? acc : (quant_accum)0;
+							if(relu){
+								acc = (ap_int<1>)acc[20] == 0 ? acc : (quant_accum)0;
+								if(acc >= (1 << (ACT_WIDTH-1)) - 1) acc = (1 << (ACT_WIDTH-1)) - 1;
+							}
+							else{
+								if(acc >= (1 << (ACT_WIDTH - 1)) - 1) acc = (1 << (ACT_WIDTH - 1)) - 1;
+								else if(acc <= -(1 << (ACT_WIDTH - 1))) acc = -(1 << (ACT_WIDTH - 1));
+							}
 //							tmp_out = (quant_act)acc;
 							acc = acc>>((sf_weights+sf_i)-sf_o);
 							tmp_out = acc.range(3,0);

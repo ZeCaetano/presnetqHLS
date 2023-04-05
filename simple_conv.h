@@ -8,7 +8,7 @@
 #define ARRAYS
 
 #define DMA_WIDTH 64
-#define WEIGHTS_WIDTH 4
+#define WEIGHTS_WIDTH 2
 #define ACT_WIDTH 4
 #define NLAYERS 2
 #define NPATCHES 1
