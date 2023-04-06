@@ -12,8 +12,8 @@
 #define LAYER1_WEIGHTS (NF1*Z1*K1*K1)
 #define INPUT1_MEM_SIZE (X1*Y1*Z1)
 #define OUT1_MEM_SIZE (X1*Y1*NF1)
-#define SFI1 1
-#define SFO1 1
+#define SFI1 -3
+#define SFO1 -1
 #define SFW1 1
 
 

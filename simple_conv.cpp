@@ -401,7 +401,15 @@ void conv_layer_k1(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACT
 	quant_act tmp_out = 0;
 	act_reshp tmp_in = 0;
 	wght_reshp tmp_weight = 0;
+	params_t in_fract_bits = -(sf_i);
+	params_t w_fract_bits = -(sf_weights);
+	params_t out_fract_bits = -(sf_o);
+	params_t shift = ((in_fract_bits + w_fract_bits) - out_fract_bits);
 
+//	if(nbands == 200 && nfilters == 32){
+//		printf("scale_w: %d \n scale_in: %d \n scale_out %d\n in_fract_bits: %d\n w_fract_bits: %d\n out_fract_bits: %d\n", sf_weights, sf_i, sf_o, in_fract_bits, w_fract_bits,out_fract_bits);
+//		printf("shift: %d\n", shift);
+//	}
 
 	loop_inputx:
 	for(int i = 0; i < fm_width; i++) {
@@ -436,7 +444,7 @@ void conv_layer_k1(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACT
 								else if(acc <= -(1 << (ACT_WIDTH - 1))) acc = -(1 << (ACT_WIDTH - 1));
 							}
 //							tmp_out = (quant_act)acc;
-							acc = acc>>((sf_weights+sf_i)-sf_o);
+							acc = acc >> shift;
 							tmp_out = acc.range(3,0);
 //							printf("%X\n\n\n",tmp_out);
 							if(k%RESHP_FACTOR==0) acc_tmp.range(3,0) = tmp_out;
@@ -477,6 +485,10 @@ void conv_layer_k1_b4k2_x9(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 	act_reshp tmp_in = 0;
 	wght_reshp tmp_weight = 0;
 	quant_act tmp_out = 0;
+	params_t in_fract_bits = -(sf_i);
+	params_t w_fract_bits = -(sf_weights);
+	params_t out_fract_bits = -(sf_o);
+	params_t shift = ((in_fract_bits + w_fract_bits) - out_fract_bits);
 
 	loop_inputx:
 	for(int i = 0; i < fm_width-1; i++) {
@@ -510,9 +522,16 @@ void conv_layer_k1_b4k2_x9(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 							kernel_idx++;
 							input_idx++;
 							if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
-								if(relu) acc = (ap_int<1>)acc[20] == 0 ? acc : (quant_accum)0;
+								if(relu){
+									acc = (ap_int<1>)acc[20] == 0 ? acc : (quant_accum)0;
+									if(acc >= (1 << (ACT_WIDTH-1)) - 1) acc = (1 << (ACT_WIDTH-1)) - 1;
+								}
+								else{
+									if(acc >= (1 << (ACT_WIDTH - 1)) - 1) acc = (1 << (ACT_WIDTH - 1)) - 1;
+									else if(acc <= -(1 << (ACT_WIDTH - 1))) acc = -(1 << (ACT_WIDTH - 1));
+								}
 //								tmp_out = (quant_act)acc;
-								acc = acc>>((sf_weights+sf_i)-sf_o);
+								acc = acc >> shift;
 								tmp_out = acc.range(3,0);
 //								printf("tmp_out: %d\n", (int)tmp_out);
 								if(k%RESHP_FACTOR==0) acc_tmp.range(3,0) = tmp_out;
@@ -563,6 +582,10 @@ void conv_layer_k1_b4k2_x4(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 	act_reshp tmp_in = 0;
 	wght_reshp tmp_weight = 0;
 	quant_act tmp_out = 0;
+	params_t in_fract_bits = -(sf_i);
+	params_t w_fract_bits = -(sf_weights);
+	params_t out_fract_bits = -(sf_o);
+	params_t shift = ((in_fract_bits + w_fract_bits) - out_fract_bits);
 
 	loop_inputx:
 	for(int i = 0; i < fm_width; i++) {
@@ -588,10 +611,17 @@ void conv_layer_k1_b4k2_x4(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 						kernel_idx++;
 						input_idx++;
 						if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
-							if(relu) acc = (ap_int<1>)acc[20] == 0 ? acc : (quant_accum)0;
+							if(relu){
+								acc = (ap_int<1>)acc[20] == 0 ? acc : (quant_accum)0;
+								if(acc >= (1 << (ACT_WIDTH-1)) - 1) acc = (1 << (ACT_WIDTH-1)) - 1;
+							}
+							else{
+								if(acc >= (1 << (ACT_WIDTH - 1)) - 1) acc = (1 << (ACT_WIDTH - 1)) - 1;
+								else if(acc <= -(1 << (ACT_WIDTH - 1))) acc = -(1 << (ACT_WIDTH - 1));
+							}
 //							tmp_out = (quant_act)acc;
 //							printf("%X -> ", acc);
-							acc = acc>>((sf_weights+sf_i)-sf_o);
+							acc = acc >> shift;
 							tmp_out = acc.range(3,0);
 //							printf("%X -> ", acc);
 //							printf("%X\n\n",tmp_out);
@@ -640,6 +670,10 @@ void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP
 	quant_act tmp_out = 0;
 	act_reshp tmp_in0 = 0, tmp_in1 = 0;
 	wght_reshp tmp_weight = 0;
+	params_t in_fract_bits = -(sf_i);
+	params_t w_fract_bits = -(sf_weights);
+	params_t out_fract_bits = -(sf_o);
+	params_t shift = ((in_fract_bits + w_fract_bits) - out_fract_bits);
 
 	loop_inputx:
 	for(int i = 0; i < fm_width-1; i+=2) {
@@ -678,9 +712,16 @@ void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP
 
 						if(z + (p*RESHP_FACTOR) == nbands*2-RESHP_FACTOR) {
 							acc_even += acc_odd;
-							if(relu) acc_even = (ap_int<1>)acc_even[20] == 0 ? acc_even : (quant_accum)0;
+							if(relu){
+								acc_even = (ap_int<1>)acc_even[20] == 0 ? acc_even : (quant_accum)0;
+								if(acc_even >= (1 << (ACT_WIDTH-1)) - 1) acc_even = (1 << (ACT_WIDTH-1)) - 1;
+							}
+							else{
+								if(acc_even >= (1 << (ACT_WIDTH - 1)) - 1) acc_even = (1 << (ACT_WIDTH - 1)) - 1;
+								else if(acc_even <= -(1 << (ACT_WIDTH - 1))) acc_even = -(1 << (ACT_WIDTH - 1));
+							}
 //							tmp_out = (quant_act)acc_even;
-							acc_even = acc_even>>((sf_weights+sf_i)-sf_o);
+							acc_even = acc_even >> shift;
 							tmp_out = acc_even.range(3,0);
 							if(k%RESHP_FACTOR==0) acc_tmp.range(3,0) = tmp_out;
 							else if(k%RESHP_FACTOR==1) acc_tmp.range(7,4) = tmp_out;
