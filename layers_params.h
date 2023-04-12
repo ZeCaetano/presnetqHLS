@@ -325,7 +325,7 @@
 //Kernel size: 1
 #define X20 4
 #define Y20 4
-#define Z20 200
+#define Z20 400
 #define NF20 96
 #define K20 1
 #define LAYER20_WEIGHTS (NF20*Z20*K20*K20)

@@ -20,27 +20,27 @@
 //#include "weights_reshaped_6.h"    //Weights reshaped for 8x2 quantization with a factor of 8 with 64 bands and 168 filters on the last layer
 #include "weights.h"
 
-void print_fm(params_t x, params_t y, params_t z, act_reshp *fm){
-
-	for(int i = 0; i < x; i++) {
-		for(int j = 0; j < y; j++) {
-			for(int k = 0; k < z/RESHP_FACTOR; k++){
-				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(3,0)));
-				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(7,4)));
-				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(11,8)));
-				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(15,12)));
-				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(19,16)));
-				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(23,20)));
-				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(27,24)));
-				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(31,28)));
-			}
-			printf("\n");
-		}
-		printf("\n");
-	}
-	printf("\n\n\n");
-}
-
+//void print_fm(params_t x, params_t y, params_t z, act_reshp *fm){
+//
+//	for(int i = 0; i < x; i++) {
+//		for(int j = 0; j < y; j++) {
+//			for(int k = 0; k < z/RESHP_FACTOR; k++){
+//				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(3,0)));
+//				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(7,4)));
+//				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(11,8)));
+//				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(15,12)));
+//				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(19,16)));
+//				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(23,20)));
+//				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(27,24)));
+//				printf("%d ", (int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(31,28)));
+//			}
+//			printf("\n");
+//		}
+//		printf("\n");
+//	}
+//	printf("\n\n\n");
+//}
+//
 
 void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) {
 
@@ -68,28 +68,72 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 //#pragma HLS BIND_STORAGE variable=m1_feature_map type=RAM_1P
 //#pragma HLS BIND_STORAGE variable=in_feature_map type=RAM_1P
 //#pragma HLS BIND_STORAGE variable=m2_feature_map type=RAM_1P
-//
-//#pragma HLS STREAM variable=in_feature_map type=PIPO depth=2
-//#pragma HLS STREAM variable=shortcut_fm type=PIPO depth=2
-//#pragma HLS STREAM variable=ds_ofm type=PIPO depth=4
-//#pragma HLS STREAM variable=m1_feature_map type=PIPO depth=2
-//#pragma HLS STREAM variable=m2_feature_map type=PIPO depth=2
-//#pragma HLS STREAM variable=m3_feature_map type=PIPO depth=2
-//#pragma HLS STREAM variable=out_feature_map type=PIPO depth=2
 
-	const params_t sf_i = 1, sf_weights = 1, sf_o = 2, sf_bias = 2, sf_conv = 2, sf_shortcut = 1;
+#pragma HLS STREAM variable=in_feature_map type=PIPO depth=2
+#pragma HLS STREAM variable=l1_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l2_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l3_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l4_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l5_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l6_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l7_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l8_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l9_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l10_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l11_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l12_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l13_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l14_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l15_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l16_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l17_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l18_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l19_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l20_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l21_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l22_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l23_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l24_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l25_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l26_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l27_fm type=PIPO depth=2
+#pragma HLS STREAM variable=l28_fm type=PIPO depth=2
+#pragma HLS STREAM variable=sum_1 type=PIPO depth=2
+#pragma HLS STREAM variable=sum_2 type=PIPO depth=2
+#pragma HLS STREAM variable=sum_3 type=PIPO depth=2
+#pragma HLS STREAM variable=sum_4 type=PIPO depth=2
+#pragma HLS STREAM variable=sum_5 type=PIPO depth=2
+#pragma HLS STREAM variable=sum_6 type=PIPO depth=2
+#pragma HLS STREAM variable=sum_7 type=PIPO depth=2
+#pragma HLS STREAM variable=sum_8 type=PIPO depth=2
+#pragma HLS STREAM variable=sum_9 type=PIPO depth=2
+#pragma HLS STREAM variable=shortcut_1_fm type=PIPO depth=6
+#pragma HLS STREAM variable=shortcut_2_fm type=PIPO depth=5
+#pragma HLS STREAM variable=shortcut_3_fm type=PIPO depth=5
+#pragma HLS STREAM variable=shortcut_4_fm type=PIPO depth=2
+#pragma HLS STREAM variable=shortcut_5_fm type=PIPO depth=5
+#pragma HLS STREAM variable=shortcut_6_fm type=PIPO depth=5
+#pragma HLS STREAM variable=shortcut_7_fm type=PIPO depth=2
+#pragma HLS STREAM variable=shortcut_8_fm type=PIPO depth=5
+#pragma HLS STREAM variable=shortcut_9_fm type=PIPO depth=2
+#pragma HLS STREAM variable=in_blk2_fm type=PIPO depth=2
+#pragma HLS STREAM variable=in_blk3_fm type=PIPO depth=2
+#pragma HLS STREAM variable=in_blk4_fm type=PIPO depth=2
+#pragma HLS STREAM variable=in_blk5_fm type=PIPO depth=2
+#pragma HLS STREAM variable=in_blk6_fm type=PIPO depth=2
+#pragma HLS STREAM variable=in_blk7_fm type=PIPO depth=2
+#pragma HLS STREAM variable=in_blk8_fm type=PIPO depth=2
+#pragma HLS STREAM variable=in_blk9_fm type=PIPO depth=2
+#pragma HLS STREAM variable=final_relu type=PIPO depth=2
+#pragma HLS STREAM variable=ds_1_fm type=PIPO depth=4
+#pragma HLS STREAM variable=ds_2_fm  type=PIPO depth=4
+#pragma HLS STREAM variable=final_ds type=PIPO depth=2
+#pragma HLS STREAM variable=output_fm type=PIPO depth=2
+
+
 
 #pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map, shortcut_1_fm);
-
-//	average_pool<X1,Y1,X13,Y13,Z1,2,sf_i,sf_o>(shortcut_fm, ds_ofm);
-////	write_dsofm(ds_ofm, strm_out);
-//	conv_layer_k1_b4k2_x4<0,X1,Y1,Z1,NF1,sf_i,sf_weights,sf_o, weights_l1, 8, false> (in_feature_map, m1_feature_map);
-//	conv_layer_k2<1,X2,Y2,Z2,NF2, X3,sf_i,sf_weights,sf_o, weights_l2, 8, false> (m1_feature_map, m2_feature_map);
-//	conv_layer_k1<2,X3,Y3,Z3,NF3,sf_i,sf_weights,sf_o, weights_l3,8, false> (m2_feature_map, m3_feature_map);
-//	add_shortcut<X3,Y3,NF3,Z13,sf_conv,sf_shortcut,sf_o>(m3_feature_map, ds_ofm, m4_feature_map);
-//	average_pool<X3,Y3,X13,Y13,NF3,K13,sf_i,sf_o>(m4_feature_map, m5_feature_map);
-//	fully_connected<NF3,NCLASSES, weights_fc, bias_fc, sf_i,sf_weights,sf_bias,sf_o>(m5_feature_map, out_feature_map);
 
 
 	conv_layer_k1<X1,Y1,Z1,NF1,SFI1,SFW1,SFO1, weights_l1,8,false> (in_feature_map, l1_fm);
@@ -102,16 +146,16 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 	add_shortcut<X4,Y4,NF4,Z2,SFO4,SFO2,SFBLK1>(l4_fm, shortcut_1_fm, sum_1);
 	gen_shortcut<X4,Y4,NF4>(sum_1, in_blk2_fm, shortcut_2_fm);
 
-	conv_layer_k1<X5,Y5,Z5,NF5,SFI5,SFW5,SFO5, weights_l5,8,true> (in_blk2_fm, l5_fm);
+	conv_layer_k1<X5,Y5,Z5,NF5,SFI5,SFW5,SFO5, weights_l5,16,true> (in_blk2_fm, l5_fm);
 	conv_layer_k1<X6,Y6,Z6,NF6,SFI6,SFW6,SFO6, weights_l6,8,true> (l5_fm, l6_fm);
-	conv_layer_k1<X7,Y7,Z7,NF7,SFI7,SFW7,SFO7, weights_l7,8,false> (l6_fm, l7_fm);
+	conv_layer_k1<X7,Y7,Z7,NF7,SFI7,SFW7,SFO7, weights_l7,16,false> (l6_fm, l7_fm);
 
 	add_shortcut<X7,Y7,NF7,Z5,SFO7,SFO5,SFBLK2>(l7_fm, shortcut_2_fm, sum_2);
 	gen_shortcut<X7,Y7,NF7>(sum_2, in_blk3_fm, shortcut_3_fm);
 
-	conv_layer_k1<X8,Y8,Z8,NF8,SFI8,SFW8,SFO8, weights_l8,8,true> (in_blk3_fm, l8_fm);
+	conv_layer_k1<X8,Y8,Z8,NF8,SFI8,SFW8,SFO8, weights_l8,16,true> (in_blk3_fm, l8_fm);
 	conv_layer_k1<X9,Y9,Z9,NF9,SFI9,SFW9,SFO9, weights_l9,8,true> (l8_fm, l9_fm);
-	conv_layer_k1<X10,Y10,Z10,NF10,SFI10,SFW10,SFO10, weights_l10,8,false> (l9_fm, l10_fm);
+	conv_layer_k1<X10,Y10,Z10,NF10,SFI10,SFW10,SFO10, weights_l10,24,false> (l9_fm, l10_fm);
 
 	add_shortcut<X10,Y10,NF10,Z8,SFO10,SFO8,SFBLK3>(l10_fm, shortcut_3_fm, sum_3);
 	gen_shortcut<X10,Y10,NF10>(sum_3, in_blk4_fm, shortcut_4_fm);
@@ -119,8 +163,8 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 
 	average_pool<X10,Y10,XDS1,YDS1,NF10,KDS1,SFBLK3,SFDS1>(shortcut_4_fm, ds_1_fm);
 
-	conv_layer_k1_b4k2_x9<X11,Y11,Z11,NF11,SFI11,SFW11,SFO11, weights_l11, 8, true> (in_blk4_fm, l11_fm);
-	conv_layer_k2<X12-1,Y12-1,Z12,NF12,X13,SFI12,SFW12,SFO12, weights_l12, 8, true> (l11_fm, l12_fm);
+	conv_layer_k1_b4k2_x9<X11,Y11,Z11,NF11,SFI11,SFW11,SFO11, weights_l11, 24, true> (in_blk4_fm, l11_fm);
+	conv_layer_k2<X12-1,Y12-1,Z12,NF12,X13,SFI12,SFW12,SFO12, weights_l12, 32, true> (l11_fm, l12_fm);
 	conv_layer_k1<X13,Y13,Z13,NF13,SFI13,SFW13,SFO13, weights_l13,8,false> (l12_fm, l13_fm);
 	add_shortcut<X13,Y13,NF13,Z11,SFO13,SFO11,SFBLK4>(l13_fm, ds_1_fm, sum_4);
 	gen_shortcut<X13,Y13,NF13>(sum_4, in_blk5_fm, shortcut_5_fm);
@@ -132,9 +176,9 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 	add_shortcut<X16,Y16,NF16,Z14,SFO16,SFO14,SFBLK5>(l16_fm, shortcut_5_fm, sum_5);
 	gen_shortcut<X16,Y16,NF16>(sum_5, in_blk6_fm, shortcut_6_fm);
 
-	conv_layer_k1<X17,Y17,Z17,NF17,SFI17,SFW17,SFO17, weights_l17,8,true> (in_blk6_fm, l17_fm);
+	conv_layer_k1<X17,Y17,Z17,NF17,SFI17,SFW17,SFO17, weights_l17,16,true> (in_blk6_fm, l17_fm);
 	conv_layer_k1<X18,Y18,Z18,NF18,SFI18,SFW18,SFO18, weights_l18,8,true> (l17_fm, l18_fm);
-	conv_layer_k1<X19,Y19,Z19,NF19,SFI19,SFW19,SFO19, weights_l19,8,false> (l18_fm, l19_fm);
+	conv_layer_k1<X19,Y19,Z19,NF19,SFI19,SFW19,SFO19, weights_l19,16,false> (l18_fm, l19_fm);
 
 	add_shortcut<X19,Y19,NF19,Z17,SFO19,SFO17,SFBLK6>(l19_fm, shortcut_6_fm, sum_6);
 	gen_shortcut<X19,Y19,NF19>(sum_6, in_blk7_fm, shortcut_7_fm);
@@ -142,9 +186,9 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 
 	average_pool<X19,Y19,XDS2,YDS2,NF19,KDS2,SFBLK6,SFDS2>(shortcut_7_fm, ds_2_fm);
 
-	conv_layer_k1_b4k2_x4<X20,Y20,Z20,NF20,SFI20,SFW20,SFO20, weights_l20, 8, true> (in_blk7_fm, l20_fm);
-	conv_layer_k2<X21,Y21,Z21,NF21,X22,SFI21,SFW21,SFO21, weights_l21, 8, true> (l20_fm, l21_fm);
-	conv_layer_k1<X22,Y2,Z22,NF22,SFI22,SFW22,SFO22, weights_l22,8,false> (l21_fm, l22_fm);
+	conv_layer_k1_b4k2_x4<X20,Y20,Z20,NF20,SFI20,SFW20,SFO20, weights_l20, 16, true> (in_blk7_fm, l20_fm);
+	conv_layer_k2<X21,Y21,Z21,NF21,X22,SFI21,SFW21,SFO21, weights_l21, 16, true> (l20_fm, l21_fm);
+	conv_layer_k1<X22,Y22,Z22,NF22,SFI22,SFW22,SFO22, weights_l22,8,false> (l21_fm, l22_fm);
 	add_shortcut<X22,Y22,NF2,Z20,SFO22,SFO20,SFBLK7>(l22_fm, ds_2_fm, sum_7);
 	gen_shortcut<X22,Y22,NF22>(sum_7, in_blk8_fm, shortcut_8_fm);
 
@@ -291,7 +335,7 @@ void average_pool(act_reshp in_feature_map[fm_width*fm_height*nbands/RESHP_FACTO
 			for (int j = 0; j < fm_height-1; j+=2) {
 				for(int k = 0; k < kernel_size; k++){
 					for(int l = 0; l < kernel_size; l++){
-#pragma HLS PIPELINE II=8
+#pragma HLS PIPELINE II=2
 						in_idx = ((i+k)*nbands*fm_height + (j+l)*nbands + z);
 						if(in_idx % RESHP_FACTOR == 0) pixel = in_feature_map[in_idx/RESHP_FACTOR].range(3,0);
 						else if(in_idx % RESHP_FACTOR == 1) pixel = in_feature_map[in_idx/RESHP_FACTOR].range(7,4);
