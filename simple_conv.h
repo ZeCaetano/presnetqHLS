@@ -20,6 +20,7 @@
 //typedef ap_fixed<9,4,AP_RND> quant_accum;
 
 typedef ap_int<4> quant_act;
+typedef ap_uint<4> quant_uact;
 typedef ap_int<2> quant_wght;
 typedef ap_int<8> quant_bias;
 
@@ -56,6 +57,9 @@ void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESH
 
 template<params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t sf_i, params_t sf_weights, params_t sf_o, wght_reshp *weights, params_t PE, bool relu>
 void conv_layer_k1(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[fm_height*fm_width*nfilters/RESHP_FACTOR]);
+
+template<params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t sf_i, params_t sf_weights, params_t sf_o, wght_reshp *weights, params_t PE, bool relu>
+void conv_layer_k1_unsigned(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[fm_height*fm_width*nfilters/RESHP_FACTOR]);
 
 template<params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, wght_reshp *weights, params_t PE>
 void conv_layer_k1_relu(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[fm_height*fm_width*nfilters/RESHP_FACTOR]);

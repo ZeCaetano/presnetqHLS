@@ -140,22 +140,22 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 
 
 	conv_layer_k1<X2,Y2,Z2,NF2,SFI2,SFW2,SFO2, weights_l2,8,true> (l1_fm, l2_fm);
-	conv_layer_k1<X3,Y3,Z3,NF3,SFI3,SFW3,SFO3, weights_l3,8,true> (l2_fm, l3_fm);
-	conv_layer_k1<X4,Y4,Z4,NF4,SFI4,SFW4,SFO4, weights_l4,8,false> (l3_fm, l4_fm);
+	conv_layer_k1_unsigned<X3,Y3,Z3,NF3,SFI3,SFW3,SFO3, weights_l3,8,true> (l2_fm, l3_fm);
+	conv_layer_k1_unsigned<X4,Y4,Z4,NF4,SFI4,SFW4,SFO4, weights_l4,8,false> (l3_fm, l4_fm);
 
 	add_shortcut<X4,Y4,NF4,Z2,SFO4,SFO2,SFBLK1>(l4_fm, shortcut_1_fm, sum_1);
 	gen_shortcut<X4,Y4,NF4>(sum_1, in_blk2_fm, shortcut_2_fm);
 
 	conv_layer_k1<X5,Y5,Z5,NF5,SFI5,SFW5,SFO5, weights_l5,16,true> (in_blk2_fm, l5_fm);
-	conv_layer_k1<X6,Y6,Z6,NF6,SFI6,SFW6,SFO6, weights_l6,8,true> (l5_fm, l6_fm);
-	conv_layer_k1<X7,Y7,Z7,NF7,SFI7,SFW7,SFO7, weights_l7,16,false> (l6_fm, l7_fm);
+	conv_layer_k1_unsigned<X6,Y6,Z6,NF6,SFI6,SFW6,SFO6, weights_l6,8,true> (l5_fm, l6_fm);
+	conv_layer_k1_unsigned<X7,Y7,Z7,NF7,SFI7,SFW7,SFO7, weights_l7,16,false> (l6_fm, l7_fm);
 
 	add_shortcut<X7,Y7,NF7,Z5,SFO7,SFO5,SFBLK2>(l7_fm, shortcut_2_fm, sum_2);
 	gen_shortcut<X7,Y7,NF7>(sum_2, in_blk3_fm, shortcut_3_fm);
 
 	conv_layer_k1<X8,Y8,Z8,NF8,SFI8,SFW8,SFO8, weights_l8,16,true> (in_blk3_fm, l8_fm);
-	conv_layer_k1<X9,Y9,Z9,NF9,SFI9,SFW9,SFO9, weights_l9,8,true> (l8_fm, l9_fm);
-	conv_layer_k1<X10,Y10,Z10,NF10,SFI10,SFW10,SFO10, weights_l10,24,false> (l9_fm, l10_fm);
+	conv_layer_k1_unsigned<X9,Y9,Z9,NF9,SFI9,SFW9,SFO9, weights_l9,8,true> (l8_fm, l9_fm);
+	conv_layer_k1_unsigned<X10,Y10,Z10,NF10,SFI10,SFW10,SFO10, weights_l10,24,false> (l9_fm, l10_fm);
 
 	add_shortcut<X10,Y10,NF10,Z8,SFO10,SFO8,SFBLK3>(l10_fm, shortcut_3_fm, sum_3);
 	gen_shortcut<X10,Y10,NF10>(sum_3, in_blk4_fm, shortcut_4_fm);
@@ -165,20 +165,20 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 
 	conv_layer_k1_b4k2_x9<X11,Y11,Z11,NF11,SFI11,SFW11,SFO11, weights_l11, 24, true> (in_blk4_fm, l11_fm);
 	conv_layer_k2<X12-1,Y12-1,Z12,NF12,X13,SFI12,SFW12,SFO12, weights_l12, 16, true> (l11_fm, l12_fm);
-	conv_layer_k1<X13,Y13,Z13,NF13,SFI13,SFW13,SFO13, weights_l13,8,false> (l12_fm, l13_fm);
+	conv_layer_k1_unsigned<X13,Y13,Z13,NF13,SFI13,SFW13,SFO13, weights_l13,8,false> (l12_fm, l13_fm);
 	add_shortcut<X13,Y13,NF13,Z11,SFO13,SFO11,SFBLK4>(l13_fm, ds_1_fm, sum_4);
 	gen_shortcut<X13,Y13,NF13>(sum_4, in_blk5_fm, shortcut_5_fm);
 
 	conv_layer_k1<X14,Y14,Z14,NF14,SFI14,SFW14,SFO14, weights_l14,8,true> (in_blk5_fm, l14_fm);
-	conv_layer_k1<X15,Y15,Z15,NF15,SFI15,SFW15,SFO15, weights_l15,8,true> (l14_fm, l15_fm);
-	conv_layer_k1<X16,Y16,Z16,NF16,SFI16,SFW16,SFO16, weights_l16,8,false> (l15_fm, l16_fm);
+	conv_layer_k1_unsigned<X15,Y15,Z15,NF15,SFI15,SFW15,SFO15, weights_l15,8,true> (l14_fm, l15_fm);
+	conv_layer_k1_unsigned<X16,Y16,Z16,NF16,SFI16,SFW16,SFO16, weights_l16,8,false> (l15_fm, l16_fm);
 
 	add_shortcut<X16,Y16,NF16,Z14,SFO16,SFO14,SFBLK5>(l16_fm, shortcut_5_fm, sum_5);
 	gen_shortcut<X16,Y16,NF16>(sum_5, in_blk6_fm, shortcut_6_fm);
 
 	conv_layer_k1<X17,Y17,Z17,NF17,SFI17,SFW17,SFO17, weights_l17,16,true> (in_blk6_fm, l17_fm);
-	conv_layer_k1<X18,Y18,Z18,NF18,SFI18,SFW18,SFO18, weights_l18,8,true> (l17_fm, l18_fm);
-	conv_layer_k1<X19,Y19,Z19,NF19,SFI19,SFW19,SFO19, weights_l19,16,false> (l18_fm, l19_fm);
+	conv_layer_k1_unsigned<X18,Y18,Z18,NF18,SFI18,SFW18,SFO18, weights_l18,8,true> (l17_fm, l18_fm);
+	conv_layer_k1_unsigned<X19,Y19,Z19,NF19,SFI19,SFW19,SFO19, weights_l19,16,false> (l18_fm, l19_fm);
 
 	add_shortcut<X19,Y19,NF19,Z17,SFO19,SFO17,SFBLK6>(l19_fm, shortcut_6_fm, sum_6);
 	gen_shortcut<X19,Y19,NF19>(sum_6, in_blk7_fm, shortcut_7_fm);
@@ -188,20 +188,20 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 
 	conv_layer_k1_b4k2_x4<X20,Y20,Z20,NF20,SFI20,SFW20,SFO20, weights_l20, 16, true> (in_blk7_fm, l20_fm);
 	conv_layer_k2<X21,Y21,Z21,NF21,X22,SFI21,SFW21,SFO21, weights_l21, 8, true> (l20_fm, l21_fm);
-	conv_layer_k1<X22,Y22,Z22,NF22,SFI22,SFW22,SFO22, weights_l22,8,false> (l21_fm, l22_fm);
+	conv_layer_k1_unsigned<X22,Y22,Z22,NF22,SFI22,SFW22,SFO22, weights_l22,8,false> (l21_fm, l22_fm);
 	add_shortcut<X22,Y22,NF2,Z20,SFO22,SFO20,SFBLK7>(l22_fm, ds_2_fm, sum_7);
 	gen_shortcut<X22,Y22,NF22>(sum_7, in_blk8_fm, shortcut_8_fm);
 
 	conv_layer_k1<X23,Y23,Z23,NF23,SFI23,SFW23,SFO23, weights_l23,8,true> (in_blk8_fm, l23_fm);
-	conv_layer_k1<X24,Y24,Z24,NF24,SFI24,SFW24,SFO24, weights_l24,8,true> (l23_fm, l24_fm);
-	conv_layer_k1<X25,Y25,Z25,NF25,SFI25,SFW25,SFO25, weights_l25,8,false> (l24_fm, l25_fm);
+	conv_layer_k1_unsigned<X24,Y24,Z24,NF24,SFI24,SFW24,SFO24, weights_l24,8,true> (l23_fm, l24_fm);
+	conv_layer_k1_unsigned<X25,Y25,Z25,NF25,SFI25,SFW25,SFO25, weights_l25,8,false> (l24_fm, l25_fm);
 
 	add_shortcut<X25,Y25,NF25,Z23,SFO25,SFO23,SFBLK8>(l25_fm, shortcut_8_fm, sum_8);
 	gen_shortcut<X25,Y25,NF25>(sum_8, in_blk9_fm, shortcut_9_fm);
 
 	conv_layer_k1<X26,Y26,Z26,NF26,SFI26,SFW26,SFO26, weights_l26,8,true> (in_blk9_fm, l26_fm);
-	conv_layer_k1<X27,Y27,Z27,NF27,SFI27,SFW27,SFO27, weights_l27,8,true> (l26_fm, l27_fm);
-	conv_layer_k1<X28,Y28,Z28,NF28,SFI28,SFW28,SFO28, weights_l28,8,false> (l27_fm, l28_fm);
+	conv_layer_k1_unsigned<X27,Y27,Z27,NF27,SFI27,SFW27,SFO27, weights_l27,8,true> (l26_fm, l27_fm);
+	conv_layer_k1_unsigned<X28,Y28,Z28,NF28,SFI28,SFW28,SFO28, weights_l28,8,false> (l27_fm, l28_fm);
 
 	add_shortcut<X28,Y28,NF28,Z26,SFO28,SFO26,SFBLK9>(l28_fm, shortcut_9_fm, sum_9);
 
@@ -482,7 +482,88 @@ void conv_layer_k1(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACT
 							acc = acc >> shift;
 							if(relu){
 								acc = (ap_int<1>)acc[20] == 0 ? acc : (quant_accum)0;
-								if(acc >= (1 << (ACT_WIDTH-1)) - 1) acc = (1 << (ACT_WIDTH-1)) - 1;
+								if(acc >= (1 << ACT_WIDTH) - 1) acc = (1 << ACT_WIDTH) - 1;
+							}
+							else{
+								if(acc >= (1 << (ACT_WIDTH - 1)) - 1) acc = (1 << (ACT_WIDTH - 1)) - 1;
+								else if(acc <= -(1 << (ACT_WIDTH - 1))) acc = -(1 << (ACT_WIDTH - 1));
+							}
+//							tmp_out = (quant_act)acc;
+							tmp_out = acc.range(3,0);
+//							printf("%X\n\n\n",tmp_out);
+							if(k%RESHP_FACTOR==0) acc_tmp.range(3,0) = tmp_out;
+							else if(k%RESHP_FACTOR==1) acc_tmp.range(7,4) = tmp_out;
+							else if(k%RESHP_FACTOR==2) acc_tmp.range(11,8) = tmp_out;
+							else if(k%RESHP_FACTOR==3) acc_tmp.range(15,12) = tmp_out;
+							else if(k%RESHP_FACTOR==4) acc_tmp.range(19,16) = tmp_out;
+							else if(k%RESHP_FACTOR==5) acc_tmp.range(23,20) = tmp_out;
+							else if(k%RESHP_FACTOR==6) acc_tmp.range(27,24) = tmp_out;
+							else {
+								acc_tmp.range(31,28) = tmp_out;
+								out_feature_map[output_idx] = acc_tmp; //ver o fator de escala aqui
+//								printf("acc_tmp: %ld\n", (long)acc_tmp);
+								output_idx++;
+							}
+							acc = 0;
+							if(k != nfilters-1) input_idx -= nbands/RESHP_FACTOR;
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+	return;
+}
+template<params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t sf_i, params_t sf_weights, params_t sf_o, wght_reshp *weights, params_t PE, bool relu>
+void conv_layer_k1_unsigned(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[fm_height*fm_width*nfilters/RESHP_FACTOR]) {
+	quant_accum acc = 0;
+	int kernel_idx = 0;
+	int input_idx = 0;
+	int output_idx = 0;
+	ap_uint<3> range_idx = 0;
+	act_reshp acc_tmp = 0;
+	quant_act tmp_out = 0;
+	act_reshp tmp_in = 0;
+	wght_reshp tmp_weight = 0;
+	params_t in_fract_bits = -(sf_i);
+	params_t w_fract_bits = -(sf_weights);
+	params_t out_fract_bits = -(sf_o);
+	params_t shift = ((in_fract_bits + w_fract_bits) - out_fract_bits);
+
+//	if(nbands == 200 && nfilters == 32){
+//		printf("scale_w: %d \n scale_in: %d \n scale_out %d\n in_fract_bits: %d\n w_fract_bits: %d\n out_fract_bits: %d\n", sf_weights, sf_i, sf_o, in_fract_bits, w_fract_bits,out_fract_bits);
+//		printf("shift: %d\n", shift);
+//	}
+
+	loop_inputx:
+	for(int i = 0; i < fm_width; i++) {
+		loop_inputy:
+		for(int j = 0; j < fm_height; j++) {
+			kernel_idx = 0;
+			loop_filters:
+			for(int k = 0; k < nfilters; k++) {
+				loop_bands:
+				for(int z = 0; z < nbands; z+=PE) {
+#pragma HLS PIPELINE
+					for(int p = 0; p < PE/RESHP_FACTOR; p++) {
+						tmp_in = in_feature_map[input_idx];
+						tmp_weight = weights[kernel_idx];
+						acc += (quant_wght)tmp_weight.range(1,0) * (quant_uact)tmp_in.range(3,0);
+						acc += (quant_wght)tmp_weight.range(3,2) * (quant_uact)tmp_in.range(7,4);
+						acc += (quant_wght)tmp_weight.range(5,4) * (quant_uact)tmp_in.range(11,8);
+						acc += (quant_wght)tmp_weight.range(7,6) * (quant_uact)tmp_in.range(15,12);
+						acc += (quant_wght)tmp_weight.range(9,8) * (quant_uact)tmp_in.range(19,16);
+						acc += (quant_wght)tmp_weight.range(11,10) * (quant_uact)tmp_in.range(23,20);
+						acc += (quant_wght)tmp_weight.range(13,12) * (quant_uact)tmp_in.range(27,24);
+						acc += (quant_wght)tmp_weight.range(15,14) * (quant_uact)tmp_in.range(31,28);
+						kernel_idx++;
+						input_idx++;
+						if(z + (p*RESHP_FACTOR) == nbands-RESHP_FACTOR) {
+							acc = acc >> shift;
+							if(relu){
+								acc = (ap_int<1>)acc[20] == 0 ? acc : (quant_accum)0;
+								if(acc >= (1 << ACT_WIDTH) - 1) acc = (1 << ACT_WIDTH) - 1;
 							}
 							else{
 								if(acc >= (1 << (ACT_WIDTH - 1)) - 1) acc = (1 << (ACT_WIDTH - 1)) - 1;
@@ -569,7 +650,7 @@ void conv_layer_k1_b4k2_x9(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 								acc = acc >> shift;
 								if(relu){
 									acc = (ap_int<1>)acc[20] == 0 ? acc : (quant_accum)0;
-									if(acc >= (1 << (ACT_WIDTH-1)) - 1) acc = (1 << (ACT_WIDTH-1)) - 1;
+									if(acc >= (1 << ACT_WIDTH) - 1) acc = (1 << ACT_WIDTH) - 1;
 								}
 								else{
 									if(acc >= (1 << (ACT_WIDTH - 1)) - 1) acc = (1 << (ACT_WIDTH - 1)) - 1;
@@ -658,7 +739,7 @@ void conv_layer_k1_b4k2_x4(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 							acc = acc >> shift;
 							if(relu){
 								acc = (ap_int<1>)acc[20] == 0 ? acc : (quant_accum)0;
-								if(acc >= (1 << (ACT_WIDTH-1)) - 1) acc = (1 << (ACT_WIDTH-1)) - 1;
+								if(acc >= (1 << ACT_WIDTH) - 1) acc = (1 << ACT_WIDTH) - 1;
 							}
 							else{
 								if(acc >= (1 << (ACT_WIDTH - 1)) - 1) acc = (1 << (ACT_WIDTH - 1)) - 1;
@@ -733,24 +814,24 @@ void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP
 						tmp_in0 = in_feature_map[0][input_idx];
 						tmp_in1 = in_feature_map[1][input_idx];
 						tmp_weight = weights[kernel_idx];
-						acc_even += (quant_wght)tmp_weight.range(1,0) * (quant_act)tmp_in0.range(3,0);
-						acc_odd += (quant_wght)tmp_weight.range(3,2) * (quant_act)tmp_in1.range(3,0);
-						acc_even += (quant_wght)tmp_weight.range(5,4) * (quant_act)tmp_in0.range(7,4);
-						acc_odd += (quant_wght)tmp_weight.range(7,6) * (quant_act)tmp_in1.range(7,4);
-						acc_even += (quant_wght)tmp_weight.range(9,8) * (quant_act)tmp_in0.range(11,8);
-						acc_odd += (quant_wght)tmp_weight.range(11,10) * (quant_act)tmp_in1.range(11,8);
-						acc_even += (quant_wght)tmp_weight.range(13,12) * (quant_act)tmp_in0.range(15,12);
-						acc_odd += (quant_wght)tmp_weight.range(15,14) * (quant_act)tmp_in1.range(15,12);
+						acc_even += (quant_wght)tmp_weight.range(1,0) * (quant_uact)tmp_in0.range(3,0);
+						acc_odd += (quant_wght)tmp_weight.range(3,2) * (quant_uact)tmp_in1.range(3,0);
+						acc_even += (quant_wght)tmp_weight.range(5,4) * (quant_uact)tmp_in0.range(7,4);
+						acc_odd += (quant_wght)tmp_weight.range(7,6) * (quant_uact)tmp_in1.range(7,4);
+						acc_even += (quant_wght)tmp_weight.range(9,8) * (quant_uact)tmp_in0.range(11,8);
+						acc_odd += (quant_wght)tmp_weight.range(11,10) * (quant_uact)tmp_in1.range(11,8);
+						acc_even += (quant_wght)tmp_weight.range(13,12) * (quant_uact)tmp_in0.range(15,12);
+						acc_odd += (quant_wght)tmp_weight.range(15,14) * (quant_uact)tmp_in1.range(15,12);
 						kernel_idx++;
 						tmp_weight = weights[kernel_idx];
-						acc_even += (quant_wght)tmp_weight.range(1,0) * (quant_act)tmp_in0.range(19,16);
-						acc_odd += (quant_wght)tmp_weight.range(3,2) * (quant_act)tmp_in1.range(19,16);
-						acc_even += (quant_wght)tmp_weight.range(5,4) * (quant_act)tmp_in0.range(23,20);
-						acc_odd += (quant_wght)tmp_weight.range(7,6) * (quant_act)tmp_in1.range(23,20);
-						acc_even += (quant_wght)tmp_weight.range(9,8) * (quant_act)tmp_in0.range(27,24);
-						acc_odd += (quant_wght)tmp_weight.range(11,10) * (quant_act)tmp_in1.range(27,24);
-						acc_even += (quant_wght)tmp_weight.range(13,12) * (quant_act)tmp_in0.range(31,28);
-						acc_odd += (quant_wght)tmp_weight.range(15,14) * (quant_act)tmp_in1.range(31,28);
+						acc_even += (quant_wght)tmp_weight.range(1,0) * (quant_uact)tmp_in0.range(19,16);
+						acc_odd += (quant_wght)tmp_weight.range(3,2) * (quant_uact)tmp_in1.range(19,16);
+						acc_even += (quant_wght)tmp_weight.range(5,4) * (quant_uact)tmp_in0.range(23,20);
+						acc_odd += (quant_wght)tmp_weight.range(7,6) * (quant_uact)tmp_in1.range(23,20);
+						acc_even += (quant_wght)tmp_weight.range(9,8) * (quant_uact)tmp_in0.range(27,24);
+						acc_odd += (quant_wght)tmp_weight.range(11,10) * (quant_uact)tmp_in1.range(27,24);
+						acc_even += (quant_wght)tmp_weight.range(13,12) * (quant_uact)tmp_in0.range(31,28);
+						acc_odd += (quant_wght)tmp_weight.range(15,14) * (quant_uact)tmp_in1.range(31,28);
 						kernel_idx++;
 						input_idx++;
 
@@ -759,7 +840,7 @@ void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP
 							acc_even = acc_even >> shift;
 							if(relu){
 								acc_even = (ap_int<1>)acc_even[20] == 0 ? acc_even : (quant_accum)0;
-								if(acc_even >= (1 << (ACT_WIDTH-1)) - 1) acc_even = (1 << (ACT_WIDTH-1)) - 1;
+								if(acc_even >= (1 << ACT_WIDTH) - 1) acc_even = (1 << ACT_WIDTH) - 1;
 							}
 							else{
 								if(acc_even >= (1 << (ACT_WIDTH - 1)) - 1) acc_even = (1 << (ACT_WIDTH - 1)) - 1;
