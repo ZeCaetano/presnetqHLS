@@ -116,6 +116,10 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 #pragma HLS STREAM variable=shortcut_7_fm type=PIPO depth=2
 #pragma HLS STREAM variable=shortcut_8_fm type=PIPO depth=5
 #pragma HLS STREAM variable=shortcut_9_fm type=PIPO depth=2
+#pragma HLS STREAM variable=ds_1_fm type=PIPO depth=4
+#pragma HLS STREAM variable=ds_2_fm  type=PIPO depth=4
+#pragma HLS STREAM variable=final_ds type=PIPO depth=2
+#pragma HLS STREAM variable=output_fm type=PIPO depth=2
 #pragma HLS STREAM variable=in_blk2_fm type=PIPO depth=2
 #pragma HLS STREAM variable=in_blk3_fm type=PIPO depth=2
 #pragma HLS STREAM variable=in_blk4_fm type=PIPO depth=2
@@ -125,10 +129,7 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 #pragma HLS STREAM variable=in_blk8_fm type=PIPO depth=2
 #pragma HLS STREAM variable=in_blk9_fm type=PIPO depth=2
 #pragma HLS STREAM variable=final_relu type=PIPO depth=2
-#pragma HLS STREAM variable=ds_1_fm type=PIPO depth=4
-#pragma HLS STREAM variable=ds_2_fm  type=PIPO depth=4
-#pragma HLS STREAM variable=final_ds type=PIPO depth=2
-#pragma HLS STREAM variable=output_fm type=PIPO depth=2
+
 
 
 

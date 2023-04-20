@@ -171,66 +171,32 @@ void init_fm(){
 	quant_wght values2[4] = {-2,-1,1};
 	quant_wght values3[4] = {1,-1,-2};
 	quant_wght values4[4] = {-1,1,-2};
+	quant_act pixel = 0;
+	char buff_image[INPUT1_MEM_SIZE];
 
-//	printf("Input Image\n\r");
-	for(int k = 0; k < Z1; k++) {
-		for (int i = 0; i < X1; i++) {
-			for (int j = 0; j < Y1; j++) {
-				image_in[(k*X1*Y1)+(i*Y1+j)] = values1[(i+j+k)%16];
-				npixels++;
-//				printf("i%d %d ", npixels-1, (int)image_in[(k*X1*Y1)+(i * Y1 + j)]);
+	FILE *input_file = fopen("input_image.bin", "rb");
+	fread(buff_image, sizeof(char), INPUT1_MEM_SIZE, input_file);
+
+
+//	for(int i = 0; i < INPUT1_MEM_SIZE; i++) {
+//		pixel = (ap_int<4>)buff_image[i];
+//		pixel = v.range(3,0);
+//		printf("%d ", (int)v);
+//	}
+
+	//	printf("Input Image\n\r");
+		for(int k = 0; k < Z1; k++) {
+			for (int i = 0; i < X1; i++) {
+				for (int j = 0; j < Y1; j++) {
+					pixel = (ap_int<4>)buff_image[(k*X1*Y1)+(i*Y1)+j];
+					pixel = pixel.range(3,0);
+					image_in[(k*X1*Y1)+(i*Y1)+j] = pixel;
+					npixels++;
+//					printf("%d ", (int)image_in[(k*X1*Y1)+(i * Y1 + j)]);
+				}
+//				printf("\n\r");
 			}
-//			printf("\n\r");
 		}
-	}
-////	printf("Weights1\n\r");
-//	for(int i = 0; i < NF1; i++) {
-//		for(int k = 0; k < Z1; k++) {
-//			for(int j = 0; j < K1; j++) {
-//				for(int l = 0; l < K1; l++) {
-//					kernel[(i*Z1*K1*K1)+(k * K1*K1 + (j * K1) + l)] = values2[(l+j+i+k)%3];
-////					printf("%d ", (int)kernel[(k*NF1*K1*K1)+(i * K1*K1 + (j * K1) + l)]);
-//				}
-//			}
-//		}
-////		printf("\n\r");
-//	}
-////	printf("\n\n\n\n\n\n");
-////	printf("\n\nWeights2\n\r");
-//	for(int i = 0; i < NF2; i++) {
-//		for(int k = 0; k < Z2; k++) {
-//			for(int j = 0; j < K2; j++) {
-//				for(int l = 0; l < K2; l++) {
-//					kernel[LAYER1_WEIGHTS + (i*Z2*K2*K2)+(k * K2*K2 + (j * K2) + l)] = values3[(l+j+i+k)%3];
-////					printf("%d ", (int)kernel[LAYER1_WEIGHTS + ((k*NF2*K2*K2)+(i * K2*K2 + (j * K2) + l))]);
-//				}
-//			}
-//		}
-////		printf("\n\r");
-//	}
-////	printf("\n\nWeights3\n\r");
-//	for(int i = 0; i < NF3; i++) {
-//		for(int k = 0; k < Z3; k++) {
-//			for(int j = 0; j < K3; j++) {
-//				for(int l = 0; l < K3; l++) {
-//					kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + ((i*Z3*K3*K3)+(k * K3*K3 + (j * K3) + l))] = values4[(l+j+i+k)%3];
-////					printf("%d ", (int)kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + ((i*Z3*K3*K3)+(k * K3*K3 + (j * K3) + l))]);
-//				}
-//			}
-//		}
-//	}
-////	printf("\n\r");
-//	for(int i = 0; i < NCLASSES; i++) {
-//		for(int j = 0; j < NF3; j++) {
-//			kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + LAYER3_WEIGHTS + (i*NF3) +j ] = values4[(j+i)%3];
-////			printf("%d ", (int)kernel[LAYER1_WEIGHTS + LAYER2_WEIGHTS + LAYER3_WEIGHTS + (i*NF3) +j ]);
-//		}
-//	}
-////	printf("\n\r");
-//	for(int i = 0; i < NCLASSES; i++) {
-//		bias[i] = values1[i];
-//	}
-
 }
 
 
@@ -243,7 +209,6 @@ int main() {
     printf("Start\n");
 
     init_fm();
-
     printf("FM initialized\n");
 
 //    init_weights_from_file();
