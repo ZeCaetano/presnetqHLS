@@ -40,7 +40,7 @@
 //	}
 //	printf("\n\n\n");
 //}
-//
+
 
 void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) {
 
@@ -59,7 +59,7 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 	act_reshp sum_6[OUT19_MEM_SIZE/RESHP_FACTOR], sum_7[OUT22_MEM_SIZE/RESHP_FACTOR], sum_8[OUT25_MEM_SIZE/RESHP_FACTOR], sum_9[OUT28_MEM_SIZE/RESHP_FACTOR];
 	act_reshp shortcut_1_fm[INPUT1_MEM_SIZE/RESHP_FACTOR], shortcut_2_fm[INPUT5_MEM_SIZE/RESHP_FACTOR], shortcut_3_fm[INPUT8_MEM_SIZE/RESHP_FACTOR], shortcut_4_fm[INPUT11_MEM_SIZE/RESHP_FACTOR], shortcut_5_fm[INPUT14_MEM_SIZE/RESHP_FACTOR];
 	act_reshp shortcut_6_fm[INPUT17_MEM_SIZE/RESHP_FACTOR],shortcut_7_fm[INPUT20_MEM_SIZE/RESHP_FACTOR], shortcut_8_fm[INPUT23_MEM_SIZE/RESHP_FACTOR], shortcut_9_fm[INPUT26_MEM_SIZE/RESHP_FACTOR];
-	act_reshp in_blk2_fm[INPUT5_MEM_SIZE/RESHP_FACTOR], in_blk3_fm[INPUT8_MEM_SIZE/RESHP_FACTOR], in_blk4_fm[INPUT11_MEM_SIZE/RESHP_FACTOR], in_blk5_fm[INPUT14_MEM_SIZE/RESHP_FACTOR];
+	act_reshp in_blk1_fm[INPUT2_MEM_SIZE/RESHP_FACTOR], in_blk2_fm[INPUT5_MEM_SIZE/RESHP_FACTOR], in_blk3_fm[INPUT8_MEM_SIZE/RESHP_FACTOR], in_blk4_fm[INPUT11_MEM_SIZE/RESHP_FACTOR], in_blk5_fm[INPUT14_MEM_SIZE/RESHP_FACTOR];
 	act_reshp in_blk6_fm[INPUT17_MEM_SIZE/RESHP_FACTOR],in_blk7_fm[INPUT20_MEM_SIZE/RESHP_FACTOR], in_blk8_fm[INPUT23_MEM_SIZE/RESHP_FACTOR], in_blk9_fm[INPUT26_MEM_SIZE/RESHP_FACTOR];
 	act_reshp final_relu[OUT28_MEM_SIZE/RESHP_FACTOR];
 	act_reshp ds_1_fm[XDS1*YDS1*NF10/RESHP_FACTOR], ds_2_fm[XDS2*XDS3*NF19/RESHP_FACTOR], final_ds[XDS3*YDS3*NF28];
@@ -107,7 +107,7 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 #pragma HLS STREAM variable=sum_7 type=PIPO depth=2
 #pragma HLS STREAM variable=sum_8 type=PIPO depth=2
 #pragma HLS STREAM variable=sum_9 type=PIPO depth=2
-#pragma HLS STREAM variable=shortcut_1_fm type=PIPO depth=6
+#pragma HLS STREAM variable=shortcut_1_fm type=PIPO depth=5
 #pragma HLS STREAM variable=shortcut_2_fm type=PIPO depth=5
 #pragma HLS STREAM variable=shortcut_3_fm type=PIPO depth=5
 #pragma HLS STREAM variable=shortcut_4_fm type=PIPO depth=2
@@ -134,83 +134,86 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 
 
 #pragma HLS DATAFLOW
-	read_ifm(strm_in, in_feature_map, shortcut_1_fm);
+	read_ifm(strm_in, in_feature_map);
 
 
-	conv_layer_k1<X1,Y1,Z1,NF1,SFI1,SFW1,SFO1, weights_l1,8,false> (in_feature_map, l1_fm);
+	conv_layer_k1<X1,Y1,Z1,NF1,SFEI1,SFEW1,SFEO1, weights_l1,8,false> (in_feature_map, l1_fm);
+
+//	print_fm(X1,Y1,NF1,l1_fm);
+	gen_shortcut<X1,X2,NF1>(l1_fm, in_blk1_fm, shortcut_1_fm);
 
 
-	conv_layer_k1<X2,Y2,Z2,NF2,SFI2,SFW2,SFO2, weights_l2,8,true> (l1_fm, l2_fm);
-	conv_layer_k1_unsigned<X3,Y3,Z3,NF3,SFI3,SFW3,SFO3, weights_l3,8,true> (l2_fm, l3_fm);
-	conv_layer_k1_unsigned<X4,Y4,Z4,NF4,SFI4,SFW4,SFO4, weights_l4,8,false> (l3_fm, l4_fm);
+	conv_layer_k1<X2,Y2,Z2,NF2,SFEI2,SFEW2,SFEO2, weights_l2,8,true> (in_blk1_fm, l2_fm);
+	conv_layer_k1_unsigned<X3,Y3,Z3,NF3,SFEI3,SFEW3,SFEO3, weights_l3,8,true> (l2_fm, l3_fm);
+	conv_layer_k1_unsigned<X4,Y4,Z4,NF4,SFEI4,SFEW4,SFEO4, weights_l4,8,false> (l3_fm, l4_fm);
 
-	add_shortcut<X4,Y4,NF4,Z2,SFO4,SFO2,SFBLK1>(l4_fm, shortcut_1_fm, sum_1);
+	add_shortcut<X4,Y4,NF4,Z2,SFEO4,SFEO2,SFEBLK1>(l4_fm, shortcut_1_fm, sum_1);
 	gen_shortcut<X4,Y4,NF4>(sum_1, in_blk2_fm, shortcut_2_fm);
 
-	conv_layer_k1<X5,Y5,Z5,NF5,SFI5,SFW5,SFO5, weights_l5,16,true> (in_blk2_fm, l5_fm);
-	conv_layer_k1_unsigned<X6,Y6,Z6,NF6,SFI6,SFW6,SFO6, weights_l6,8,true> (l5_fm, l6_fm);
-	conv_layer_k1_unsigned<X7,Y7,Z7,NF7,SFI7,SFW7,SFO7, weights_l7,16,false> (l6_fm, l7_fm);
+	conv_layer_k1<X5,Y5,Z5,NF5,SFEI5,SFEW5,SFEO5, weights_l5,16,true> (in_blk2_fm, l5_fm);
+	conv_layer_k1_unsigned<X6,Y6,Z6,NF6,SFEI6,SFEW6,SFEO6, weights_l6,8,true> (l5_fm, l6_fm);
+	conv_layer_k1_unsigned<X7,Y7,Z7,NF7,SFEI7,SFEW7,SFEO7, weights_l7,16,false> (l6_fm, l7_fm);
 
-	add_shortcut<X7,Y7,NF7,Z5,SFO7,SFO5,SFBLK2>(l7_fm, shortcut_2_fm, sum_2);
+	add_shortcut<X7,Y7,NF7,Z5,SFEO7,SFEO5,SFEBLK2>(l7_fm, shortcut_2_fm, sum_2);
 	gen_shortcut<X7,Y7,NF7>(sum_2, in_blk3_fm, shortcut_3_fm);
 
-	conv_layer_k1<X8,Y8,Z8,NF8,SFI8,SFW8,SFO8, weights_l8,16,true> (in_blk3_fm, l8_fm);
-	conv_layer_k1_unsigned<X9,Y9,Z9,NF9,SFI9,SFW9,SFO9, weights_l9,8,true> (l8_fm, l9_fm);
-	conv_layer_k1_unsigned<X10,Y10,Z10,NF10,SFI10,SFW10,SFO10, weights_l10,24,false> (l9_fm, l10_fm);
+	conv_layer_k1<X8,Y8,Z8,NF8,SFEI8,SFEW8,SFEO8, weights_l8,16,true> (in_blk3_fm, l8_fm);
+	conv_layer_k1_unsigned<X9,Y9,Z9,NF9,SFEI9,SFEW9,SFEO9, weights_l9,8,true> (l8_fm, l9_fm);
+	conv_layer_k1_unsigned<X10,Y10,Z10,NF10,SFEI10,SFEW10,SFEO10, weights_l10,24,false> (l9_fm, l10_fm);
 
-	add_shortcut<X10,Y10,NF10,Z8,SFO10,SFO8,SFBLK3>(l10_fm, shortcut_3_fm, sum_3);
+	add_shortcut<X10,Y10,NF10,Z8,SFEO10,SFEO8,SFEBLK3>(l10_fm, shortcut_3_fm, sum_3);
 	gen_shortcut<X10,Y10,NF10>(sum_3, in_blk4_fm, shortcut_4_fm);
 
 
-	average_pool<X10,Y10,XDS1,YDS1,NF10,KDS1,SFBLK3,SFDS1>(shortcut_4_fm, ds_1_fm);
+	average_pool<X10,Y10,XDS1,YDS1,NF10,KDS1,SFEBLK3,SFEDS1>(shortcut_4_fm, ds_1_fm);
 
-	conv_layer_k1_b4k2_x9<X11,Y11,Z11,NF11,SFI11,SFW11,SFO11, weights_l11, 24, true> (in_blk4_fm, l11_fm);
-	conv_layer_k2<X12-1,Y12-1,Z12,NF12,X13,SFI12,SFW12,SFO12, weights_l12, 16, true> (l11_fm, l12_fm);
-	conv_layer_k1_unsigned<X13,Y13,Z13,NF13,SFI13,SFW13,SFO13, weights_l13,8,false> (l12_fm, l13_fm);
-	add_shortcut<X13,Y13,NF13,Z11,SFO13,SFO11,SFBLK4>(l13_fm, ds_1_fm, sum_4);
+	conv_layer_k1_b4k2_x9<X11,Y11,Z11,NF11,SFEI11,SFEW11,SFEO11, weights_l11, 24, true> (in_blk4_fm, l11_fm);
+	conv_layer_k2<X12-1,Y12-1,Z12,NF12,X13,SFEI12,SFEW12,SFEO12, weights_l12, 16, true> (l11_fm, l12_fm);
+	conv_layer_k1_unsigned<X13,Y13,Z13,NF13,SFEI13,SFEW13,SFEO13, weights_l13,8,false> (l12_fm, l13_fm);
+	add_shortcut<X13,Y13,NF13,Z11,SFEO13,SFEDS1,SFEBLK4>(l13_fm, ds_1_fm, sum_4);
 	gen_shortcut<X13,Y13,NF13>(sum_4, in_blk5_fm, shortcut_5_fm);
 
-	conv_layer_k1<X14,Y14,Z14,NF14,SFI14,SFW14,SFO14, weights_l14,8,true> (in_blk5_fm, l14_fm);
-	conv_layer_k1_unsigned<X15,Y15,Z15,NF15,SFI15,SFW15,SFO15, weights_l15,8,true> (l14_fm, l15_fm);
-	conv_layer_k1_unsigned<X16,Y16,Z16,NF16,SFI16,SFW16,SFO16, weights_l16,8,false> (l15_fm, l16_fm);
+	conv_layer_k1<X14,Y14,Z14,NF14,SFEI14,SFEW14,SFEO14, weights_l14,8,true> (in_blk5_fm, l14_fm);
+	conv_layer_k1_unsigned<X15,Y15,Z15,NF15,SFEI15,SFEW15,SFEO15, weights_l15,8,true> (l14_fm, l15_fm);
+	conv_layer_k1_unsigned<X16,Y16,Z16,NF16,SFEI16,SFEW16,SFEO16, weights_l16,8,false> (l15_fm, l16_fm);
 
-	add_shortcut<X16,Y16,NF16,Z14,SFO16,SFO14,SFBLK5>(l16_fm, shortcut_5_fm, sum_5);
+	add_shortcut<X16,Y16,NF16,Z14,SFEO16,SFEO14,SFEBLK5>(l16_fm, shortcut_5_fm, sum_5);
 	gen_shortcut<X16,Y16,NF16>(sum_5, in_blk6_fm, shortcut_6_fm);
 
-	conv_layer_k1<X17,Y17,Z17,NF17,SFI17,SFW17,SFO17, weights_l17,16,true> (in_blk6_fm, l17_fm);
-	conv_layer_k1_unsigned<X18,Y18,Z18,NF18,SFI18,SFW18,SFO18, weights_l18,8,true> (l17_fm, l18_fm);
-	conv_layer_k1_unsigned<X19,Y19,Z19,NF19,SFI19,SFW19,SFO19, weights_l19,16,false> (l18_fm, l19_fm);
+	conv_layer_k1<X17,Y17,Z17,NF17,SFEI17,SFEW17,SFEO17, weights_l17,16,true> (in_blk6_fm, l17_fm);
+	conv_layer_k1_unsigned<X18,Y18,Z18,NF18,SFEI18,SFEW18,SFEO18, weights_l18,8,true> (l17_fm, l18_fm);
+	conv_layer_k1_unsigned<X19,Y19,Z19,NF19,SFEI19,SFEW19,SFEO19, weights_l19,16,false> (l18_fm, l19_fm);
 
-	add_shortcut<X19,Y19,NF19,Z17,SFO19,SFO17,SFBLK6>(l19_fm, shortcut_6_fm, sum_6);
+	add_shortcut<X19,Y19,NF19,Z17,SFEO19,SFEO17,SFEBLK6>(l19_fm, shortcut_6_fm, sum_6);
 	gen_shortcut<X19,Y19,NF19>(sum_6, in_blk7_fm, shortcut_7_fm);
 
 
-	average_pool<X19,Y19,XDS2,YDS2,NF19,KDS2,SFBLK6,SFDS2>(shortcut_7_fm, ds_2_fm);
+	average_pool<X19,Y19,XDS2,YDS2,NF19,KDS2,SFEBLK6,SFEDS2>(shortcut_7_fm, ds_2_fm);
 
-	conv_layer_k1_b4k2_x4<X20,Y20,Z20,NF20,SFI20,SFW20,SFO20, weights_l20, 16, true> (in_blk7_fm, l20_fm);
-	conv_layer_k2<X21,Y21,Z21,NF21,X22,SFI21,SFW21,SFO21, weights_l21, 8, true> (l20_fm, l21_fm);
-	conv_layer_k1_unsigned<X22,Y22,Z22,NF22,SFI22,SFW22,SFO22, weights_l22,8,false> (l21_fm, l22_fm);
-	add_shortcut<X22,Y22,NF2,Z20,SFO22,SFO20,SFBLK7>(l22_fm, ds_2_fm, sum_7);
+	conv_layer_k1_b4k2_x4<X20,Y20,Z20,NF20,SFEI20,SFEW20,SFEO20, weights_l20, 16, true> (in_blk7_fm, l20_fm);
+	conv_layer_k2<X21,Y21,Z21,NF21,X22,SFEI21,SFEW21,SFEO21, weights_l21, 8, true> (l20_fm, l21_fm);
+	conv_layer_k1_unsigned<X22,Y22,Z22,NF22,SFEI22,SFEW22,SFEO22, weights_l22,8,false> (l21_fm, l22_fm);
+	add_shortcut<X22,Y22,NF2,Z20,SFEO22,SFEO20,SFEBLK7>(l22_fm, ds_2_fm, sum_7);
 	gen_shortcut<X22,Y22,NF22>(sum_7, in_blk8_fm, shortcut_8_fm);
 
-	conv_layer_k1<X23,Y23,Z23,NF23,SFI23,SFW23,SFO23, weights_l23,8,true> (in_blk8_fm, l23_fm);
-	conv_layer_k1_unsigned<X24,Y24,Z24,NF24,SFI24,SFW24,SFO24, weights_l24,8,true> (l23_fm, l24_fm);
-	conv_layer_k1_unsigned<X25,Y25,Z25,NF25,SFI25,SFW25,SFO25, weights_l25,8,false> (l24_fm, l25_fm);
+	conv_layer_k1<X23,Y23,Z23,NF23,SFEI23,SFEW23,SFEO23, weights_l23,8,true> (in_blk8_fm, l23_fm);
+	conv_layer_k1_unsigned<X24,Y24,Z24,NF24,SFEI24,SFEW24,SFEO24, weights_l24,8,true> (l23_fm, l24_fm);
+	conv_layer_k1_unsigned<X25,Y25,Z25,NF25,SFEI25,SFEW25,SFEO25, weights_l25,8,false> (l24_fm, l25_fm);
 
-	add_shortcut<X25,Y25,NF25,Z23,SFO25,SFO23,SFBLK8>(l25_fm, shortcut_8_fm, sum_8);
+	add_shortcut<X25,Y25,NF25,Z23,SFEO25,SFEO23,SFEBLK8>(l25_fm, shortcut_8_fm, sum_8);
 	gen_shortcut<X25,Y25,NF25>(sum_8, in_blk9_fm, shortcut_9_fm);
 
-	conv_layer_k1<X26,Y26,Z26,NF26,SFI26,SFW26,SFO26, weights_l26,8,true> (in_blk9_fm, l26_fm);
-	conv_layer_k1_unsigned<X27,Y27,Z27,NF27,SFI27,SFW27,SFO27, weights_l27,8,true> (l26_fm, l27_fm);
-	conv_layer_k1_unsigned<X28,Y28,Z28,NF28,SFI28,SFW28,SFO28, weights_l28,8,false> (l27_fm, l28_fm);
+	conv_layer_k1<X26,Y26,Z26,NF26,SFEI26,SFEW26,SFEO26, weights_l26,8,true> (in_blk9_fm, l26_fm);
+	conv_layer_k1_unsigned<X27,Y27,Z27,NF27,SFEI27,SFEW27,SFEO27, weights_l27,8,true> (l26_fm, l27_fm);
+	conv_layer_k1_unsigned<X28,Y28,Z28,NF28,SFEI28,SFEW28,SFEO28, weights_l28,8,false> (l27_fm, l28_fm);
 
-	add_shortcut<X28,Y28,NF28,Z26,SFO28,SFO26,SFBLK9>(l28_fm, shortcut_9_fm, sum_9);
+	add_shortcut<X28,Y28,NF28,Z26,SFEO28,SFEO26,SFEBLK9>(l28_fm, shortcut_9_fm, sum_9);
 
 	relu<X28,Y28,NF28>(sum_9, final_relu);
 
-	average_pool<X28,Y28,XDS3,YDS3, NF28,KDS3, SFBLK9, SFDS3>(final_relu, final_ds);
+	average_pool<X28,Y28,XDS3,YDS3, NF28,KDS3, SFEBLK9, SFEDS3>(final_relu, final_ds);
 
-	fully_connected<NF28,NCLASSES, weights_fc, bias_fc, SFDS3,SFW_FC,SFB_FC,SFO_FC>(final_ds, output_fm);
+	fully_connected<NF28,NCLASSES, weights_fc, bias_fc, SFEDS3,SFEW_FC,SFEB_FC,SFEO_FC>(final_ds, output_fm);
 
 
 
@@ -219,7 +222,7 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 }
 
 
-void read_ifm(hls::stream<strmi_t> &strm_in, act_reshp in_feature_map[INPUT1_MEM_SIZE/RESHP_FACTOR], act_reshp shortcut_ifm[INPUT1_MEM_SIZE/RESHP_FACTOR]){
+void read_ifm(hls::stream<strmi_t> &strm_in, act_reshp in_feature_map[INPUT1_MEM_SIZE/RESHP_FACTOR]){
 	strmi_t tmpin;
 	act_reshp tmp = 0;
 
@@ -256,7 +259,6 @@ void read_ifm(hls::stream<strmi_t> &strm_in, act_reshp in_feature_map[INPUT1_MEM
 		tmpin = strm_in.read();
 		tmp.range(31,28) = tmpin.data;
 		in_feature_map[i] = tmp;
-		shortcut_ifm[i] = tmp;
 		//printf("%d: %d   ", (int)tmpin.data, (int)((quant_act)in_feature_map[i].range(11,8)));
 		if(tmpin.last == 1) break;
 
@@ -323,7 +325,7 @@ void write_ofm(quant_accum ofm[NCLASSES], hls::stream<strmo_t> &strm_out) {
 }
 
 
-template<params_t fm_width, params_t fm_height, params_t output_width, params_t output_height, params_t nbands, params_t kernel_size, params_t sf_i, params_t sf_o>
+template<params_t fm_width, params_t fm_height, params_t output_width, params_t output_height, params_t nbands, params_t kernel_size, params_t sfe_i, params_t sfe_o>
 void average_pool(act_reshp in_feature_map[fm_width*fm_height*nbands/RESHP_FACTOR], act_reshp out_feature_map[output_height*output_width*nbands/RESHP_FACTOR]){
 	ap_int<32> accum = 0;
 	quant_act avg = 0;
@@ -351,7 +353,11 @@ void average_pool(act_reshp in_feature_map[fm_width*fm_height*nbands/RESHP_FACTO
 //						printf("accum: %d\n", (int)accum);
 						if(k == kernel_size-1 && l == kernel_size-1){
 							avg = accum / div;
-							avg = avg >> (sf_i-sf_o);
+							avg = avg >> (sfe_i-sfe_o);
+
+							if(avg >= (1 << (ACT_WIDTH - 1)) - 1) avg = (1 << (ACT_WIDTH - 1)) - 1;
+							else if(avg <= -(1 << (ACT_WIDTH - 1))) avg = -(1 << (ACT_WIDTH - 1));
+
 							avg = avg.range(3,0);
 							out_idx = (i/2)*nbands*output_height+ (j/2)*nbands + z;
 							if(out_idx % RESHP_FACTOR == 0) out_feature_map[out_idx/RESHP_FACTOR].range(3,0) = avg;
@@ -371,13 +377,13 @@ void average_pool(act_reshp in_feature_map[fm_width*fm_height*nbands/RESHP_FACTO
 	}
 }
 
-template<params_t fm_width, params_t fm_height, params_t nbands_conv, params_t nbands_shortcut, params_t sf_conv, params_t sf_shortcut, params_t sf_o>
+template<params_t fm_width, params_t fm_height, params_t nbands_conv, params_t nbands_shortcut, params_t sfe_conv, params_t sfe_shortcut, params_t sfe_o>
 void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESHP_FACTOR], act_reshp shortcut[fm_width*fm_height*nbands_shortcut/RESHP_FACTOR], act_reshp out_feature_map[fm_width*fm_height*nbands_conv/RESHP_FACTOR]){
 	int idx_conv = 0;
 	int idx_shortcut = 0;
 	quant_accum sum = 0;
 	quant_act tmp_conv = 0, tmp_shortcut = 0;
-	params_t scale_factor = sf_conv;
+	params_t scale_factor = sfe_conv;
 	for (int i = 0; i < fm_width; i++) {
 		for (int j = 0; j < fm_height; j++) {
 			for(int z = 0; z < nbands_conv; z++){
@@ -406,17 +412,17 @@ void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESH
 						tmp_shortcut = (quant_act)shortcut[idx_shortcut].range(31,28);
 						idx_shortcut++;
 					}
-					if(sf_conv > sf_shortcut) {
-						tmp_shortcut = tmp_shortcut << (sf_conv - sf_shortcut);
-						scale_factor = sf_conv;
-					} else if( sf_shortcut > sf_conv) {
-						tmp_conv = tmp_conv << (sf_shortcut-sf_conv);
-						scale_factor = sf_shortcut;
+					if(sfe_conv > sfe_shortcut) {
+						tmp_shortcut = tmp_shortcut << (sfe_conv - sfe_shortcut);
+						scale_factor = sfe_conv;
+					} else if( sfe_shortcut > sfe_conv) {
+						tmp_conv = tmp_conv << (sfe_shortcut-sfe_conv);
+						scale_factor = sfe_shortcut;
 					}
 					sum = tmp_conv + tmp_shortcut;
 				}
 
-				sum = sum >> (scale_factor-sf_o);
+				sum = sum >> (scale_factor-sfe_o);
 				sum = sum.range(3,0);
 
 				if(z%RESHP_FACTOR == 0) out_feature_map[idx_conv].range(3,0) = sum;
@@ -435,7 +441,7 @@ void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESH
 	}
 }
 
-template<params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t sf_i, params_t sf_weights, params_t sf_o, wght_reshp *weights, params_t PE, bool relu>
+template<params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t sfe_i, params_t sfe_weights, params_t sfe_o, wght_reshp *weights, params_t PE, bool relu>
 void conv_layer_k1(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[fm_height*fm_width*nfilters/RESHP_FACTOR]) {
 	quant_accum acc = 0;
 	int kernel_idx = 0;
@@ -446,13 +452,13 @@ void conv_layer_k1(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACT
 	quant_act tmp_out = 0;
 	act_reshp tmp_in = 0;
 	wght_reshp tmp_weight = 0;
-	params_t in_fract_bits = -(sf_i);
-	params_t w_fract_bits = -(sf_weights);
-	params_t out_fract_bits = -(sf_o);
+	params_t in_fract_bits = sfe_i;
+	params_t w_fract_bits = sfe_weights;
+	params_t out_fract_bits = sfe_o;
 	params_t shift = ((in_fract_bits + w_fract_bits) - out_fract_bits);
 
 //	if(nbands == 200 && nfilters == 32){
-//		printf("scale_w: %d \n scale_in: %d \n scale_out %d\n in_fract_bits: %d\n w_fract_bits: %d\n out_fract_bits: %d\n", sf_weights, sf_i, sf_o, in_fract_bits, w_fract_bits,out_fract_bits);
+//		printf("scale_w: %d \n scale_in: %d \n scale_out %d\n in_fract_bits: %d\n w_fract_bits: %d\n out_fract_bits: %d\n", sfe_weights, sfe_i, sfe_o, in_fract_bits, w_fract_bits,out_fract_bits);
 //		printf("shift: %d\n", shift);
 //	}
 
@@ -516,7 +522,7 @@ void conv_layer_k1(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACT
 	}
 	return;
 }
-template<params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t sf_i, params_t sf_weights, params_t sf_o, wght_reshp *weights, params_t PE, bool relu>
+template<params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t sfe_i, params_t sfe_weights, params_t sfe_o, wght_reshp *weights, params_t PE, bool relu>
 void conv_layer_k1_unsigned(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[fm_height*fm_width*nfilters/RESHP_FACTOR]) {
 	quant_accum acc = 0;
 	int kernel_idx = 0;
@@ -527,13 +533,13 @@ void conv_layer_k1_unsigned(act_reshp in_feature_map[fm_height*fm_width*nbands/R
 	quant_act tmp_out = 0;
 	act_reshp tmp_in = 0;
 	wght_reshp tmp_weight = 0;
-	params_t in_fract_bits = -(sf_i);
-	params_t w_fract_bits = -(sf_weights);
-	params_t out_fract_bits = -(sf_o);
+	params_t in_fract_bits = sfe_i;
+	params_t w_fract_bits = sfe_weights;
+	params_t out_fract_bits = sfe_o;
 	params_t shift = ((in_fract_bits + w_fract_bits) - out_fract_bits);
 
 //	if(nbands == 200 && nfilters == 32){
-//		printf("scale_w: %d \n scale_in: %d \n scale_out %d\n in_fract_bits: %d\n w_fract_bits: %d\n out_fract_bits: %d\n", sf_weights, sf_i, sf_o, in_fract_bits, w_fract_bits,out_fract_bits);
+//		printf("scale_w: %d \n scale_in: %d \n scale_out %d\n in_fract_bits: %d\n w_fract_bits: %d\n out_fract_bits: %d\n", sfe_weights, sfe_i, sfe_o, in_fract_bits, w_fract_bits,out_fract_bits);
 //		printf("shift: %d\n", shift);
 //	}
 
@@ -599,7 +605,7 @@ void conv_layer_k1_unsigned(act_reshp in_feature_map[fm_height*fm_width*nbands/R
 }
 
 //Convolutional layer to be aplied before a convolution with kernel and stride 2, that will clear the last row and column from the outputs
-template<params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t sf_i, params_t sf_weights, params_t sf_o, wght_reshp *weights, params_t PE, bool relu>
+template<params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t sfe_i, params_t sfe_weights, params_t sfe_o, wght_reshp *weights, params_t PE, bool relu>
 void conv_layer_k1_b4k2_x9(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[2][(fm_height-1)*(fm_width-1)*nfilters/2/RESHP_FACTOR]) {
 	quant_accum acc = 0;
 	int kernel_idx = 0;
@@ -611,9 +617,9 @@ void conv_layer_k1_b4k2_x9(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 	act_reshp tmp_in = 0;
 	wght_reshp tmp_weight = 0;
 	quant_act tmp_out = 0;
-	params_t in_fract_bits = -(sf_i);
-	params_t w_fract_bits = -(sf_weights);
-	params_t out_fract_bits = -(sf_o);
+	params_t in_fract_bits = sfe_i;
+	params_t w_fract_bits = sfe_weights;
+	params_t out_fract_bits = sfe_o;
 	params_t shift = ((in_fract_bits + w_fract_bits) - out_fract_bits);
 
 	loop_inputx:
@@ -696,7 +702,7 @@ void conv_layer_k1_b4k2_x9(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 }
 
 //Convolutional layer to be aplied before a convolution with kernel and stride 2, that will clear the last row and column from the outputs
-template<params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t sf_i, params_t sf_weights, params_t sf_o, wght_reshp *weights, params_t PE, bool relu>
+template<params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t sfe_i, params_t sfe_weights, params_t sfe_o, wght_reshp *weights, params_t PE, bool relu>
 void conv_layer_k1_b4k2_x4(act_reshp in_feature_map[fm_height*fm_width*nbands/RESHP_FACTOR], act_reshp out_feature_map[2][(fm_height)*(fm_width)*nfilters/2/RESHP_FACTOR]) {
 	quant_accum acc = 0;
 	int kernel_idx = 0;
@@ -708,9 +714,9 @@ void conv_layer_k1_b4k2_x4(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 	act_reshp tmp_in = 0;
 	wght_reshp tmp_weight = 0;
 	quant_act tmp_out = 0;
-	params_t in_fract_bits = -(sf_i);
-	params_t w_fract_bits = -(sf_weights);
-	params_t out_fract_bits = -(sf_o);
+	params_t in_fract_bits = sfe_i;
+	params_t w_fract_bits = sfe_weights;
+	params_t out_fract_bits = sfe_o;
 	params_t shift = ((in_fract_bits + w_fract_bits) - out_fract_bits);
 
 	loop_inputx:
@@ -784,7 +790,7 @@ void conv_layer_k1_b4k2_x4(act_reshp in_feature_map[fm_height*fm_width*nbands/RE
 	return;
 }
 //Convolution with stride 2
-template<params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim, params_t sf_i, params_t sf_weights, params_t sf_o,wght_reshp *weights, params_t PE, bool relu>
+template<params_t fm_width, params_t fm_height, params_t nbands, params_t nfilters, params_t output_dim, params_t sfe_i, params_t sfe_weights, params_t sfe_o,wght_reshp *weights, params_t PE, bool relu>
 void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP_FACTOR], act_reshp out_feature_map[(fm_height/2)*(fm_width/2)*nfilters/RESHP_FACTOR]) {
 	quant_accum acc_even = 0, acc_odd = 0;
 	ap_uint<2> kernel_size = 2;
@@ -796,9 +802,9 @@ void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP
 	quant_act tmp_out = 0;
 	act_reshp tmp_in0 = 0, tmp_in1 = 0;
 	wght_reshp tmp_weight = 0;
-	params_t in_fract_bits = -(sf_i);
-	params_t w_fract_bits = -(sf_weights);
-	params_t out_fract_bits = -(sf_o);
+	params_t in_fract_bits = sfe_i;
+	params_t w_fract_bits = sfe_weights;
+	params_t out_fract_bits = sfe_o;
 	params_t shift = ((in_fract_bits + w_fract_bits) - out_fract_bits);
 
 	loop_inputx:
@@ -874,12 +880,12 @@ void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP
 	return;
 }
 
-template<params_t input_size, params_t nfilters, wght_reshp *weights, quant_bias *bias, params_t sf_i, params_t sf_weights, params_t sf_bias, params_t sf_o>
+template<params_t input_size, params_t nfilters, wght_reshp *weights, quant_bias *bias, params_t sfe_i, params_t sfe_weights, params_t sfe_bias, params_t sfe_o>
 void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], quant_accum output_fm[nfilters]) {
 	quant_accum acc = 0;
 	act_reshp tmp_in = 0, tmp_acc = 0;
 	wght_reshp tmp_weight = 0;
-	int kernel_idx = 0, output_idx = 0, sf = sf_i;
+	int kernel_idx = 0, output_idx = 0, sfe = sfe_i;
 
 	for(int i = 0; i < nfilters; i++) {
 		for(int j = 0; j < input_size/RESHP_FACTOR; j++) {
