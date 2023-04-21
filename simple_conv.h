@@ -52,6 +52,9 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out);
 template<params_t fm_width, params_t fm_height, params_t output_width, params_t output_height, params_t nbands, params_t kernel_size, params_t sfe_i, params_t sfe_o>
 void average_pool(act_reshp in_feature_map[fm_width*fm_height*nbands/RESHP_FACTOR], act_reshp out_feature_map[output_height*output_width*nbands/RESHP_FACTOR]);
 
+template<params_t fm_width, params_t fm_height, params_t output_width, params_t output_height, params_t nbands, params_t kernel_size, params_t sfe_i, params_t sfe_o>
+void average_pool_unsigned(act_reshp in_feature_map[fm_width*fm_height*nbands/RESHP_FACTOR], act_reshp out_feature_map[output_height*output_width*nbands/RESHP_FACTOR]);
+
 template<params_t fm_width, params_t fm_height, params_t nbands_conv, params_t nbands_shortcut, params_t sfe_conv, params_t sfe_shortcut, params_t sfe_o>
 void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESHP_FACTOR], act_reshp shortcut[fm_width*fm_height*nbands_shortcut/RESHP_FACTOR], act_reshp out_feature_map[fm_width*fm_height*nbands_conv/RESHP_FACTOR]);
 
@@ -85,5 +88,5 @@ void write_ofm(quant_accum *ofm, hls::stream<strmo_t> &strm_out);
 template<params_t width, params_t height, params_t nbands>
 void gen_shortcut(act_reshp fm[width*height*nbands/RESHP_FACTOR], act_reshp fm1[width*height*nbands/RESHP_FACTOR], act_reshp fm2[width*height*nbands/RESHP_FACTOR]);
 
-template<params_t width, params_t height, params_t nbands>
+template<params_t width, params_t height, params_t nbands, params_t sfe_i,params_t sfe_o>
 void relu(act_reshp in[width*height*nbands/RESHP_FACTOR], act_reshp out[width*height*nbands/RESHP_FACTOR]);

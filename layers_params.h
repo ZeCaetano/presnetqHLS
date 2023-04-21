@@ -472,6 +472,9 @@
 #define SFEW28 3
 #define SFEBLK9 -1
 
+//----------Final Relu------//
+#define SFE_RELU_I SFEBLK9
+#define SFE_RELU_O 0
 
 //----------Final Downsampling------//
 #define XDS3 1
