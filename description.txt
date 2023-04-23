@@ -1,10 +1,10 @@
 Layer Name = imageQuant
-Scale = 0.0625
-Shift 4.0 positions to the right
+Scale = 1.0
+Shift 0.0 positions to the right
 
 Layer Name = conv1.weight
-Scale = 0.25
-Shift 2.0 positions to the right
+Scale = 0.125
+Shift 3.0 positions to the right
 Address is 0x0
 Layer Name = quant1
 Scale = 1.0
@@ -45,18 +45,19 @@ Shift 1.0 positions to the right
 Layer Name = layer1[0].dequant
 Scale = 1.0
 Shift 0.0 positions to the right
+---------------------------------
 
 Layer Name = layer1[1].conv1.weight
 Scale = 0.125
 Shift 3.0 positions to the right
 Address is 0x7a80
 Layer Name = layer1[1].conv2.weight
-Scale = 0.25
-Shift 2.0 positions to the right
+Scale = 0.5
+Shift 1.0 positions to the right
 Address is 0xb680
 Layer Name = layer1[1].conv3.weight
-Scale = 0.25
-Shift 2.0 positions to the right
+Scale = 0.5
+Shift 1.0 positions to the right
 Address is 0xc880
 Layer Name = layer1[1].relu1
 Scale = 1.0
@@ -81,10 +82,12 @@ Shift 1.0 positions to the right
 Layer Name = layer1[1].dequant
 Scale = 1.0
 Shift 0.0 positions to the right
+--------------------------------
+
 
 Layer Name = layer1[2].conv1.weight
-Scale = 0.125
-Shift 3.0 positions to the right
+Scale = 0.0625
+Shift 4.0 positions to the right
 Address is 0x11080
 Layer Name = layer1[2].conv2.weight
 Scale = 0.25
@@ -103,8 +106,8 @@ Scale = 1.0
 Shift 0.0 positions to the right
 
 Layer Name = layer1[2].quant1
-Scale = 2.0
-Shift 1.0 positions to the right
+Scale = 1.0
+Shift 0.0 positions to the right
 
 Layer Name = layer1[2].quant2
 Scale = 0.125
@@ -115,8 +118,10 @@ Scale = 2.0
 Shift 1.0 positions to the right
 
 Layer Name = layer1[2].dequant
-Scale = 2.0
-Shift 1.0 positions to the right
+Scale = 1.0
+Shift 0.0 positions to the right
+--------------------------------
+
 
 Layer Name = layer2[0].conv1.weight
 Scale = 0.0625
@@ -153,6 +158,8 @@ Shift 1.0 positions to the right
 Layer Name = layer2[0].dequant
 Scale = 2.0
 Shift 1.0 positions to the right
+--------------------------------------
+
 
 Layer Name = layer2[1].conv1.weight
 Scale = 0.0625
@@ -175,8 +182,8 @@ Scale = 1.0
 Shift 0.0 positions to the right
 
 Layer Name = layer2[1].quant1
-Scale = 2.0
-Shift 1.0 positions to the right
+Scale = 1.0
+Shift 0.0 positions to the right
 
 Layer Name = layer2[1].quant2
 Scale = 0.125
@@ -189,18 +196,20 @@ Shift 1.0 positions to the right
 Layer Name = layer2[1].dequant
 Scale = 2.0
 Shift 1.0 positions to the right
+--------------------------------------
+
 
 Layer Name = layer2[2].conv1.weight
-Scale = 0.125
-Shift 3.0 positions to the right
+Scale = 0.0625
+Shift 4.0 positions to the right
 Address is 0x5ce00
 Layer Name = layer2[2].conv2.weight
 Scale = 0.25
 Shift 2.0 positions to the right
 Address is 0x6d600
 Layer Name = layer2[2].conv3.weight
-Scale = 0.25
-Shift 2.0 positions to the right
+Scale = 0.125
+Shift 3.0 positions to the right
 Address is 0x71e00
 Layer Name = layer2[2].relu1
 Scale = 2.0
@@ -211,8 +220,8 @@ Scale = 1.0
 Shift 0.0 positions to the right
 
 Layer Name = layer2[2].quant1
-Scale = 2.0
-Shift 1.0 positions to the right
+Scale = 1.0
+Shift 0.0 positions to the right
 
 Layer Name = layer2[2].quant2
 Scale = 0.125
@@ -225,6 +234,8 @@ Shift 1.0 positions to the right
 Layer Name = layer2[2].dequant
 Scale = 2.0
 Shift 1.0 positions to the right
+-------------------------------------
+
 
 Layer Name = layer3[0].conv1.weight
 Scale = 0.0625
@@ -235,8 +246,8 @@ Scale = 0.125
 Shift 3.0 positions to the right
 Address is 0x97600
 Layer Name = layer3[0].conv3.weight
-Scale = 0.125
-Shift 3.0 positions to the right
+Scale = 0.25
+Shift 2.0 positions to the right
 Address is 0xaae00
 Layer Name = layer3[0].relu1
 Scale = 2.0
@@ -261,6 +272,8 @@ Shift 1.0 positions to the right
 Layer Name = layer3[0].dequant
 Scale = 2.0
 Shift 1.0 positions to the right
+-----------------------------------
+
 
 Layer Name = layer3[1].conv1.weight
 Scale = 0.0625
@@ -279,8 +292,8 @@ Scale = 2.0
 Shift 1.0 positions to the right
 
 Layer Name = layer3[1].relu2
-Scale = 1.0
-Shift 0.0 positions to the right
+Scale = 2.0
+Shift 1.0 positions to the right
 
 Layer Name = layer3[1].quant1
 Scale = 1.0
@@ -295,8 +308,10 @@ Scale = 2.0
 Shift 1.0 positions to the right
 
 Layer Name = layer3[1].dequant
-Scale = 2.0
-Shift 1.0 positions to the right
+Scale = 1.0
+Shift 0.0 positions to the right
+-----------------------------------
+
 
 Layer Name = layer3[2].conv1.weight
 Scale = 0.0625
@@ -331,8 +346,8 @@ Scale = 2.0
 Shift 1.0 positions to the right
 
 Layer Name = layer3[2].dequant
-Scale = 2.0
-Shift 1.0 positions to the right
+Scale = 1.0
+Shift 0.0 positions to the right
 
 Layer Name = relu_final
 Scale = 1.0

@@ -31,8 +31,8 @@ typedef ap_int<7> quant_mult;
 //typedef ap_int<16> quant_accum;
 typedef ap_int<21> quant_accum;
 
-typedef ap_int<32> quant_reshp;
-typedef ap_int<16> wght_reshp;
+typedef ap_uint<32> quant_reshp;
+typedef ap_uint<16> wght_reshp;
 typedef ap_int<32> act_reshp;
 #define RESHP_FACTOR 8
 
