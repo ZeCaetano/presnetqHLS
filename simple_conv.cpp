@@ -69,6 +69,29 @@ void print_fm_single_val(params_t x, params_t y, params_t z, act_reshp *fm){
 	printf("-------------------------------------------------\n");
 }
 
+void print_fm_single_val_u(params_t x, params_t y, params_t z, act_reshp *fm){
+	int in_idx = 0;
+	quant_uact pixel = 0;
+
+	for(int k = 0; k < z; k++){
+		for(int i = 0; i < x; i++) {
+			for(int j = 0; j < y; j++) {
+				in_idx = (i*z*y + j*z + k);
+				if(in_idx % RESHP_FACTOR == 0) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(3,0);
+				else if(in_idx % RESHP_FACTOR == 1) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(7,4);
+				else if(in_idx % RESHP_FACTOR == 2) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(11,8);
+				else if(in_idx % RESHP_FACTOR == 3) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(15,12);
+				else if(in_idx % RESHP_FACTOR == 4) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(19,16);
+				else if(in_idx % RESHP_FACTOR == 5) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(23,20);
+				else if(in_idx % RESHP_FACTOR == 6) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(27,24);
+				else if(in_idx % RESHP_FACTOR == 7) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(31,28);
+				printf("%d\n", (int)pixel);
+			}
+		}
+	}
+	printf("-------------------------------------------------\n");
+}
+
 void print_fm(params_t x, params_t y, params_t z, act_reshp *fm){
 	int in_idx = 0;
 	quant_act pixel = 0;
@@ -238,7 +261,6 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 	add_shortcut<X4,Y4,NF4,Z2,SFEO4,SFEI2,SFEBLK1>(l4_fm, shortcut_1_fm, sum_1);
 	gen_shortcut<X4,Y4,NF4>(sum_1, in_blk2_fm, shortcut_2_fm);
 
-	print_fm_single_val(X4, Y4, NF4, sum_1);
 
 	conv_layer_k1<X5,Y5,Z5,NF5,SFEI5,SFEW5,SFEO5, weights_l5,16,true> (in_blk2_fm, l5_fm);
 	conv_layer_k1_unsigned<X6,Y6,Z6,NF6,SFEI6,SFEW6,SFEO6, weights_l6,8,true> (l5_fm, l6_fm);
@@ -255,15 +277,9 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 	add_shortcut<X10,Y10,NF10,Z8,SFEO10,SFEI8,SFEBLK3>(l10_fm, shortcut_3_fm, sum_3);
 	gen_shortcut<X10,Y10,NF10>(sum_3, in_blk4_fm, shortcut_4_fm);
 
-//	printf("shortcut:\n");
-//	print_fm(X7,Y7,NF7,in_blk3_fm);
-//	printf("conv:\n");
-//	print_fm(X10,Y10,NF10,l10_fm);
-//	print_fm_single_val(X10,Y10,NF10,sum_3);
-//	printf("sum:\n");
-//	print_fm(X10,Y10,NF10,sum_3);
+
+
 	average_pool<X10,Y10,XDS1,YDS1,NF10,KDS1,SFEBLK3,SFEDS1>(shortcut_4_fm, ds_1_fm);
-//	print_fm_single_val(XDS1,YDS1,NF10,ds_1_fm);
 
 	conv_layer_k1_b4k2_x9<X11,Y11,Z11,NF11,SFEI11,SFEW11,SFEO11, weights_l11, 24, true> (in_blk4_fm, l11_fm);
 	conv_layer_k2<X12-1,Y12-1,Z12,NF12,X13,SFEI12,SFEW12,SFEO12, weights_l12, 16, true> (l11_fm, l12_fm);
@@ -272,13 +288,6 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 	add_shortcut<X13,Y13,NF13,Z11,SFEO13,SFEDS1,SFEBLK4>(l13_fm, ds_1_fm, sum_4);
 	gen_shortcut<X13,Y13,NF13>(sum_4, in_blk5_fm, shortcut_5_fm);
 
-//	printf("shortcut:\n");
-//	print_fm(X13, Y13, Z11, ds_1_fm);
-//	printf("conv:\n");
-//	print_fm(X13, Y13, NF13, l13_fm);
-//	printf("sum:\n");
-//	print_fm(X13, Y13, NF13, sum_4);
-//	print_fm_single_val(X13, Y13, NF13, sum_4);
 
 	conv_layer_k1<X14,Y14,Z14,NF14,SFEI14,SFEW14,SFEO14, weights_l14,8,true> (in_blk5_fm, l14_fm);
 	conv_layer_k1_unsigned<X15,Y15,Z15,NF15,SFEI15,SFEW15,SFEO15, weights_l15,8,true> (l14_fm, l15_fm);
@@ -301,8 +310,10 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 	conv_layer_k1_b4k2_x4<X20,Y20,Z20,NF20,SFEI20,SFEW20,SFEO20, weights_l20, 16, true> (in_blk7_fm, l20_fm);
 	conv_layer_k2<X21,Y21,Z21,NF21,X22,SFEI21,SFEW21,SFEO21, weights_l21, 8, true> (l20_fm, l21_fm);
 	conv_layer_k1_unsigned<X22,Y22,Z22,NF22,SFEI22,SFEW22,SFEO22, weights_l22,8,false> (l21_fm, l22_fm);
-	add_shortcut<X22,Y22,NF2,Z20,SFEO22,SFEI20,SFEBLK7>(l22_fm, ds_2_fm, sum_7);
+
+	add_shortcut<X22,Y22,NF22,Z20,SFEO22,SFEI20,SFEBLK7>(l22_fm, ds_2_fm, sum_7);
 	gen_shortcut<X22,Y22,NF22>(sum_7, in_blk8_fm, shortcut_8_fm);
+
 
 	conv_layer_k1<X23,Y23,Z23,NF23,SFEI23,SFEW23,SFEO23, weights_l23,8,true> (in_blk8_fm, l23_fm);
 	conv_layer_k1_unsigned<X24,Y24,Z24,NF24,SFEI24,SFEW24,SFEO24, weights_l24,8,true> (l23_fm, l24_fm);
@@ -317,13 +328,14 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 
 	add_shortcut<X28,Y28,NF28,Z26,SFEO28,SFEI26,SFEBLK9>(l28_fm, shortcut_9_fm, sum_9);
 
+
 	relu<X28,Y28,NF28,SFE_RELU_I, SFE_RELU_O>(sum_9, final_relu);
+
 
 	average_pool_unsigned<X28,Y28,XDS3,YDS3, NF28,KDS3, SFEBLK9, SFEDS3>(final_relu, final_ds);
 
+
 	fully_connected<NF28,NCLASSES, weights_fc, bias_fc, SFEDS3,SFEW_FC,SFEB_FC,SFEO_FC>(final_ds, output_fm);
-
-
 
 
 	write_ofm(output_fm, strm_out);
@@ -490,7 +502,7 @@ void average_pool(act_reshp in_feature_map[fm_width*fm_height*nbands/RESHP_FACTO
 template<params_t fm_width, params_t fm_height, params_t output_width, params_t output_height, params_t nbands, params_t kernel_size, params_t sfe_i, params_t sfe_o>
 void average_pool_unsigned(act_reshp in_feature_map[fm_width*fm_height*nbands/RESHP_FACTOR], act_reshp out_feature_map[output_height*output_width*nbands/RESHP_FACTOR]){
 	ap_int<32> accum = 0;
-	quant_act avg = 0;
+	quant_uact avg = 0;
 	ap_uint<3> div = kernel_size*kernel_size;
 	int in_idx = 0, out_idx = 0;
 	quant_uact pixel = 0;
@@ -517,8 +529,7 @@ void average_pool_unsigned(act_reshp in_feature_map[fm_width*fm_height*nbands/RE
 							avg = accum >> 2;
 //							avg = avg >> (sfe_i-sfe_o);
 
-							if(avg >= (1 << (ACT_WIDTH - 1)) - 1) avg = (1 << (ACT_WIDTH - 1)) - 1;
-							else if(avg <= -(1 << (ACT_WIDTH - 1))) avg = -(1 << (ACT_WIDTH - 1));
+							if(avg >= (1 << ACT_WIDTH) - 1) avg = (1 << ACT_WIDTH) - 1;
 
 							avg = avg.range(3,0);
 							out_idx = (i/2)*nbands*output_height+ (j/2)*nbands + z;
@@ -1106,7 +1117,16 @@ void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], quant_accum ou
 	quant_accum acc = 0;
 	act_reshp tmp_in = 0, tmp_acc = 0;
 	wght_reshp tmp_weight = 0;
+	quant_bias tmp_bias = 0;
 	int kernel_idx = 0, output_idx = 0, sfe = sfe_i;
+	params_t scale_factor = 0;
+
+	if((sfe_i + sfe_weights) >= sfe_bias) {
+			scale_factor = (sfe_i + sfe_weights);
+		} else {
+			scale_factor = sfe_bias;
+		}
+
 
 	for(int i = 0; i < nfilters; i++) {
 		for(int j = 0; j < input_size/RESHP_FACTOR; j++) {
@@ -1123,7 +1143,14 @@ void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], quant_accum ou
 			kernel_idx++;
 
 			if(j == input_size/RESHP_FACTOR-1) {
-				output_fm[i] = acc + bias[i];
+				tmp_bias = bias[i];
+				if(scale_factor == (sfe_i + sfe_weights)) {
+					tmp_bias << (sfe_i + sfe_weights) - sfe_bias;
+				} else {
+					acc = acc << (sfe_bias-(sfe_i + sfe_weights));
+				}
+				acc = acc + tmp_bias;
+				output_fm[i] = (acc >> (scale_factor-sfe_o)) / 8;
 				acc = 0;
 			}
 		}
