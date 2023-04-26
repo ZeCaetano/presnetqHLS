@@ -94,7 +94,7 @@
 #define INPUT6_MEM_SIZE (X6*Y6*Z6)
 #define OUT6_MEM_SIZE (X7*Y7*NF6)
 #define SFEI6 SFEO5
-#define SFEO6 1
+#define SFEO6 0
 #define SFEW6 1
 //-------LAYER 7--------//
 //Input: 9,9,48
@@ -110,7 +110,7 @@
 #define OUT7_MEM_SIZE (X8*Y8*NF7)
 #define SFEI7 SFEO6
 #define SFEO7 0
-#define SFEW7 1
+#define SFEW7 2
 #define SFEBLK2 -1
 
 
@@ -129,7 +129,7 @@
 #define OUT8_MEM_SIZE (X9*Y9*NF8)
 #define SFEI8 SFEBLK2
 #define SFEO8 0
-#define SFEW8 4
+#define SFEW8 3
 //-------LAYER 9--------//
 //Input: 9,9,64
 //Number of filters: 72
@@ -143,7 +143,7 @@
 #define INPUT9_MEM_SIZE (X9*Y9*Z9)
 #define OUT9_MEM_SIZE (X10*Y10*NF9)
 #define SFEI9 SFEO8
-#define SFEO9 0
+#define SFEO9 1
 #define SFEW9 2
 //-------LAYER 10--------//
 //Input: 9,9,72
@@ -158,7 +158,7 @@
 #define INPUT10_MEM_SIZE (X10*Y10*Z10)
 #define OUT10_MEM_SIZE (X11*Y11*NF10)
 #define SFEI10 SFEO9
-#define SFEO10 0
+#define SFEO10 -1
 #define SFEW10 2
 #define SFEBLK3 -1
 
@@ -177,7 +177,7 @@
 #define INPUT11_MEM_SIZE (X11*Y11*Z11)
 #define OUT11_MEM_SIZE (X12*Y12*NF11)
 #define SFEI11 SFEBLK3
-#define SFEO11 0
+#define SFEO11 -1
 #define SFEW11 4
 //-------LAYER 12--------//
 //Input: 9,9,64
@@ -264,7 +264,7 @@
 #define INPUT16_MEM_SIZE (X16*Y16*Z16)
 #define OUT16_MEM_SIZE (X17*Y17*NF16)
 #define SFEI16 SFEO15
-#define SFEO16 0
+#define SFEO16 -1
 #define SFEW16 2
 #define SFEBLK5 -1
 
@@ -313,8 +313,8 @@
 #define INPUT19_MEM_SIZE (X19*Y19*Z19)
 #define OUT19_MEM_SIZE (X20*Y20*NF19)
 #define SFEI19 SFEO18
-#define SFEO19 0
-#define SFEW19 3
+#define SFEO19 -1
+#define SFEW19 2
 #define SFEBLK6 -1
 
 
@@ -347,7 +347,7 @@
 #define INPUT21_MEM_SIZE (X21*Y21*Z21)
 #define OUT21_MEM_SIZE (X22*Y22*NF21)
 #define SFEI21 SFEO20
-#define SFEO21 -1
+#define SFEO21 0
 #define SFEW21 3
 //-------LAYER 22--------//
 //Input: 2,2,104
@@ -404,7 +404,7 @@
 #define INPUT24_MEM_SIZE (X24*Y24*Z24)
 #define OUT24_MEM_SIZE (X25*Y25*NF24)
 #define SFEI24 SFEO23
-#define SFEO24 -1
+#define SFEO24 0
 #define SFEW24 2
 //-------LAYER 25--------//
 //Input: 2,2,120
@@ -420,7 +420,7 @@
 #define OUT25_MEM_SIZE (X26*Y26*NF25)
 #define SFEI25 SFEO24
 #define SFEO25 0
-#define SFEW25 3
+#define SFEW25 2
 #define SFEBLK8 -1
 
 
@@ -454,7 +454,7 @@
 #define OUT27_MEM_SIZE (X28*Y28*NF27)
 #define SFEI27 SFEO26
 #define SFEO27 0
-#define SFEW27 2
+#define SFEW27 3
 //-------LAYER 28--------//
 //Input: 2,2,128
 //Number of filters: 528
@@ -485,6 +485,6 @@
 
 //-------Fully Connected---------//
 #define SFEW_FC 3
-#define SFEB_FC 1
-#define SFEO_FC (SFEW_FC+SFEB_FC)
+#define SFEB_FC 3
+#define SFEO_FC 3
 

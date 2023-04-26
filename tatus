@@ -1,0 +1,590 @@
+[33mcommit 5eaab7ad2a7059209c1abc8a15dc32af9a69df93[m[33m ([m[1;36mHEAD -> [m[1;32mfull_network[m[33m, [m[1;31morigin/full_network[m[33m)[m
+Author: jmc <jose.caetano@tecnico.ulisboa.pt>
+Date:   Mon Apr 17 22:45:53 2023 +0100
+
+    Add unsigned activations version of convolution
+
+[33mcommit 12496847ee694396c3ba1f505432b05974a49561[m
+Author: jmc <jose.caetano@tecnico.ulisboa.pt>
+Date:   Mon Apr 17 22:27:38 2023 +0100
+
+    Fix saturation check
+
+[33mcommit fbf1b90477c109e3ea2e30c17bf361d65ebdec1b[m
+Author: jmc <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Apr 12 21:31:56 2023 +0100
+
+    Add pipo pragmas
+
+[33mcommit 325a08e433325716b961696697d572e31bd5effb[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Apr 6 17:28:34 2023 +0100
+
+    Fix scale factor rounding
+
+[33mcommit b8549770f7ba57ee883d49da4bffef33c8399ade[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Apr 5 21:33:29 2023 +0100
+
+    Implement saturation
+
+[33mcommit ae9fcea8da046f7f4807a230ae1b4438d896bc65[m
+Merge: bf0e60c a8b20ff
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Tue Apr 4 21:10:58 2023 +0100
+
+    Merge remote-tracking branch 'origin/full_network' into full_network
+
+[33mcommit bf0e60c2c58a4935c852cf4da1fa23745194dab1[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Tue Apr 4 21:10:06 2023 +0100
+
+    Put ReLU verification before rounding
+
+[33mcommit a8b20fff25b6815c3f86b97e4e4b55abba95dcd0[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Sat Apr 1 18:49:02 2023 +0100
+
+    Fix synthesis errors
+
+[33mcommit 3cf0670bca177ccfa377c49af96f9b720c42830b[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Fri Mar 31 20:02:38 2023 +0100
+
+    Change fully connected output to be more bits; update weights file
+
+[33mcommit 76722294d4cacd6866230991b2c13ac5141162be[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Fri Mar 31 17:42:45 2023 +0100
+
+    Add all layers and all parameters
+
+[33mcommit 30996ca1591e332669ce187281ae0fe1b2662511[m[33m ([m[1;31morigin/new_quantization8x2[m[33m)[m
+Merge: 13e3a55 033caee
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Mar 29 18:23:34 2023 +0100
+
+    Merge full network
+
+[33mcommit 13e3a556a4840bf51c9f09601aca01f9bb61bd5e[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Mar 29 17:10:32 2023 +0100
+
+    Implement scale factor rounding in average pooling
+
+[33mcommit 8d79404422be59ba69f00b83a82aa938205c88f5[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Mar 29 16:25:47 2023 +0100
+
+    Implement scale factor rounding in shortcut sum
+
+[33mcommit 3bbbd33fdfac638a849b4e0611f61e537f6ec52d[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Tue Mar 28 18:13:40 2023 +0100
+
+    Implement scale factor rounding
+
+[33mcommit cbc5ce51520dc17be9ba51d790119774e5dbd42e[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Mar 23 14:06:25 2023 +0000
+
+    Change activations quantization to 4 bits
+
+[33mcommit 71ff4ef80c2a47d4c6a86a4bf38d83dcfc01618b[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Mar 15 11:25:55 2023 +0000
+
+    Implement fully connected layer
+
+[33mcommit 18b3f83095fdd7c084326c999dc776638877084c[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Tue Mar 14 17:51:41 2023 +0000
+
+    Modify avg pool and add shortcut to receive and produce reshaped arrays
+
+[33mcommit e7752e8d6713a4ed42f114d2fe587c968c1a1295[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Tue Mar 14 17:18:36 2023 +0000
+
+    Write fully connected layer code
+
+[33mcommit 1478c1761894e116e5a3d919f0071a7e1c356d04[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Sat Mar 11 19:04:30 2023 +0000
+
+    Add function for 4x4 input FMs before a k2 conv
+
+[33mcommit 8f42452da67f38cb76986dbc5c8fae2f10d09a1e[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Sat Mar 11 18:49:22 2023 +0000
+
+    Change test input image and fix new quantization bugs
+
+[33mcommit 214a610936c95457bf3e39d1ff82c0cd34a5a87b[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Fri Mar 10 21:36:32 2023 +0000
+
+    Remove 0 from weights values
+
+[33mcommit 8c1088cc18da71446a826235a71ad19addd268cf[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Mar 9 18:01:29 2023 +0000
+
+    Test functions for different sized input FMs
+
+[33mcommit 033caeed6876ddb1146860a89669463ea120414a[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Mar 9 16:49:10 2023 +0000
+
+    Add layers parameters
+
+[33mcommit 21063d4f8f2774e6e0fd91d95bd99347c2e1d678[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Mar 9 16:48:38 2023 +0000
+
+    Add relu to other functions
+
+[33mcommit b01bb2c4e18e4aba34a8accaf353350569880737[m
+Merge: f29936e 17a04f7
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Mar 9 12:36:46 2023 +0000
+
+    Merge remote-tracking branch 'origin/new_quantization8x2' into new_quantization8x2
+
+[33mcommit f29936e4fd82337e3c01465d6d4f0179a33b6dc5[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Mar 9 12:35:40 2023 +0000
+
+    Change quantization to 8x2; add pragma to change bram utilization
+
+[33mcommit 17a04f77a5532a5355bb7f7a7afdf8a0b66d76fa[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Mar 9 12:35:40 2023 +0000
+
+    Add pragma to change bram utilization
+
+[33mcommit 6861f057c2c26bebf003b5f3936dffe7b1f49008[m[33m ([m[1;31morigin/manual_reshape[m[33m)[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Tue Mar 7 16:28:48 2023 +0000
+
+    Write to tmp before adding to output
+
+[33mcommit 911e9dc10a35d850d681f5b26151b01ed26d8f53[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Feb 23 14:53:03 2023 +0000
+
+    Implement relu
+
+[33mcommit 7a58622cf9f9506d010fa492754bc5aff3ce43a4[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Feb 22 18:10:48 2023 +0000
+
+    Chage function arguments' size
+
+[33mcommit 35c881af4d5721d3e3f6a2ae5063b8ae8ba93931[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Feb 22 17:35:42 2023 +0000
+
+    Implement reshape of factor 8
+
+[33mcommit 752f03a46a400aeb8ffb6a787e6404a2bd81de64[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Feb 22 17:15:22 2023 +0000
+
+    Change some layers parameters
+
+[33mcommit 0076dec02f5c0d586e2e233bd6546769b4b590e4[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Feb 22 14:45:01 2023 +0000
+
+    Remove tmp array from all functions
+
+[33mcommit 0cb08bec64599fef5dd6391d27bcf3b83b954ed7[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Feb 22 00:53:46 2023 +0000
+
+    Remove tmp array; add 1 PE specific function
+
+[33mcommit 648e5bf82664020707f3cf155d332e75e6cee1dc[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Mon Feb 13 19:59:01 2023 +0000
+
+    Implement tmp reg that concats accums before adding to memory
+
+[33mcommit 90f6eb0d0a0fab8c825f5566afb8a6cb92b24821[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Mon Feb 13 13:45:24 2023 +0000
+
+    Add header weights generator file
+
+[33mcommit f63ac2b08c81c53196e09839fe05520113d129d2[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Feb 9 18:52:40 2023 +0000
+
+    Change npatches and PEs for most optimized
+
+[33mcommit 750d7ff53b9b88c0cf458906ef4e211ed4052be6[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Feb 9 18:07:06 2023 +0000
+
+    Add more bands layer for reshaped weights
+
+[33mcommit 2560590bac3cc4a42674763321da53b51e2b78a9[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Feb 9 17:13:46 2023 +0000
+
+    Remove pragma reshape
+
+[33mcommit 70cdd8e2fac2d03fb3e20173da864b2be6e872a4[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Feb 9 15:52:23 2023 +0000
+
+    Implement hls code for reshaped weights
+
+[33mcommit 894e665e7c381a913d242f603e99d6452ae21b9b[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Feb 9 15:33:16 2023 +0000
+
+    Fix reshaped weights header file
+
+[33mcommit 5b8768b3f362a122f78e2a942f506cd02c8a1eb7[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Feb 9 11:32:34 2023 +0000
+
+    Add reshaped weights header file
+
+[33mcommit 47d1e06375084e9287b0bfb4ac88361b8ce37ec6[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Feb 8 18:19:51 2023 +0000
+
+    Fix average pool and shortcut add with manual reshape
+
+[33mcommit 8baef23dd0bdae4967fe8f18de70999b9a9602fb[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Feb 8 17:09:02 2023 +0000
+
+    Fix manual reshape warnings
+
+[33mcommit 255e3d135911b3af4991c72c74e2c9ba0a8f5b5b[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Tue Feb 7 13:29:05 2023 +0000
+
+    Impement manual reshape on conv layers
+
+[33mcommit 1b2614973987440fbd7eef90fc75fe4603abb6af[m[33m ([m[1;31morigin/kernel2_stride2[m[33m)[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Mon Feb 6 14:57:55 2023 +0000
+
+    Add third layer
+
+[33mcommit 35c6e0cc4ef540c53394ad04c979dddcb14e4c47[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Fri Feb 3 19:08:44 2023 +0000
+
+    Eliminate DSP usage
+
+[33mcommit f833642a176db97f9bff3bfd67674d135d74353d[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Fri Feb 3 13:14:05 2023 +0000
+
+    Implement downsampling layer with shortcut
+
+[33mcommit da948a18b9ad5ac9c2b9e3b9b2242b3d7fd6585b[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Feb 2 18:43:37 2023 +0000
+
+    Implement shortcut layer
+
+[33mcommit f390d2a376a25667df9ba4d6ad4d06c4735e3296[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Feb 2 15:00:02 2023 +0000
+
+    Implement reshape on weights
+
+[33mcommit 4c48ea2f8b07f7cfc8d957ef066854d8b1c06ec8[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Mon Jan 30 18:14:24 2023 +0000
+
+    Fix co-simulation dataflow errors
+
+[33mcommit d9dec2a6c128f988a2e3afeb33f784fed8073cc5[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Fri Jan 27 18:11:10 2023 +0000
+
+    Call dataflow from top function and increase number of patches
+
+[33mcommit 8be1bb27827c5633ff1c01f30fd3557619e2617e[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Fri Jan 27 14:36:19 2023 +0000
+
+    Implement PE in k2 layer
+
+[33mcommit ab8a5c112a5d4737736865e84dfc710a7fd623a2[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Jan 26 22:14:57 2023 +0000
+
+    Implement PE in k1 layer
+
+[33mcommit f34c1e70987a18179765662226bfd9747e57658b[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Jan 26 21:16:49 2023 +0000
+
+    Add layer_params header file; fix weights file for k1 layers
+
+[33mcommit 163ae41499be65c878aa42cde59bf804f6eda75f[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Jan 26 20:35:54 2023 +0000
+
+    Implement PE in k1_b4k2
+
+[33mcommit 84eb784f095fdbd088b3bdd853a8fd0010afdff1[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Jan 25 16:36:53 2023 +0000
+
+    Send output image by Z, fix co-simulation error
+
+[33mcommit 32bab08ca50a3b6310a373d1fd03be62368fe17d[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Tue Jan 24 16:47:05 2023 +0000
+
+    Make pipeline changes
+
+[33mcommit a8fa55bd2555835ea02e7b7a3f980d8e5e5a85ad[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Mon Jan 23 20:27:59 2023 +0000
+
+    Change loop variables to int
+
+[33mcommit 83c2dedce2e22c774782a83adeb5c9d2c30631d7[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Mon Jan 23 20:25:10 2023 +0000
+
+    Read input from two dimensional array in k2 layer
+
+[33mcommit e4347f0d89bd4218a3cad0957b495c4ecd324afc[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Mon Jan 23 19:29:05 2023 +0000
+
+    Fix synthesis warnings
+
+[33mcommit 9d416c0eafb2d6e42dc3c75b5c8a06af9c388487[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Mon Jan 23 19:12:00 2023 +0000
+
+    Remove the extra pixels that aren't used in k2 layer
+
+[33mcommit c8118d799f5a280d7d6c8a213e20752a6db7981d[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Mon Jan 23 18:09:38 2023 +0000
+
+    Read output from first layer ordered by Z, but with jumping index
+
+[33mcommit a9c041fa67c57d366926a90349755397e21bcc40[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Mon Jan 23 17:55:57 2023 +0000
+
+    Read image ordered by Z
+
+[33mcommit 1e43c7f1338a1b600bf2e7156f6bf47cf96694ee[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Mon Jan 23 17:37:39 2023 +0000
+
+    Switch filters and bands loops order
+
+[33mcommit 5417d47188725d0c29f075e3ab912ce8c39ff528[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Mon Jan 23 17:31:55 2023 +0000
+
+    Add differently ordered weights files
+
+[33mcommit 76b7bfa0fb152b2da50c17ce5a6a075c485b21a9[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Mon Jan 23 17:25:59 2023 +0000
+
+    Change loops variables
+
+[33mcommit 363dcdd7fb287f92fa59cb53faf2596eac99357c[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Jan 18 17:22:04 2023 +0000
+
+    Fix errors made during meeting
+
+[33mcommit 3ef527b95fb9de2e3d0196a652470ad3536dec21[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Tue Jan 17 18:53:04 2023 +0000
+
+    Implement average pooling in testbench
+
+[33mcommit 30992ea1f21dc0d16126d3bcb18ec235c70ef37e[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Jan 5 21:15:18 2023 +0000
+
+    Implement layer with kernel of size 2
+
+[33mcommit f3e8f7f20dce1cf54f08bd2a781cd0a02b72ff17[m[33m ([m[1;31morigin/diff_layers[m[33m)[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Fri Dec 23 12:00:09 2022 +0000
+
+    Fix streams imperfect loop
+
+[33mcommit 8ef37b1050b82db3314acfead4078b24e529e414[m[33m ([m[1;31morigin/dataflow_func[m[33m)[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Tue Dec 20 21:05:28 2022 +0000
+
+    Have weight arrays seperate for each layer
+
+[33mcommit 4285c65f33456c123352e11401051fa3c44cdd3b[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Fri Dec 16 16:51:24 2022 +0000
+
+    Read weights from header file
+
+[33mcommit 5df6bf7fbf0764fff03e2e6c1be1abc821858095[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Sat Dec 10 18:32:59 2022 +0000
+
+    Clean up code
+
+[33mcommit f4f37914de4fba49e0ed655d4669fc9a309d2c00[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Dec 8 18:32:04 2022 +0000
+
+    Create a dataflow function
+
+[33mcommit 0a3b6ae990218f472e4d65b5cac319535f119e63[m[33m ([m[1;31morigin/iso_rd_strm[m[33m)[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Dec 8 17:31:33 2022 +0000
+
+    Try to use inside loop variables
+
+[33mcommit fb0b8f9766eeb47db8117707b7db519276d50d17[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Tue Dec 6 17:03:23 2022 +0000
+
+    Isolate weights read from dataflow block
+
+[33mcommit e9a0f0c4ad2349974713c0722c3518ca1370156a[m[33m ([m[1;31morigin/quantization[m[33m)[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Nov 24 10:18:08 2022 +0000
+
+    Changes during meeting
+
+[33mcommit 24c3670f99d99a0fab84b269eb15ae60c4d95962[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Fri Nov 11 18:08:19 2022 +0000
+
+    Implement low precision int quantiazion
+
+[33mcommit 2268f048def2d314dfcd53761fc83298aad766b3[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Nov 10 15:01:24 2022 +0000
+
+    Change weights format to minimize computation
+
+[33mcommit 30968efb2ebfaee3adc4a29f5ec4fdcd5aba15c8[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Nov 9 17:04:08 2022 +0000
+
+    Implement fixed point quantization
+
+[33mcommit 7eb24bfb0c92894520bc66d0e73e8acf8a0d8a47[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Tue Nov 8 18:05:09 2022 +0000
+
+    Start changing quant_t type to fixed point
+
+[33mcommit a3d4112fd508c3b80db65122c56a7e8b05faa34e[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Fri Nov 4 16:20:08 2022 +0000
+
+    Change stream types in layer, correct synthesis erros
+
+[33mcommit fbe80d2a36ea85624814dbd83c4b30c2468159be[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Nov 3 18:08:17 2022 +0000
+
+    Change output to be stream
+
+[33mcommit 7ab28e1e2d80e1a931e449fdfd28994143514b7d[m[33m ([m[1;31morigin/arrays[m[33m)[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Nov 3 17:12:45 2022 +0000
+
+    Implement accum array, correct errors for synthesis
+
+[33mcommit 38be79779ec5e9e56563f15c89c9fe62e6f48985[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Nov 2 18:14:31 2022 +0000
+
+    Put filter loop inside bands loop
+
+[33mcommit f9a936c6c6a52e7f68f703b8ac02db79676a5b28[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Nov 2 17:49:45 2022 +0000
+
+    Use arrays as layer arguments instead of streams
+
+[33mcommit 47ea4eb12523c8403915328a3e1940003869a596[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Nov 2 17:18:30 2022 +0000
+
+    Send output FM through stream
+
+[33mcommit fa60a184c840d13e0caed5c3e2fca542264d202d[m[33m ([m[1;31morigin/two_layers[m[33m)[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Nov 2 17:13:36 2022 +0000
+
+    Add const ifdef
+
+[33mcommit 0e099e4dbea763691b9050db2d65dc2ff127a9f9[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Oct 27 18:08:06 2022 +0100
+
+    Implement const weight array
+
+[33mcommit 891c9cb5d294c4f7adc359011a5e3c4d3f07b2f5[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Oct 26 20:27:30 2022 +0100
+
+    Finish first implementation of two layers
+
+[33mcommit ad646c7e031a443ad439d97dec62cf07216173f8[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Oct 26 19:33:44 2022 +0100
+
+    Start implement conv with two layers
+
+[33mcommit 91080d94cbe3720da4f8d69b87bc5334a5c6f4da[m[33m ([m[1;31morigin/one_layer[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Tue Oct 25 18:23:46 2022 +0100
+
+    Finish simple implementation for one layer
+
+[33mcommit c3376f9c162cd4c682b0045931bd64fee8c3621e[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Fri Oct 21 15:59:53 2022 +0100
+
+    Implement basic conv and tb
+
+[33mcommit 2d753c37b8ac8947a324648b920f1c4590654909[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Oct 20 18:22:07 2022 +0100
+
+    Initialize variables and main function
+
+[33mcommit 135640f77902bc1266208dcec4c024f99043cd13[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Thu Oct 20 17:54:51 2022 +0100
+
+    Start implementation of simple conv
+
+[33mcommit 865067e76f90baa93c911ff1f75368286e7bd12e[m
+Author: ZeCaetano <39213604+ZeCaetano@users.noreply.github.com>
+Date:   Thu Oct 20 10:24:02 2022 +0100
+
+    Update README.md
+
+[33mcommit 66936f0747e88073140067a6024103f0ae58dec4[m
+Author: Jose Caetano <jose.caetano@tecnico.ulisboa.pt>
+Date:   Wed Oct 19 21:14:47 2022 +0100
+
+    Initial commit
