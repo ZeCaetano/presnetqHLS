@@ -248,6 +248,8 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 #pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map);
 
+//	print_fm_single_val(X1, Y1, Z1, in_feature_map);
+
 	conv_layer_k1<X1,Y1,Z1,NF1,SFEI1,SFEW1,SFEO1, weights_l1,8,false> (in_feature_map, l1_fm);
 
 
@@ -261,6 +263,7 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 	add_shortcut<X4,Y4,NF4,Z2,SFEO4,SFEI2,SFEBLK1>(l4_fm, shortcut_1_fm, sum_1);
 	gen_shortcut<X4,Y4,NF4>(sum_1, in_blk2_fm, shortcut_2_fm);
 
+//	print_fm_single_val(X4, Y4, NF4, sum_1);
 
 	conv_layer_k1<X5,Y5,Z5,NF5,SFEI5,SFEW5,SFEO5, weights_l5,16,true> (in_blk2_fm, l5_fm);
 	conv_layer_k1_unsigned<X6,Y6,Z6,NF6,SFEI6,SFEW6,SFEO6, weights_l6,8,true> (l5_fm, l6_fm);
@@ -269,15 +272,22 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 	add_shortcut<X7,Y7,NF7,Z5,SFEO7,SFEI5,SFEBLK2>(l7_fm, shortcut_2_fm, sum_2);
 	gen_shortcut<X7,Y7,NF7>(sum_2, in_blk3_fm, shortcut_3_fm);
 
+//	print_fm_single_val(X7, Y7, NF7, sum_2);
 
 	conv_layer_k1<X8,Y8,Z8,NF8,SFEI8,SFEW8,SFEO8, weights_l8,16,true> (in_blk3_fm, l8_fm);
 	conv_layer_k1_unsigned<X9,Y9,Z9,NF9,SFEI9,SFEW9,SFEO9, weights_l9,8,true> (l8_fm, l9_fm);
 	conv_layer_k1_unsigned<X10,Y10,Z10,NF10,SFEI10,SFEW10,SFEO10, weights_l10,24,false> (l9_fm, l10_fm);
 
+
 	add_shortcut<X10,Y10,NF10,Z8,SFEO10,SFEI8,SFEBLK3>(l10_fm, shortcut_3_fm, sum_3);
 	gen_shortcut<X10,Y10,NF10>(sum_3, in_blk4_fm, shortcut_4_fm);
 
-
+//	printf("conv:\n");
+//	print_fm(X10, Y10, NF10, l10_fm);
+//	printf("shortcut:\n");
+//	print_fm(X7, Y7, NF7, shortcut_3_fm);
+//	printf("sum:\n");
+//	print_fm(X10, Y10, NF10, sum_3);
 
 	average_pool<X10,Y10,XDS1,YDS1,NF10,KDS1,SFEBLK3,SFEDS1>(shortcut_4_fm, ds_1_fm);
 
@@ -303,7 +313,7 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 	add_shortcut<X19,Y19,NF19,Z17,SFEO19,SFEI17,SFEBLK6>(l19_fm, shortcut_6_fm, sum_6);
 	gen_shortcut<X19,Y19,NF19>(sum_6, in_blk7_fm, shortcut_7_fm);
 
-
+//	print_fm_single_val(X19, Y19, NF19, sum_6);
 
 	average_pool<X19,Y19,XDS2,YDS2,NF19,KDS2,SFEBLK6,SFEDS2>(shortcut_7_fm, ds_2_fm);
 
@@ -314,6 +324,7 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 	add_shortcut<X22,Y22,NF22,Z20,SFEO22,SFEI20,SFEBLK7>(l22_fm, ds_2_fm, sum_7);
 	gen_shortcut<X22,Y22,NF22>(sum_7, in_blk8_fm, shortcut_8_fm);
 
+//	print_fm_single_val(X22, Y22, NF22, sum_7);
 
 	conv_layer_k1<X23,Y23,Z23,NF23,SFEI23,SFEW23,SFEO23, weights_l23,8,true> (in_blk8_fm, l23_fm);
 	conv_layer_k1_unsigned<X24,Y24,Z24,NF24,SFEI24,SFEW24,SFEO24, weights_l24,8,true> (l23_fm, l24_fm);
@@ -328,11 +339,15 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 
 	add_shortcut<X28,Y28,NF28,Z26,SFEO28,SFEI26,SFEBLK9>(l28_fm, shortcut_9_fm, sum_9);
 
+//	print_fm_single_val(X28, Y28, NF28, sum_9);
 
 	relu<X28,Y28,NF28,SFE_RELU_I, SFE_RELU_O>(sum_9, final_relu);
 
+//	print_fm_single_val_u(X28, Y28, NF28, final_relu);
 
 	average_pool_unsigned<X28,Y28,XDS3,YDS3, NF28,KDS3, SFEBLK9, SFEDS3>(final_relu, final_ds);
+
+//	print_fm_single_val_u(XDS3, YDS3, NF28, final_ds);
 
 
 	fully_connected<NF28,NCLASSES, weights_fc, bias_fc, SFEDS3,SFEW_FC,SFEB_FC,SFEO_FC>(final_ds, output_fm);
@@ -558,9 +573,9 @@ void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESH
 	quant_accum tmp_conv = 0, tmp_shortcut = 0;
 	params_t scale_factor = 0;
 
-	if(sfe_conv > sfe_shortcut) {
+	if(sfe_conv >= sfe_shortcut) {
 		scale_factor = sfe_conv;
-	} else if( sfe_shortcut > sfe_conv) {
+	} else {
 		scale_factor = sfe_shortcut;
 	}
 
@@ -579,7 +594,7 @@ void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESH
 					tmp_conv = (quant_act)conv_feature_map[idx_conv].range(31,28);
 					idx_conv++;
 				}
-				tmp_conv = tmp_conv >> sfe_conv;
+//				tmp_conv = tmp_conv >> sfe_conv;
 //				if(sfe_conv < 0) {
 //					if(tmp_conv >= (1 << (ACT_WIDTH - 1)) - 1) tmp_conv = (1 << (ACT_WIDTH - 1)) - 1;
 //					else if(tmp_conv <= -(1 << (ACT_WIDTH - 1))) tmp_conv = -(1 << (ACT_WIDTH - 1));
@@ -596,8 +611,8 @@ void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESH
 //					sum = sum >> sfe_conv;
 //					if(sum >= (1 << (ACT_WIDTH - 1)) - 1) sum = (1 << (ACT_WIDTH - 1)) - 1;
 //					else if(sum <= -(1 << (ACT_WIDTH - 1))) sum = -(1 << (ACT_WIDTH - 1));
-//					sum = sum << sfe_conv;
-					sum = sum << sfe_o;
+//					sum = sum << sfe_o;
+					sum = sum >> (sfe_conv - sfe_o);
 //					if(tmp_conv != sum)
 //						printf("%d --> %d\n",(int)tmp_conv, (int)sum);
 //					printf("%d\n ", (int)tmp_conv);
@@ -616,7 +631,7 @@ void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESH
 						idx_shortcut++;
 					}
 
-					tmp_shortcut = tmp_shortcut >> sfe_shortcut;
+//					tmp_shortcut = tmp_shortcut >> sfe_shortcut;
 //					if(sfe_shortcut < 0) {
 //						if(tmp_shortcut >= (1 << (ACT_WIDTH - 1)) - 1) {
 ////							printf("%d - (%d,%d,%d) Saturated over\n", nbands_conv,i,j,z);
@@ -629,14 +644,14 @@ void add_shortcut(act_reshp conv_feature_map[fm_width*fm_height*nbands_conv/RESH
 ////						tmp_shortcut = tmp_shortcut << sfe_shortcut;
 //					}
 
-//					if(scale_factor == sfe_conv) {
-//						tmp_shortcut = tmp_shortcut << (sfe_conv - sfe_shortcut);
-//					} else {
-//						tmp_conv = tmp_conv << (sfe_shortcut-sfe_conv);
-//					}
+					if(scale_factor == sfe_conv) {
+						tmp_shortcut = tmp_shortcut << (sfe_conv - sfe_shortcut);
+					} else {
+						tmp_conv = tmp_conv << (sfe_shortcut-sfe_conv);
+					}
 					sum = tmp_conv + tmp_shortcut;
-//					sum = sum >> (scale_factor-sfe_o);
-					sum = sum << sfe_o;
+					sum = sum >> (scale_factor-sfe_o);
+//					sum = sum << sfe_o;
 				}
 //				if(z >= nbands_shortcut){
 //					printf("sum\n%d ---> ", (int)sum);

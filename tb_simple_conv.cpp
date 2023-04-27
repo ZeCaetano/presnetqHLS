@@ -174,7 +174,12 @@ void init_fm(){
 	quant_act pixel = 0;
 	char buff_image[INPUT1_MEM_SIZE];
 
-	FILE *input_file = fopen("input_image.bin", "rb");
+//	FILE *input_file = fopen("input_image.bin", "rb");
+//	FILE *input_file = fopen("input_image_1.bin", "rb");
+//	FILE *input_file = fopen("input_image_2.bin", "rb");
+//	FILE *input_file = fopen("input_image_3.bin", "rb");
+//	FILE *input_file = fopen("input_image_4.bin", "rb");
+	FILE *input_file = fopen("input_image_5.bin", "rb");
 	fread(buff_image, sizeof(char), INPUT1_MEM_SIZE, input_file);
 
 
