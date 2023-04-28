@@ -21,141 +21,141 @@
 #include "weights.h"
 
 
-void print_fm_u(params_t x, params_t y, params_t z, act_reshp *fm){
-	int in_idx = 0;
-	quant_uact pixel = 0;
-
-	for(int k = 0; k < z; k++){
-		printf("%d\n",k);
-		for(int i = 0; i < x; i++) {
-			for(int j = 0; j < y; j++) {
-				in_idx = (i*z*y + j*z + k);
-//				printf("%d ", in_idx);
-				if(in_idx % RESHP_FACTOR == 0) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(3,0);
-				else if(in_idx % RESHP_FACTOR == 1) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(7,4);
-				else if(in_idx % RESHP_FACTOR == 2) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(11,8);
-				else if(in_idx % RESHP_FACTOR == 3) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(15,12);
-				else if(in_idx % RESHP_FACTOR == 4) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(19,16);
-				else if(in_idx % RESHP_FACTOR == 5) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(23,20);
-				else if(in_idx % RESHP_FACTOR == 6) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(27,24);
-				else if(in_idx % RESHP_FACTOR == 7) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(31,28);
-				printf("%d ", (int)pixel);
-			}
-			printf("\n");
-		}
-		printf("\n");
-	}
-}
-
-void print_fm_single_val(params_t x, params_t y, params_t z, act_reshp *fm){
-	int in_idx = 0;
-	quant_act pixel = 0;
-
-	for(int k = 0; k < z; k++){
-		for(int i = 0; i < x; i++) {
-			for(int j = 0; j < y; j++) {
-				in_idx = (i*z*y + j*z + k);
-				if(in_idx % RESHP_FACTOR == 0) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(3,0);
-				else if(in_idx % RESHP_FACTOR == 1) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(7,4);
-				else if(in_idx % RESHP_FACTOR == 2) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(11,8);
-				else if(in_idx % RESHP_FACTOR == 3) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(15,12);
-				else if(in_idx % RESHP_FACTOR == 4) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(19,16);
-				else if(in_idx % RESHP_FACTOR == 5) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(23,20);
-				else if(in_idx % RESHP_FACTOR == 6) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(27,24);
-				else if(in_idx % RESHP_FACTOR == 7) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(31,28);
-				printf("%d\n", (int)pixel);
-			}
-		}
-	}
-	printf("-------------------------------------------------\n");
-}
-
-void print_fm_single_val_u(params_t x, params_t y, params_t z, act_reshp *fm){
-	int in_idx = 0;
-	quant_uact pixel = 0;
-
-	for(int k = 0; k < z; k++){
-		for(int i = 0; i < x; i++) {
-			for(int j = 0; j < y; j++) {
-				in_idx = (i*z*y + j*z + k);
-				if(in_idx % RESHP_FACTOR == 0) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(3,0);
-				else if(in_idx % RESHP_FACTOR == 1) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(7,4);
-				else if(in_idx % RESHP_FACTOR == 2) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(11,8);
-				else if(in_idx % RESHP_FACTOR == 3) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(15,12);
-				else if(in_idx % RESHP_FACTOR == 4) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(19,16);
-				else if(in_idx % RESHP_FACTOR == 5) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(23,20);
-				else if(in_idx % RESHP_FACTOR == 6) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(27,24);
-				else if(in_idx % RESHP_FACTOR == 7) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(31,28);
-				printf("%d\n", (int)pixel);
-			}
-		}
-	}
-	printf("-------------------------------------------------\n");
-}
-
-void print_fm(params_t x, params_t y, params_t z, act_reshp *fm){
-	int in_idx = 0;
-	quant_act pixel = 0;
-
-	for(int k = 0; k < z; k++){
-		printf("%d\n",k);
-		for(int i = 0; i < x; i++) {
-			for(int j = 0; j < y; j++) {
-				in_idx = (i*z*y + j*z + k);
-//				printf("%d ", in_idx);
-				if(in_idx % RESHP_FACTOR == 0) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(3,0);
-				else if(in_idx % RESHP_FACTOR == 1) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(7,4);
-				else if(in_idx % RESHP_FACTOR == 2) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(11,8);
-				else if(in_idx % RESHP_FACTOR == 3) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(15,12);
-				else if(in_idx % RESHP_FACTOR == 4) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(19,16);
-				else if(in_idx % RESHP_FACTOR == 5) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(23,20);
-				else if(in_idx % RESHP_FACTOR == 6) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(27,24);
-				else if(in_idx % RESHP_FACTOR == 7) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(31,28);
-				printf("%d ", (int)pixel);
-			}
-			printf("\n");
-		}
-		printf("\n");
-	}
-
-
-
-//	for(int i = 0; i < x; i++) {
-//		for(int j = 0; j < y; j++) {
-//			for(int k = 0; k < z/RESHP_FACTOR; k++){
-//				printf("(%d) %d ", (k*RESHP_FACTOR) + 1,(int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(3,0)));
-//				printf("(%d) %d ", (k*RESHP_FACTOR) + 2,(int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(7,4)));
-//				printf("(%d) %d ", (k*RESHP_FACTOR) + 3,(int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(11,8)));
-//				printf("(%d) %d ", (k*RESHP_FACTOR) + 4,(int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(15,12)));
-//				printf("(%d) %d ", (k*RESHP_FACTOR) + 5,(int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(19,16)));
-//				printf("(%d) %d ", (k*RESHP_FACTOR) + 6,(int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(23,20)));
-//				printf("(%d) %d ", (k*RESHP_FACTOR) + 7,(int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(27,24)));
-//				printf("(%d) %d ", (k*RESHP_FACTOR) + 8,(int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(31,28)));
+//void print_fm_u(params_t x, params_t y, params_t z, act_reshp *fm){
+//	int in_idx = 0;
+//	quant_uact pixel = 0;
+//
+//	for(int k = 0; k < z; k++){
+//		printf("%d\n",k);
+//		for(int i = 0; i < x; i++) {
+//			for(int j = 0; j < y; j++) {
+//				in_idx = (i*z*y + j*z + k);
+////				printf("%d ", in_idx);
+//				if(in_idx % RESHP_FACTOR == 0) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(3,0);
+//				else if(in_idx % RESHP_FACTOR == 1) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(7,4);
+//				else if(in_idx % RESHP_FACTOR == 2) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(11,8);
+//				else if(in_idx % RESHP_FACTOR == 3) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(15,12);
+//				else if(in_idx % RESHP_FACTOR == 4) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(19,16);
+//				else if(in_idx % RESHP_FACTOR == 5) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(23,20);
+//				else if(in_idx % RESHP_FACTOR == 6) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(27,24);
+//				else if(in_idx % RESHP_FACTOR == 7) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(31,28);
+//				printf("%d ", (int)pixel);
 //			}
 //			printf("\n");
 //		}
 //		printf("\n");
 //	}
-//	printf("\n\n\n");
-}
-
-
-void print_weights(params_t z, params_t nf, wght_reshp *weights){
-	printf("WEIGHTS\n");
-	for(int i = 0; i < nf; i++){
-		for(int j = 0; j < z/RESHP_FACTOR;j++){
-			printf("%d ", (int)((quant_wght) weights[i*(z/RESHP_FACTOR)+j].range(1,0)));
-			printf("%d ", (int)((quant_wght) weights[i*(z/RESHP_FACTOR)+j].range(3,2)));
-			printf("%d ", (int)((quant_wght) weights[i*(z/RESHP_FACTOR)+j].range(5,4)));
-			printf("%d ", (int)((quant_wght) weights[i*(z/RESHP_FACTOR)+j].range(7,6)));
-			printf("%d ", (int)((quant_wght) weights[i*(z/RESHP_FACTOR)+j].range(9,8)));
-			printf("%d ", (int)((quant_wght) weights[i*(z/RESHP_FACTOR)+j].range(11,10)));
-			printf("%d ", (int)((quant_wght) weights[i*(z/RESHP_FACTOR)+j].range(13,12)));
-			printf("%d ", (int)((quant_wght) weights[i*(z/RESHP_FACTOR)+j].range(15,14)));
-		}
-		printf("\n");
-	}
-}
+//}
+//
+//void print_fm_single_val(params_t x, params_t y, params_t z, act_reshp *fm){
+//	int in_idx = 0;
+//	quant_act pixel = 0;
+//
+//	for(int k = 0; k < z; k++){
+//		for(int i = 0; i < x; i++) {
+//			for(int j = 0; j < y; j++) {
+//				in_idx = (i*z*y + j*z + k);
+//				if(in_idx % RESHP_FACTOR == 0) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(3,0);
+//				else if(in_idx % RESHP_FACTOR == 1) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(7,4);
+//				else if(in_idx % RESHP_FACTOR == 2) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(11,8);
+//				else if(in_idx % RESHP_FACTOR == 3) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(15,12);
+//				else if(in_idx % RESHP_FACTOR == 4) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(19,16);
+//				else if(in_idx % RESHP_FACTOR == 5) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(23,20);
+//				else if(in_idx % RESHP_FACTOR == 6) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(27,24);
+//				else if(in_idx % RESHP_FACTOR == 7) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(31,28);
+//				printf("%d\n", (int)pixel);
+//			}
+//		}
+//	}
+//	printf("-------------------------------------------------\n");
+//}
+//
+//void print_fm_single_val_u(params_t x, params_t y, params_t z, act_reshp *fm){
+//	int in_idx = 0;
+//	quant_uact pixel = 0;
+//
+//	for(int k = 0; k < z; k++){
+//		for(int i = 0; i < x; i++) {
+//			for(int j = 0; j < y; j++) {
+//				in_idx = (i*z*y + j*z + k);
+//				if(in_idx % RESHP_FACTOR == 0) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(3,0);
+//				else if(in_idx % RESHP_FACTOR == 1) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(7,4);
+//				else if(in_idx % RESHP_FACTOR == 2) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(11,8);
+//				else if(in_idx % RESHP_FACTOR == 3) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(15,12);
+//				else if(in_idx % RESHP_FACTOR == 4) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(19,16);
+//				else if(in_idx % RESHP_FACTOR == 5) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(23,20);
+//				else if(in_idx % RESHP_FACTOR == 6) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(27,24);
+//				else if(in_idx % RESHP_FACTOR == 7) pixel = (quant_uact)fm[in_idx/RESHP_FACTOR].range(31,28);
+//				printf("%d\n", (int)pixel);
+//			}
+//		}
+//	}
+//	printf("-------------------------------------------------\n");
+//}
+//
+//void print_fm(params_t x, params_t y, params_t z, act_reshp *fm){
+//	int in_idx = 0;
+//	quant_act pixel = 0;
+//
+//	for(int k = 0; k < z; k++){
+//		printf("%d\n",k);
+//		for(int i = 0; i < x; i++) {
+//			for(int j = 0; j < y; j++) {
+//				in_idx = (i*z*y + j*z + k);
+////				printf("%d ", in_idx);
+//				if(in_idx % RESHP_FACTOR == 0) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(3,0);
+//				else if(in_idx % RESHP_FACTOR == 1) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(7,4);
+//				else if(in_idx % RESHP_FACTOR == 2) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(11,8);
+//				else if(in_idx % RESHP_FACTOR == 3) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(15,12);
+//				else if(in_idx % RESHP_FACTOR == 4) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(19,16);
+//				else if(in_idx % RESHP_FACTOR == 5) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(23,20);
+//				else if(in_idx % RESHP_FACTOR == 6) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(27,24);
+//				else if(in_idx % RESHP_FACTOR == 7) pixel = (quant_act)fm[in_idx/RESHP_FACTOR].range(31,28);
+//				printf("%d ", (int)pixel);
+//			}
+//			printf("\n");
+//		}
+//		printf("\n");
+//	}
+//
+//
+//
+////	for(int i = 0; i < x; i++) {
+////		for(int j = 0; j < y; j++) {
+////			for(int k = 0; k < z/RESHP_FACTOR; k++){
+////				printf("(%d) %d ", (k*RESHP_FACTOR) + 1,(int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(3,0)));
+////				printf("(%d) %d ", (k*RESHP_FACTOR) + 2,(int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(7,4)));
+////				printf("(%d) %d ", (k*RESHP_FACTOR) + 3,(int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(11,8)));
+////				printf("(%d) %d ", (k*RESHP_FACTOR) + 4,(int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(15,12)));
+////				printf("(%d) %d ", (k*RESHP_FACTOR) + 5,(int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(19,16)));
+////				printf("(%d) %d ", (k*RESHP_FACTOR) + 6,(int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(23,20)));
+////				printf("(%d) %d ", (k*RESHP_FACTOR) + 7,(int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(27,24)));
+////				printf("(%d) %d ", (k*RESHP_FACTOR) + 8,(int)((quant_act)fm[k + (j*z/RESHP_FACTOR) + (i*y*z/RESHP_FACTOR)].range(31,28)));
+////			}
+////			printf("\n");
+////		}
+////		printf("\n");
+////	}
+////	printf("\n\n\n");
+//}
+//
+//
+//void print_weights(params_t z, params_t nf, wght_reshp *weights){
+//	printf("WEIGHTS\n");
+//	for(int i = 0; i < nf; i++){
+//		for(int j = 0; j < z/RESHP_FACTOR;j++){
+//			printf("%d ", (int)((quant_wght) weights[i*(z/RESHP_FACTOR)+j].range(1,0)));
+//			printf("%d ", (int)((quant_wght) weights[i*(z/RESHP_FACTOR)+j].range(3,2)));
+//			printf("%d ", (int)((quant_wght) weights[i*(z/RESHP_FACTOR)+j].range(5,4)));
+//			printf("%d ", (int)((quant_wght) weights[i*(z/RESHP_FACTOR)+j].range(7,6)));
+//			printf("%d ", (int)((quant_wght) weights[i*(z/RESHP_FACTOR)+j].range(9,8)));
+//			printf("%d ", (int)((quant_wght) weights[i*(z/RESHP_FACTOR)+j].range(11,10)));
+//			printf("%d ", (int)((quant_wght) weights[i*(z/RESHP_FACTOR)+j].range(13,12)));
+//			printf("%d ", (int)((quant_wght) weights[i*(z/RESHP_FACTOR)+j].range(15,14)));
+//		}
+//		printf("\n");
+//	}
+//}
 
 void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) {
 
@@ -230,7 +230,7 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 #pragma HLS STREAM variable=shortcut_6_fm type=PIPO depth=5
 #pragma HLS STREAM variable=shortcut_7_fm type=PIPO depth=2
 #pragma HLS STREAM variable=shortcut_8_fm type=PIPO depth=5
-#pragma HLS STREAM variable=shortcut_9_fm type=PIPO depth=2
+#pragma HLS STREAM variable=shortcut_9_fm type=PIPO depth=5
 #pragma HLS STREAM variable=ds_1_fm type=PIPO depth=4
 #pragma HLS STREAM variable=ds_2_fm  type=PIPO depth=4
 #pragma HLS STREAM variable=final_ds type=PIPO depth=2
@@ -1173,42 +1173,42 @@ void relu(act_reshp in[width*height*nbands/RESHP_FACTOR], act_reshp out[width*he
 	for(int i = 0; i < width*height*nbands/RESHP_FACTOR; i++) {
 		tmp_buff_in = in[i];
 		tmp = (quant_act)tmp_buff_in.range(3,0);
-		tmp = tmp >> sfe_i - sfe_o;
+		tmp = tmp >> (sfe_i - sfe_o);
 		if(tmp >= (1 << ACT_WIDTH) - 1) tmp = (1 << ACT_WIDTH) - 1;
 		tmpu = tmp.range(3,0);
 		tmp_buff_out.range(3,0) = (ap_int<1>)tmp[20] == 0 ? (quant_uact)tmpu : (quant_uact) 0;
 		tmp = (quant_act)tmp_buff_in.range(7,4);
-		tmp = tmp >> sfe_i - sfe_o;
+		tmp = tmp >> (sfe_i - sfe_o);
 		if(tmp >= (1 << ACT_WIDTH) - 1) tmp = (1 << ACT_WIDTH) - 1;
 		tmpu = tmp.range(3,0);
 		tmp_buff_out.range(7,4) = (ap_int<1>)tmp[20] == 0 ? (quant_uact)tmpu : (quant_uact) 0;
 		tmp = (quant_act)tmp_buff_in.range(11,8);
-		tmp = tmp >> sfe_i - sfe_o;
+		tmp = tmp >> (sfe_i - sfe_o);
 		if(tmp >= (1 << ACT_WIDTH) - 1) tmp = (1 << ACT_WIDTH) - 1;
 		tmpu = tmp.range(3,0);
 		tmp_buff_out.range(11,8) = (ap_int<1>)tmp[20] == 0 ? (quant_uact)tmpu : (quant_uact) 0;
 		tmp = (quant_act)tmp_buff_in.range(15,12);
-		tmp = tmp >> sfe_i - sfe_o;
+		tmp = tmp >> (sfe_i - sfe_o);
 		if(tmp >= (1 << ACT_WIDTH) - 1) tmp = (1 << ACT_WIDTH) - 1;
 		tmpu = tmp.range(3,0);
 		tmp_buff_out.range(15,12) = (ap_int<1>)tmp[20] == 0 ? (quant_uact)tmpu : (quant_uact) 0;
 		tmp = (quant_act)tmp_buff_in.range(19,16);
-		tmp = tmp >> sfe_i - sfe_o;
+		tmp = tmp >> (sfe_i - sfe_o);
 		if(tmp >= (1 << ACT_WIDTH) - 1) tmp = (1 << ACT_WIDTH) - 1;
 		tmpu = tmp.range(3,0);
 		tmp_buff_out.range(19,16) = (ap_int<1>)tmp[20] == 0 ? (quant_uact)tmpu : (quant_uact) 0;
 		tmp = (quant_act)tmp_buff_in.range(23,20);
-		tmp = tmp >> sfe_i - sfe_o;
+		tmp = tmp >> (sfe_i - sfe_o);
 		if(tmp >= (1 << ACT_WIDTH) - 1) tmp = (1 << ACT_WIDTH) - 1;
 		tmpu = tmp.range(3,0);
 		tmp_buff_out.range(23,20) = (ap_int<1>)tmp[20] == 0 ? (quant_uact)tmpu : (quant_uact) 0;
 		tmp = (quant_act)tmp_buff_in.range(27,24);
-		tmp = tmp >> sfe_i - sfe_o;
+		tmp = tmp >> (sfe_i - sfe_o);
 		if(tmp >= (1 << ACT_WIDTH) - 1) tmp = (1 << ACT_WIDTH) - 1;
 		tmpu = tmp.range(3,0);
 		tmp_buff_out.range(27,24) = (ap_int<1>)tmp[20] == 0 ? (quant_uact)tmpu : (quant_uact) 0;
 		tmp = (quant_act)tmp_buff_in.range(31,28);
-		tmp = tmp >> sfe_i - sfe_o;
+		tmp = tmp >> (sfe_i - sfe_o);
 		if(tmp >= (1 << ACT_WIDTH) - 1) tmp = (1 << ACT_WIDTH) - 1;
 		tmpu = tmp.range(3,0);
 		tmp_buff_out.range(31,28) = (ap_int<1>)tmp[20] == 0 ? (quant_uact)tmpu : (quant_uact) 0;
