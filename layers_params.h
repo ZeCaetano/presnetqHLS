@@ -143,7 +143,7 @@
 #define INPUT9_MEM_SIZE (X9*Y9*Z9)
 #define OUT9_MEM_SIZE (X10*Y10*NF9)
 #define SFEI9 SFEO8
-#define SFEO9 1
+#define SFEO9 0
 #define SFEW9 2
 //-------LAYER 10--------//
 //Input: 9,9,72
@@ -347,7 +347,7 @@
 #define INPUT21_MEM_SIZE (X21*Y21*Z21)
 #define OUT21_MEM_SIZE (X22*Y22*NF21)
 #define SFEI21 SFEO20
-#define SFEO21 0
+#define SFEO21 -1
 #define SFEW21 3
 //-------LAYER 22--------//
 //Input: 2,2,104
@@ -372,7 +372,7 @@
 #define YDS2 2
 #define KDS2 2
 #define SFEDS2 -1
-#define SFEBLK7 -1
+#define SFEBLK7 -2
 
 
 
@@ -420,8 +420,8 @@
 #define OUT25_MEM_SIZE (X26*Y26*NF25)
 #define SFEI25 SFEO24
 #define SFEO25 0
-#define SFEW25 2
-#define SFEBLK8 -1
+#define SFEW25 3
+#define SFEBLK8 -2
 
 
 
@@ -470,7 +470,7 @@
 #define SFEI28 SFEO27
 #define SFEO28 0
 #define SFEW28 3
-#define SFEBLK9 -1
+#define SFEBLK9 -2
 
 //----------Final Relu------//
 #define SFE_RELU_I SFEBLK9

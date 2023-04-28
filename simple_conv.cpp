@@ -26,6 +26,7 @@ void print_fm_u(params_t x, params_t y, params_t z, act_reshp *fm){
 	quant_uact pixel = 0;
 
 	for(int k = 0; k < z; k++){
+		printf("%d\n",k);
 		for(int i = 0; i < x; i++) {
 			for(int j = 0; j < y; j++) {
 				in_idx = (i*z*y + j*z + k);
@@ -287,7 +288,7 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 //	printf("shortcut:\n");
 //	print_fm(X7, Y7, NF7, shortcut_3_fm);
 //	printf("sum:\n");
-//	print_fm(X10, Y10, NF10, sum_3);
+//	print_fm_single_val(X10, Y10, NF10, sum_3);
 
 	average_pool<X10,Y10,XDS1,YDS1,NF10,KDS1,SFEBLK3,SFEDS1>(shortcut_4_fm, ds_1_fm);
 
@@ -298,6 +299,8 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 	add_shortcut<X13,Y13,NF13,Z11,SFEO13,SFEDS1,SFEBLK4>(l13_fm, ds_1_fm, sum_4);
 	gen_shortcut<X13,Y13,NF13>(sum_4, in_blk5_fm, shortcut_5_fm);
 
+//	print_fm_single_val(X13, Y13, NF13, sum_4);
+
 
 	conv_layer_k1<X14,Y14,Z14,NF14,SFEI14,SFEW14,SFEO14, weights_l14,8,true> (in_blk5_fm, l14_fm);
 	conv_layer_k1_unsigned<X15,Y15,Z15,NF15,SFEI15,SFEW15,SFEO15, weights_l15,8,true> (l14_fm, l15_fm);
@@ -305,6 +308,8 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 
 	add_shortcut<X16,Y16,NF16,Z14,SFEO16,SFEI14,SFEBLK5>(l16_fm, shortcut_5_fm, sum_5);
 	gen_shortcut<X16,Y16,NF16>(sum_5, in_blk6_fm, shortcut_6_fm);
+
+//	print_fm_single_val(X16, Y16, NF16, sum_5);
 
 	conv_layer_k1<X17,Y17,Z17,NF17,SFEI17,SFEW17,SFEO17, weights_l17,16,true> (in_blk6_fm, l17_fm);
 	conv_layer_k1_unsigned<X18,Y18,Z18,NF18,SFEI18,SFEW18,SFEO18, weights_l18,8,true> (l17_fm, l18_fm);
@@ -343,6 +348,9 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 
 	relu<X28,Y28,NF28,SFE_RELU_I, SFE_RELU_O>(sum_9, final_relu);
 
+//	print_fm(X28, Y28, NF28, sum_9);
+//	printf("relu:\n");
+//	print_fm_u(X28, Y28, NF28, final_relu);
 //	print_fm_single_val_u(X28, Y28, NF28, final_relu);
 
 	average_pool_unsigned<X28,Y28,XDS3,YDS3, NF28,KDS3, SFEBLK9, SFEDS3>(final_relu, final_ds);
@@ -1189,34 +1197,42 @@ void relu(act_reshp in[width*height*nbands/RESHP_FACTOR], act_reshp out[width*he
 		tmp_buff_in = in[i];
 		tmp = (quant_act)tmp_buff_in.range(3,0);
 		tmp = tmp >> sfe_i - sfe_o;
+		if(tmp >= (1 << ACT_WIDTH) - 1) tmp = (1 << ACT_WIDTH) - 1;
 		tmpu = tmp.range(3,0);
 		tmp_buff_out.range(3,0) = (ap_int<1>)tmp[20] == 0 ? (quant_uact)tmpu : (quant_uact) 0;
 		tmp = (quant_act)tmp_buff_in.range(7,4);
 		tmp = tmp >> sfe_i - sfe_o;
+		if(tmp >= (1 << ACT_WIDTH) - 1) tmp = (1 << ACT_WIDTH) - 1;
 		tmpu = tmp.range(3,0);
 		tmp_buff_out.range(7,4) = (ap_int<1>)tmp[20] == 0 ? (quant_uact)tmpu : (quant_uact) 0;
 		tmp = (quant_act)tmp_buff_in.range(11,8);
 		tmp = tmp >> sfe_i - sfe_o;
+		if(tmp >= (1 << ACT_WIDTH) - 1) tmp = (1 << ACT_WIDTH) - 1;
 		tmpu = tmp.range(3,0);
 		tmp_buff_out.range(11,8) = (ap_int<1>)tmp[20] == 0 ? (quant_uact)tmpu : (quant_uact) 0;
 		tmp = (quant_act)tmp_buff_in.range(15,12);
 		tmp = tmp >> sfe_i - sfe_o;
+		if(tmp >= (1 << ACT_WIDTH) - 1) tmp = (1 << ACT_WIDTH) - 1;
 		tmpu = tmp.range(3,0);
 		tmp_buff_out.range(15,12) = (ap_int<1>)tmp[20] == 0 ? (quant_uact)tmpu : (quant_uact) 0;
 		tmp = (quant_act)tmp_buff_in.range(19,16);
 		tmp = tmp >> sfe_i - sfe_o;
+		if(tmp >= (1 << ACT_WIDTH) - 1) tmp = (1 << ACT_WIDTH) - 1;
 		tmpu = tmp.range(3,0);
 		tmp_buff_out.range(19,16) = (ap_int<1>)tmp[20] == 0 ? (quant_uact)tmpu : (quant_uact) 0;
 		tmp = (quant_act)tmp_buff_in.range(23,20);
 		tmp = tmp >> sfe_i - sfe_o;
+		if(tmp >= (1 << ACT_WIDTH) - 1) tmp = (1 << ACT_WIDTH) - 1;
 		tmpu = tmp.range(3,0);
 		tmp_buff_out.range(23,20) = (ap_int<1>)tmp[20] == 0 ? (quant_uact)tmpu : (quant_uact) 0;
 		tmp = (quant_act)tmp_buff_in.range(27,24);
 		tmp = tmp >> sfe_i - sfe_o;
+		if(tmp >= (1 << ACT_WIDTH) - 1) tmp = (1 << ACT_WIDTH) - 1;
 		tmpu = tmp.range(3,0);
 		tmp_buff_out.range(27,24) = (ap_int<1>)tmp[20] == 0 ? (quant_uact)tmpu : (quant_uact) 0;
 		tmp = (quant_act)tmp_buff_in.range(31,28);
 		tmp = tmp >> sfe_i - sfe_o;
+		if(tmp >= (1 << ACT_WIDTH) - 1) tmp = (1 << ACT_WIDTH) - 1;
 		tmpu = tmp.range(3,0);
 		tmp_buff_out.range(31,28) = (ap_int<1>)tmp[20] == 0 ? (quant_uact)tmpu : (quant_uact) 0;
 		out[i] = tmp_buff_out;

@@ -2,12 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static quant_act image_in[INPUT1_MEM_SIZE];
+static quant_act image_in[INPUT1_MEM_SIZE*NPATCHES];
 //static quant_wght kernel[LAYER1_WEIGHTS+LAYER3_WEIGHTS+LAYER2_WEIGHTS];
 //static quant_bias bias[NCLASSES];
 
 //quant_act hw_image_out[OUTPUT_MEM_SIZE];
-quant_accum hw_image_out[NCLASSES];
+quant_accum hw_image_out[NPATCHES*NCLASSES];
 quant_act sw_image_out_1[OUT1_MEM_SIZE];
 quant_act sw_image_out_2[OUT2_MEM_SIZE];
 quant_act sw_image_out_3[OUT3_MEM_SIZE];
@@ -167,41 +167,39 @@ void init_fm(){
 
 	int npixels = 0;
 //	quant_act values1[16] = {200,142,222,133,247,35,96,72,11,231,194,166,55,182,175,89};
-	quant_act values1[16] = {-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7};
-	quant_wght values2[4] = {-2,-1,1};
-	quant_wght values3[4] = {1,-1,-2};
-	quant_wght values4[4] = {-1,1,-2};
-	quant_act pixel = 0;
+//	quant_act values1[16] = {-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7};
+//	quant_wght values2[4] = {-2,-1,1};
+//	quant_wght values3[4] = {1,-1,-2};
+//	quant_wght values4[4] = {-1,1,-2};
+
 	char buff_image[INPUT1_MEM_SIZE];
+	quant_act pixel = 0;
+	FILE *input_files[6];
+	input_files[0] = fopen("input_image.bin", "rb");
+	input_files[1] = fopen("input_image_1.bin", "rb");
+	input_files[2] = fopen("input_image_2.bin", "rb");
+	input_files[3] = fopen("input_image_3.bin", "rb");
+	input_files[4] = fopen("input_image_4.bin", "rb");
+	input_files[5] = fopen("input_image_5.bin", "rb");
+//	FILE *input_file = fopen("input_image_50.bin", "rb");
 
-//	FILE *input_file = fopen("input_image.bin", "rb");
-//	FILE *input_file = fopen("input_image_1.bin", "rb");
-//	FILE *input_file = fopen("input_image_2.bin", "rb");
-//	FILE *input_file = fopen("input_image_3.bin", "rb");
-//	FILE *input_file = fopen("input_image_4.bin", "rb");
-	FILE *input_file = fopen("input_image_5.bin", "rb");
-	fread(buff_image, sizeof(char), INPUT1_MEM_SIZE, input_file);
-
-
-//	for(int i = 0; i < INPUT1_MEM_SIZE; i++) {
-//		pixel = (ap_int<4>)buff_image[i];
-//		pixel = v.range(3,0);
-//		printf("%d ", (int)v);
-//	}
 
 	//	printf("Input Image\n\r");
+	for(int n = 0; n < NPATCHES; n++) {
+		fread(buff_image, sizeof(char), INPUT1_MEM_SIZE, input_files[n]);
 		for(int k = 0; k < Z1; k++) {
 			for (int i = 0; i < X1; i++) {
 				for (int j = 0; j < Y1; j++) {
 					pixel = (ap_int<4>)buff_image[(k*X1*Y1)+(i*Y1)+j];
 					pixel = pixel.range(3,0);
-					image_in[(k*X1*Y1)+(i*Y1)+j] = pixel;
+					image_in[(n*INPUT1_MEM_SIZE)+((k*X1*Y1)+(i*Y1)+j)] = pixel;
 					npixels++;
 //					printf("%d ", (int)image_in[(k*X1*Y1)+(i * Y1 + j)]);
 				}
 //				printf("\n\r");
 			}
 		}
+	}
 }
 
 
@@ -211,10 +209,10 @@ int main() {
     hls::stream<strmo_t> so;
     strmi_t vin;
     strmo_t vout;
-    printf("Start\n");
+//    printf("Start\n");
 
     init_fm();
-    printf("FM initialized\n");
+//    printf("FM initialized\n");
 
 //    init_weights_from_file();
 //    for(int i = 0; i < WEIGHTS_MEM_SIZE; i++) {
@@ -259,29 +257,17 @@ int main() {
 //			}
 //		}
 //	}
-    printf("Sending fm\n");
+//    printf("Sending fm\n");
     for(int i = 0; i < NPATCHES; i++){
-	#ifdef ARRAYS
 		for (int t=0 ; t<X1*Y1; t++) {
 			for(int j = 0; j < Z1; j++) {
-				vin.data = image_in[(j*X1*Y1) + t];
+				vin.data = image_in[(i*INPUT1_MEM_SIZE)+((j*X1*Y1) + t)];
 				if(t == INPUT1_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
 				else vin.last = (ap_int<1>)0;
 				sin.write(vin);
 //				printf("pixel sent: %d \n",(int)image_in[(j*X1*Y1) + t]);
 			}
 		}
-	#else
-		for (int t=0 ; t<X1*Y1; t++) {
-			for(int j = 0; j < Z1; j++) {
-				vin.data = image_in[(j*X1*Y1) + t];
-				if(t == INPUT1_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
-				else vin.last = (ap_int<1>)0;
-				sin.write(vin);
-		//		printf("pixel sent: %f count: %d last: %d\n",image_in[t], t, vin.last);
-			}
-		}
-	#endif
     }
 //	exit(0);
     printf("Start HW\n");
@@ -309,7 +295,7 @@ int main() {
     	printf("Reading HW\n");
 		for(int j = 0; j < NCLASSES; j++) {
 			vout = so.read();
-			hw_image_out[j] = vout.data;
+			hw_image_out[i*NCLASSES + j] = vout.data;
 //				printf("idx-%d  %d\n", (j*X3*Y3) + l, (int)vout.data);
 			if(vout.last == 1) break;
 		}
@@ -450,10 +436,13 @@ int main() {
 //	printf("\n");
 //
 	printf("HARDWARE output image\n");
-	for(int i = 0; i < NCLASSES; i++) {
-		printf("%d ", (int)hw_image_out[i]);
+	for(int n = 0; n < NPATCHES; n++) {
+		printf("pixel %d\n", n);
+		for(int i = 0; i < NCLASSES; i++) {
+			printf("%d ", (int)hw_image_out[n*NCLASSES + i]);
+		}
+		printf("\n");
 	}
-	printf("\n");
 
 	//--------------------------------------------------------------------------------------------------//
 	//-----------------------------------------Results Verification-------------------------------------//
