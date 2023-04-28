@@ -373,36 +373,7 @@ void read_ifm(hls::stream<strmi_t> &strm_in, act_reshp in_feature_map[INPUT1_MEM
 	for(int i = 0; i < INPUT1_MEM_SIZE/RESHP_FACTOR; i++) {
 #pragma HLS PIPELINE II=8
 		tmpin = strm_in.read();
-		tmp.range(3,0) = tmpin.data;
-//		printf("%d   ", (int)(quant_act)(in_feature_map[i].range(3,0)));
-		if(tmpin.last == 1) break;
-		tmpin = strm_in.read();
-		tmp.range(7,4) = tmpin.data;
-//		printf("%d: %d   ", (int)tmpin.data, (int)((quant_act)in_feature_map[i].range(7,4)));
-		if(tmpin.last == 1) break;
-		tmpin = strm_in.read();
-		tmp.range(11,8) = tmpin.data;
-//		printf("%d: %d   ", (int)tmpin.data, (int)((quant_act)in_feature_map[i].range(11,8)));
-		if(tmpin.last == 1) break;
-		tmpin = strm_in.read();
-		tmp.range(15,12) = tmpin.data;
-		if(tmpin.last == 1) break;
-		tmpin = strm_in.read();
-		tmp.range(19,16) = tmpin.data;
-//		printf("%d: %d   ", (int)tmpin.data, (int)((quant_act)in_feature_map[i].range(11,8)));
-		if(tmpin.last == 1) break;
-		tmpin = strm_in.read();
-		tmp.range(23,20) = tmpin.data;
-		//printf("%d: %d   ", (int)tmpin.data, (int)((quant_act)in_feature_map[i].range(11,8)));
-		if(tmpin.last == 1) break;
-		tmpin = strm_in.read();
-		tmp.range(27,24) = tmpin.data;
-		//printf("%d: %d   ", (int)tmpin.data, (int)((quant_act)in_feature_map[i].range(11,8)));
-		if(tmpin.last == 1) break;
-		tmpin = strm_in.read();
-		tmp.range(31,28) = tmpin.data;
-		in_feature_map[i] = tmp;
-		//printf("%d: %d   ", (int)tmpin.data, (int)((quant_act)in_feature_map[i].range(11,8)));
+		in_feature_map[i] = tmpin.data;
 		if(tmpin.last == 1) break;
 
 //		if(layer_id == 1) printf("%f-%d\n", tmpin.data, i);

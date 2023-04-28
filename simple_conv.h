@@ -7,38 +7,30 @@
 
 #define ARRAYS
 
-#define DMA_WIDTH 64
 #define WEIGHTS_WIDTH 2
 #define ACT_WIDTH 4
-#define NLAYERS 2
-#define NPATCHES 6
+#define NPATCHES 1
 #define NCLASSES 16
-
-
-//typedef ap_fixed<4,2,AP_RND> quant_t;
-//typedef ap_fixed<8,4,AP_RND> quant_mult;
-//typedef ap_fixed<9,4,AP_RND> quant_accum;
 
 typedef ap_int<4> quant_act;
 typedef ap_uint<4> quant_uact;
 typedef ap_int<2> quant_wght;
 typedef ap_int<8> quant_bias;
 
-//typedef ap_int<4> quant_t;
 
 typedef ap_int<5> quant_sum;
 typedef ap_int<7> quant_mult;
-//typedef ap_int<16> quant_accum;
 typedef ap_int<21> quant_accum;
 
 typedef ap_uint<32> quant_reshp;
 typedef ap_uint<16> wght_reshp;
-typedef ap_int<32> act_reshp;
+typedef ap_uint<32> act_reshp;
 #define RESHP_FACTOR 8
 
 typedef ap_fixed<32, 32-(SFEDS3+SFEW_FC)> data_out;
+typedef ap_uint<32> data_in;
 typedef short params_t;
-typedef hls::axis<quant_act, 0, 0, 0> strmi_t;
+typedef hls::axis<data_in, 0, 0, 0> strmi_t;
 typedef hls::axis<data_out, 0, 0, 0> strmo_t;
 
 
