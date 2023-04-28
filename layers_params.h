@@ -486,5 +486,5 @@
 //-------Fully Connected---------//
 #define SFEW_FC 3
 #define SFEB_FC 3
-#define SFEO_FC 3
+#define SFEO_FC 0
 

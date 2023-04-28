@@ -178,7 +178,7 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 	act_reshp in_blk6_fm[INPUT17_MEM_SIZE/RESHP_FACTOR],in_blk7_fm[INPUT20_MEM_SIZE/RESHP_FACTOR], in_blk8_fm[INPUT23_MEM_SIZE/RESHP_FACTOR], in_blk9_fm[INPUT26_MEM_SIZE/RESHP_FACTOR];
 	act_reshp final_relu[OUT28_MEM_SIZE/RESHP_FACTOR];
 	act_reshp ds_1_fm[XDS1*YDS1*NF10/RESHP_FACTOR], ds_2_fm[XDS2*XDS3*NF19/RESHP_FACTOR], final_ds[XDS3*YDS3*NF28];
-	quant_accum output_fm[NCLASSES];
+	data_out output_fm[NCLASSES];
 
 //#pragma HLS BIND_STORAGE variable=m1_feature_map type=RAM_1P
 //#pragma HLS BIND_STORAGE variable=in_feature_map type=RAM_1P
@@ -409,7 +409,7 @@ void read_ifm(hls::stream<strmi_t> &strm_in, act_reshp in_feature_map[INPUT1_MEM
 	}
 }
 
-void write_ofm(quant_accum ofm[NCLASSES], hls::stream<strmo_t> &strm_out) {
+void write_ofm(data_out ofm[NCLASSES], hls::stream<strmo_t> &strm_out) {
 	strmo_t tmpout;
 	//Write output fm to stream
 	for(int i = 0; i < NCLASSES; i++){
@@ -1136,13 +1136,14 @@ void conv_layer_k2(act_reshp in_feature_map[2][fm_height*fm_width*nbands/2/RESHP
 }
 
 template<params_t input_size, params_t nfilters, wght_reshp *weights, quant_bias *bias, params_t sfe_i, params_t sfe_weights, params_t sfe_bias, params_t sfe_o>
-void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], quant_accum output_fm[nfilters]) {
+void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], data_out output_fm[nfilters]) {
 	quant_accum acc = 0;
 	act_reshp tmp_in = 0, tmp_acc = 0;
 	wght_reshp tmp_weight = 0;
 	quant_bias tmp_bias = 0;
 	int kernel_idx = 0, output_idx = 0, sfe = sfe_i;
 	params_t scale_factor = 0;
+	ap_fixed<21, 15> pixel_float = 0;
 
 	if((sfe_i + sfe_weights) >= sfe_bias) {
 			scale_factor = (sfe_i + sfe_weights);
@@ -1173,7 +1174,12 @@ void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], quant_accum ou
 					acc = acc << (sfe_bias-(sfe_i + sfe_weights));
 				}
 				acc = acc + tmp_bias;
-				output_fm[i] = (acc >> (scale_factor-sfe_o)) / 8;
+//				pixel_float = (ap_fixed<21, 15>)acc;
+//				pixel_float = pixel_float >> (scale_factor-0);
+//				pixel_float.range(5,0) = acc.range(5,0);
+//				pixel_float.range(20,6) = acc.range(20,6);
+//				printf("%d %f \n",(int)acc >> 3, (float)pixel_float);
+				output_fm[i] = ((data_out)acc) >> (scale_factor-sfe_o);
 				acc = 0;
 			}
 		}
