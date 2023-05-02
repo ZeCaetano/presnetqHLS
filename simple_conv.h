@@ -11,7 +11,7 @@
 #define WEIGHTS_WIDTH 2
 #define ACT_WIDTH 4
 #define NLAYERS 2
-#define NPATCHES 6
+#define NPATCHES 1
 #define NCLASSES 16
 
 

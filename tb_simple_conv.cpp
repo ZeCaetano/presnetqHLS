@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 static quant_act image_in[INPUT1_MEM_SIZE*NPATCHES];
+static act_reshp reshp_image_in[INPUT1_MEM_SIZE/RESHP_FACTOR];
 //static quant_wght kernel[LAYER1_WEIGHTS+LAYER3_WEIGHTS+LAYER2_WEIGHTS];
 //static quant_bias bias[NCLASSES];
 
@@ -173,14 +174,17 @@ void init_fm(){
 //	quant_wght values4[4] = {-1,1,-2};
 
 	char buff_image[INPUT1_MEM_SIZE];
+	int reshp_buff_image[INPUT1_MEM_SIZE/RESHP_FACTOR];
 	quant_act pixel = 0;
 	FILE *input_files[6];
+	FILE *reshp_file;
 	input_files[0] = fopen("input_image.bin", "rb");
 	input_files[1] = fopen("input_image_1.bin", "rb");
 	input_files[2] = fopen("input_image_2.bin", "rb");
 	input_files[3] = fopen("input_image_3.bin", "rb");
 	input_files[4] = fopen("input_image_4.bin", "rb");
 	input_files[5] = fopen("input_image_5.bin", "rb");
+	reshp_file = fopen("reshp_input_image.bin", "rb");
 //	FILE *input_file = fopen("input_image_50.bin", "rb");
 
 
@@ -200,6 +204,13 @@ void init_fm(){
 			}
 		}
 	}
+	fread(reshp_buff_image, sizeof(int), INPUT1_MEM_SIZE/RESHP_FACTOR, reshp_file);
+	for(int i = 0; i < INPUT1_MEM_SIZE/RESHP_FACTOR; i++){
+		reshp_image_in[i] = (act_reshp)reshp_buff_image[i];
+
+	}
+
+
 }
 
 
@@ -258,15 +269,24 @@ int main() {
 //		}
 //	}
 //    printf("Sending fm\n");
+//    for(int i = 0; i < NPATCHES; i++){
+//		for (int t=0 ; t<X1*Y1; t++) {
+//			for(int j = 0; j < Z1; j++) {
+//				vin.data = image_in[(i*INPUT1_MEM_SIZE)+((j*X1*Y1) + t)];
+//				if(t == INPUT1_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
+//				else vin.last = (ap_int<1>)0;
+//				sin.write(vin);
+////				printf("pixel sent: %d \n",(int)image_in[(j*X1*Y1) + t]);
+//			}
+//		}
+//    }
     for(int i = 0; i < NPATCHES; i++){
-		for (int t=0 ; t<X1*Y1; t++) {
-			for(int j = 0; j < Z1; j++) {
-				vin.data = image_in[(i*INPUT1_MEM_SIZE)+((j*X1*Y1) + t)];
-				if(t == INPUT1_MEM_SIZE - 1) vin.last = (ap_int<1>)1;
-				else vin.last = (ap_int<1>)0;
-				sin.write(vin);
+		for (int t=0 ; t<X1*Y1*Z1/RESHP_FACTOR; t++) {
+			vin.data = reshp_image_in[t];
+			if(t == INPUT1_MEM_SIZE/RESHP_FACTOR - 1) vin.last = (ap_int<1>)1;
+			else vin.last = (ap_int<1>)0;
+			sin.write(vin);
 //				printf("pixel sent: %d \n",(int)image_in[(j*X1*Y1) + t]);
-			}
 		}
     }
 //	exit(0);
