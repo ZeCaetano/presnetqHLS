@@ -249,6 +249,9 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 
 #pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map);
+	for(int i=0; i<10; i++)
+		printf("%d ", (int)in_feature_map[i]);
+	printf("\n");
 
 //	print_fm_single_val(X1, Y1, Z1, in_feature_map);
 
@@ -1151,11 +1154,13 @@ void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], data_out outpu
 //				pixel_float.range(5,0) = acc.range(5,0);
 //				pixel_float.range(20,6) = acc.range(20,6);
 //				printf("%d %f \n",(int)acc >> 3, (float)pixel_float);
+				printf("%x ",acc >> (scale_factor-sfe_o));
 				output_fm[i] = ((data_out)acc) >> (scale_factor-sfe_o);
 				acc = 0;
 			}
 		}
 	}
+	printf("\n");
 }
 
 template<params_t width, params_t height, params_t nbands>
