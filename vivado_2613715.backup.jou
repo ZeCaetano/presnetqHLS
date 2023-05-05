@@ -1,0 +1,44 @@
+#-----------------------------------------------------------
+# Vivado v2022.2 (64-bit)
+# SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+# IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+# Start of session at: Tue May  2 16:12:14 2023
+# Process ID: 2613715
+# Current directory: /home/jmc/projects/source_hls
+# Command line: vivado
+# Log file: /home/jmc/projects/source_hls/vivado.log
+# Journal file: /home/jmc/projects/source_hls/vivado.jou
+# Running On: brutus, OS: Linux, CPU Frequency: 3600.000 MHz, CPU Physical cores: 8, Host memory: 33499 MB
+#-----------------------------------------------------------
+start_gui
+open_project -read_only /home/jmc/projects/uscale_dma/uscale_dma.xpr
+update_compile_order -fileset sources_1
+open_bd_design {/home/jmc/projects/uscale_dma/uscale_dma.srcs/sources_1/bd/design_1/design_1.bd}
+close_project
+open_project /home/jmc/projects/uscale_dma/uscale_dma.xpr
+upgrade_project -migrate_output_products
+report_ip_status -name ip_status 
+update_compile_order -fileset sources_1
+open_bd_design {/home/jmc/projects/uscale_dma/uscale_dma.srcs/sources_1/bd/design_1/design_1.bd}
+regenerate_bd_layout
+upgrade_ip [get_ips  {design_1_axis_data_fifo_0_0 design_1_axi_smc_1 design_1_ps8_0_axi_periph_1 design_1_zynq_ultra_ps_e_0_0 design_1_axi_dma_0_0}] -log ip_upgrade.log
+export_ip_user_files -of_objects [get_ips {design_1_axis_data_fifo_0_0 design_1_axi_smc_1 design_1_ps8_0_axi_periph_1 design_1_zynq_ultra_ps_e_0_0 design_1_axi_dma_0_0}] -no_script -sync -force -quiet
+generate_target all [get_files  /home/jmc/projects/uscale_dma/uscale_dma.srcs/sources_1/bd/design_1/design_1.bd]
+catch { config_ip_cache -export [get_ips -all design_1_zynq_ultra_ps_e_0_0] }
+catch { config_ip_cache -export [get_ips -all design_1_axi_dma_0_0] }
+catch { config_ip_cache -export [get_ips -all design_1_axis_data_fifo_0_0] }
+catch { config_ip_cache -export [get_ips -all design_1_rst_ps8_0_99M_0] }
+catch { config_ip_cache -export [get_ips -all design_1_axi_smc_1] }
+catch { config_ip_cache -export [get_ips -all design_1_auto_ds_0] }
+catch { config_ip_cache -export [get_ips -all design_1_auto_pc_0] }
+export_ip_user_files -of_objects [get_files /home/jmc/projects/uscale_dma/uscale_dma.srcs/sources_1/bd/design_1/design_1.bd] -no_script -sync -force -quiet
+create_ip_run [get_files -of_objects [get_fileset sources_1] /home/jmc/projects/uscale_dma/uscale_dma.srcs/sources_1/bd/design_1/design_1.bd]
+launch_runs design_1_rst_ps8_0_99M_0_synth_1 design_1_zynq_ultra_ps_e_0_0_synth_1 design_1_axi_dma_0_0_synth_1 design_1_axis_data_fifo_0_0_synth_1 design_1_axi_smc_1_synth_1 design_1_auto_ds_0_synth_1 design_1_auto_pc_0_synth_1 -jobs 8
+wait_on_run design_1_rst_ps8_0_99M_0_synth_1
+wait_on_run design_1_zynq_ultra_ps_e_0_0_synth_1
+wait_on_run design_1_axi_dma_0_0_synth_1
+wait_on_run design_1_axis_data_fifo_0_0_synth_1
+wait_on_run design_1_axi_smc_1_synth_1
+wait_on_run design_1_auto_ds_0_synth_1
+wait_on_run design_1_auto_pc_0_synth_1
+export_simulation -of_objects [get_files /home/jmc/projects/uscale_dma/uscale_dma.srcs/sources_1/bd/design_1/design_1.bd] -directory /home/jmc/projects/uscale_dma/uscale_dma.ip_user_files/sim_scripts -ip_user_files_dir /home/jmc/projects/uscale_dma/uscale_dma.ip_user_files -ipstatic_source_dir /home/jmc/projects/uscale_dma/uscale_dma.ip_user_files/ipstatic -lib_map_path [list {modelsim=/home/jmc/projects/uscale_dma/uscale_dma.cache/compile_simlib/modelsim} {questa=/home/jmc/projects/uscale_dma/uscale_dma.cache/compile_simlib/questa} {xcelium=/home/jmc/projects/uscale_dma/uscale_dma.cache/compile_simlib/xcelium} {vcs=/home/jmc/projects/uscale_dma/uscale_dma.cache/compile_simlib/vcs} {riviera=/home/jmc/projects/uscale_dma/uscale_dma.cache/compile_simlib/riviera}] -use_ip_compiled_libs -force -quiet

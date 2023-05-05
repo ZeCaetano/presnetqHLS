@@ -1154,8 +1154,8 @@ void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], data_out outpu
 //				pixel_float.range(5,0) = acc.range(5,0);
 //				pixel_float.range(20,6) = acc.range(20,6);
 //				printf("%d %f \n",(int)acc >> 3, (float)pixel_float);
-				printf("%x ",acc >> (scale_factor-sfe_o));
 				output_fm[i] = ((data_out)acc) >> (scale_factor-sfe_o);
+//				printf("%x ",output_fm[i]);
 				acc = 0;
 			}
 		}

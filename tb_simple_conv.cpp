@@ -482,6 +482,10 @@ int main() {
 		for(int i = 0; i < NCLASSES; i++) {
 			printf("%.4f ", (float)hw_image_out[n*NCLASSES + i]);
 		}
+		for(int i = 0; i < NCLASSES; i++) {
+			printf("%s ", hw_image_out[n*NCLASSES + i].to_string(16).c_str());
+//			printf("hexa:    %s \n", val.to_string(16).c_str());
+		}
 		printf("\n\n");
 	}
 
