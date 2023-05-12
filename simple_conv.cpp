@@ -159,7 +159,8 @@
 
 void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) {
 
-#pragma HLS INTERFACE s_axilite port=return
+//#pragma HLS INTERFACE s_axilite port=return
+#pragma HLS INTERFACE ap_ctrl_none port=return
 #pragma HLS INTERFACE axis port=strm_in
 #pragma HLS INTERFACE axis port=strm_out
 
@@ -249,9 +250,9 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 
 #pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map);
-	for(int i=0; i<10; i++)
-		printf("%d ", (int)in_feature_map[i]);
-	printf("\n");
+//	for(int i=0; i<10; i++)
+//		printf("%d ", (int)in_feature_map[i]);
+//	printf("\n");
 
 //	print_fm_single_val(X1, Y1, Z1, in_feature_map);
 
@@ -1160,7 +1161,7 @@ void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], data_out outpu
 			}
 		}
 	}
-	printf("\n");
+//	printf("\n");
 }
 
 template<params_t width, params_t height, params_t nbands>

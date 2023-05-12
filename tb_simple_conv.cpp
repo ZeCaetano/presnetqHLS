@@ -228,8 +228,8 @@ void init_fm(){
 
 int main() {
 
-    hls::stream<strmi_t> sin;
-    hls::stream<strmo_t> so;
+    hls::stream<strmi_t> sin[NPATCHES];
+    hls::stream<strmo_t> so[NPATCHES];
     strmi_t vin;
     strmo_t vout;
 //    printf("Start\n");
@@ -306,7 +306,7 @@ int main() {
 			vin.data = reshp_image_in[(i*INPUT1_MEM_SIZE/RESHP_FACTOR) + t];
 			if(t == INPUT1_MEM_SIZE/RESHP_FACTOR - 1) vin.last = (ap_int<1>)1;
 			else vin.last = (ap_int<1>)0;
-			sin.write(vin);
+			sin[i].write(vin);
 		//		printf("pixel sent: %d \n",(int)image_in[(j*X1*Y1) + t]);
 		}
     }
@@ -314,7 +314,7 @@ int main() {
     printf("Start HW\n");
 	//Hardware computation
     for(int i = 0; i < NPATCHES; i++)
-    	simple_conv(sin, so);
+    	simple_conv(sin[i], so[i]);
 
     for(int i = 0; i < NPATCHES; i++){
 //	#ifdef ARRAYS
@@ -335,7 +335,7 @@ int main() {
 //		}
     	printf("Reading HW\n");
 		for(int j = 0; j < NCLASSES; j++) {
-			vout = so.read();
+			vout = so[i].read();
 			hw_image_out[i*NCLASSES + j] = vout.data;
 //				printf("idx-%d  %d\n", (j*X3*Y3) + l, (int)vout.data);
 			if(vout.last == 1) break;
@@ -482,11 +482,11 @@ int main() {
 		for(int i = 0; i < NCLASSES; i++) {
 			printf("%.4f ", (float)hw_image_out[n*NCLASSES + i]);
 		}
-		for(int i = 0; i < NCLASSES; i++) {
-			printf("%s ", hw_image_out[n*NCLASSES + i].to_string(16).c_str());
-//			printf("hexa:    %s \n", val.to_string(16).c_str());
-		}
-		printf("\n\n");
+//		for(int i = 0; i < NCLASSES; i++) {
+//			printf("%s ", hw_image_out[n*NCLASSES + i].to_string(16).c_str());
+////			printf("hexa:    %s \n", val.to_string(16).c_str());
+//		}
+//		printf("\n\n");
 	}
 
 	//--------------------------------------------------------------------------------------------------//
