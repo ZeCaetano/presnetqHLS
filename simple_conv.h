@@ -9,7 +9,7 @@
 
 #define WEIGHTS_WIDTH 2
 #define ACT_WIDTH 4
-#define NPATCHES 6
+#define NPATCHES 1
 #define NCLASSES 16
 
 typedef ap_int<4> quant_act;
@@ -34,7 +34,7 @@ typedef hls::axis<data_in, 0, 0, 0> strmi_t;
 typedef hls::axis<data_out, 0, 0, 0> strmo_t;
 
 
-void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out);
+void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out, ap_uint<1> last);
 
 //void read_stream(hls::stream<strmio_t> &strm_in, quant_act *weights_l1, quant_t *weights_l2);
 
@@ -73,7 +73,9 @@ template<params_t input_size, params_t nfilters, wght_reshp *weights, quant_bias
 void fully_connected(act_reshp input_fm[input_size/RESHP_FACTOR], data_out output_fm[nfilters]);
 
 void read_ifm(hls::stream<strmi_t> &strm_in, act_reshp in_feature_map[X1*Y1*Z1/RESHP_FACTOR]);
-void write_ofm(data_out *ofm, hls::stream<strmo_t> &strm_out);
+void write_ofm(data_out *ofm, hls::stream<strmo_t> &strm_out, ap_uint<1> last);
+//#define OUT_SIZE XDS3*YDS3*NF28
+//void write_ofm(act_reshp ofm[OUT_SIZE], hls::stream<strmo_t> &strm_out);
 
 template<params_t width, params_t height, params_t nbands>
 void gen_shortcut(act_reshp fm[width*height*nbands/RESHP_FACTOR], act_reshp fm1[width*height*nbands/RESHP_FACTOR], act_reshp fm2[width*height*nbands/RESHP_FACTOR]);
