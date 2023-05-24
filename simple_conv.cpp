@@ -157,11 +157,11 @@
 //	}
 //}
 
-void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out, ap_uint<1> last) {
+void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) {
 
-#pragma HLS INTERFACE s_axilite port=return bundle=BUS1
-#pragma HLS INTERFACE s_axilite port=last bundle=BUS1
-//#pragma HLS INTERFACE ap_ctrl_none port=return
+//#pragma HLS INTERFACE s_axilite port=return bundle=BUS1
+//#pragma HLS INTERFACE s_axilite port=last bundle=BUS1
+#pragma HLS INTERFACE ap_ctrl_none port=return
 #pragma HLS INTERFACE axis port=strm_in
 #pragma HLS INTERFACE axis port=strm_out
 
@@ -182,6 +182,7 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out, 
 	act_reshp final_relu[OUT28_MEM_SIZE/RESHP_FACTOR];
 	act_reshp ds_1_fm[XDS1*YDS1*NF10/RESHP_FACTOR], ds_2_fm[XDS2*YDS2*NF19/RESHP_FACTOR], final_ds[XDS3*YDS3*NF28];
 	data_out output_fm[NCLASSES];
+	ap_uint<1> last_flag = 0;
 
 //#pragma HLS BIND_STORAGE variable=m1_feature_map type=RAM_1P
 //#pragma HLS BIND_STORAGE variable=in_feature_map type=RAM_1P
@@ -248,9 +249,8 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out, 
 #pragma HLS STREAM variable=in_blk9_fm type=PIPO depth=2
 #pragma HLS STREAM variable=final_relu type=PIPO depth=2
 
-
-#pragma HLS DATAFLOW
-	read_ifm(strm_in, in_feature_map);
+//#pragma HLS DATAFLOW
+	read_ifm(strm_in, in_feature_map, &last_flag);
 //	for(int i=0; i<10; i++)
 //		printf("%d ", (int)in_feature_map[i]);
 //	printf("\n");
@@ -372,13 +372,16 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out, 
 	fully_connected<NF28,NCLASSES, weights_fc, bias_fc, SFEDS3,SFEW_FC,SFEB_FC,SFEO_FC>(final_ds, output_fm);
 //	write_ofm(ds_2_fm, strm_out);
 
-	write_ofm(output_fm, strm_out, last);
+	write_ofm(output_fm, strm_out, last_flag);
 }
 
 
-void read_ifm(hls::stream<strmi_t> &strm_in, act_reshp in_feature_map[INPUT1_MEM_SIZE/RESHP_FACTOR]){
+void read_ifm(hls::stream<strmi_t> &strm_in, act_reshp in_feature_map[INPUT1_MEM_SIZE/RESHP_FACTOR], ap_uint<1> *last){
 	strmi_t tmpin;
 	act_reshp tmp = 0;
+
+	tmpin = strm_in.read();
+	*last = tmpin.data.range(1,0);
 
 	//read input fm
 	for(int i = 0; i < INPUT1_MEM_SIZE/RESHP_FACTOR; i++) {

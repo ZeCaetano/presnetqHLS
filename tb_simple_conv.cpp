@@ -76,13 +76,15 @@ int main() {
 
     init_fm();
     printf("FM initialized\n");
-//    for(int i = 0; i < INPUT1_MEM_SIZE/RESHP_FACTOR; i++){
-//    	printf("%d \n", (int) reshp_image_in[i]);
-//    }
-//    printf("\n");
 
 
     for(int i = 0; i < NPATCHES; i++){
+//		for(int j = 0; j < INPUT1_MEM_SIZE/RESHP_FACTOR; j++){
+//			printf("%d ", (int) reshp_image_in[i*INPUT1_MEM_SIZE/RESHP_FACTOR + j]);
+//		}
+//		printf("\n");
+		vin.data = 1;
+		sin[i].write(vin);
 		for (int t=0 ; t<X1*Y1*Z1/RESHP_FACTOR; t++) {
 			vin.data = reshp_image_in[(i*INPUT1_MEM_SIZE/RESHP_FACTOR) + t];
 			if(t == INPUT1_MEM_SIZE/RESHP_FACTOR - 1) vin.last = (ap_int<1>)1;
@@ -97,7 +99,7 @@ int main() {
     int last = 0;
     for(int i = 0; i < NPATCHES; i++) {
     	if(i == NPATCHES-1) last = 1;
-    	simple_conv(sin[i], so[i], last);
+    	simple_conv(sin[i], so[i]);
     }
 
     for(int i = 0; i < NPATCHES; i++){
@@ -107,7 +109,10 @@ int main() {
 			vout = so[i].read();
 			hw_image_out[i*NCLASSES + j] = vout.data;
 //				printf("idx-%d  %d\n", (j*X3*Y3) + l, (int)vout.data);
-			if(vout.last == 1) break;
+			if(vout.last == 1) {
+				printf("last!\n");
+				break;
+			}
 		}
     }
 
