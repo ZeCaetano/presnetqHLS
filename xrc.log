@@ -1,14 +1,14 @@
-Mon May 22 16:02:33 2023: Server was asked to start on port: '39557'
-Mon May 22 16:02:33 2023: Server is using token UUID: '48549119-9ad0-4c1e-b5a3-4f7f7c0416f5'
-Mon May 22 16:02:33 2023: Attempting to start server on port '39557'
-Mon May 22 16:02:33 2023: XRC main fifo: created main fifo '/tmp/xrcmain48549119-9ad0-4c1e-b5a3-4f7f7c0416f5', fd read = 11
-Mon May 22 16:02:33 2023: Running Rule Check Server
-Mon May 22 16:02:33 2023: Version 1.6.1
-Mon May 22 16:02:34 2023: Rule Check Server: Accepted socket connection from client
-Mon May 22 16:02:34 2023: EXCHANGE_TOKEN received, server token: 48549119-9ad0-4c1e-b5a3-4f7f7c0416f5, passed token: 48549119-9ad0-4c1e-b5a3-4f7f7c0416f5
-Mon May 22 17:08:53 2023: STOP_SERVER received, server token: 48549119-9ad0-4c1e-b5a3-4f7f7c0416f5, passed token: 48549119-9ad0-4c1e-b5a3-4f7f7c0416f5
-Mon May 22 17:08:53 2023: Socket received request to stop server.
-Mon May 22 17:08:53 2023: SERVER: destructor for server bound to port 39557
-Mon May 22 17:08:53 2023: XRC main fifo: Good unlink of /tmp/xrcmain48549119-9ad0-4c1e-b5a3-4f7f7c0416f5
-Mon May 22 17:08:53 2023: Server exiting with status 0.
-Mon May 22 17:08:53 2023: Closing log file.
+Thu May 25 16:54:51 2023: Server was asked to start on port: '34823'
+Thu May 25 16:54:51 2023: Server is using token UUID: '9ddd964c-48eb-4698-bc58-2d546afb5865'
+Thu May 25 16:54:51 2023: Attempting to start server on port '34823'
+Thu May 25 16:54:51 2023: XRC main fifo: created main fifo '/tmp/xrcmain9ddd964c-48eb-4698-bc58-2d546afb5865', fd read = 11
+Thu May 25 16:54:51 2023: Running Rule Check Server
+Thu May 25 16:54:51 2023: Version 1.6.1
+Thu May 25 16:54:52 2023: Rule Check Server: Accepted socket connection from client
+Thu May 25 16:54:53 2023: EXCHANGE_TOKEN received, server token: 9ddd964c-48eb-4698-bc58-2d546afb5865, passed token: 9ddd964c-48eb-4698-bc58-2d546afb5865
+Thu May 25 17:40:04 2023: STOP_SERVER received, server token: 9ddd964c-48eb-4698-bc58-2d546afb5865, passed token: 9ddd964c-48eb-4698-bc58-2d546afb5865
+Thu May 25 17:40:04 2023: Socket received request to stop server.
+Thu May 25 17:40:04 2023: SERVER: destructor for server bound to port 34823
+Thu May 25 17:40:04 2023: XRC main fifo: Good unlink of /tmp/xrcmain9ddd964c-48eb-4698-bc58-2d546afb5865
+Thu May 25 17:40:04 2023: Server exiting with status 0.
+Thu May 25 17:40:04 2023: Closing log file.

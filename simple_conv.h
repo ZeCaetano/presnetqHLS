@@ -9,7 +9,7 @@
 
 #define WEIGHTS_WIDTH 2
 #define ACT_WIDTH 4
-#define NPATCHES 1
+#define NPATCHES 6
 #define NCLASSES 16
 
 typedef ap_int<4> quant_act;

@@ -249,7 +249,7 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 #pragma HLS STREAM variable=in_blk9_fm type=PIPO depth=2
 #pragma HLS STREAM variable=final_relu type=PIPO depth=2
 
-//#pragma HLS DATAFLOW
+#pragma HLS DATAFLOW
 	read_ifm(strm_in, in_feature_map, &last_flag);
 //	for(int i=0; i<10; i++)
 //		printf("%d ", (int)in_feature_map[i]);
@@ -463,10 +463,11 @@ void average_pool(act_reshp in_feature_map[fm_width*fm_height*nbands/RESHP_FACTO
 	ap_uint<3> div = kernel_size*kernel_size;
 	int in_idx = 0, out_idx = 0;
 	quant_act pixel = 0, tmp_out = 0;
+	act_reshp tmp_out_word = 0;
 
-	for(int z = 0; z < nbands; z++){
-		for (int i = 0; i < fm_width-1; i+=2) {
-			for (int j = 0; j < fm_height-1; j+=2) {
+	for (int i = 0; i < fm_width-1; i+=2) {
+		for (int j = 0; j < fm_height-1; j+=2) {
+			for(int z = 0; z < nbands; z++){
 				for(int k = 0; k < kernel_size; k++){
 					for(int l = 0; l < kernel_size; l++){
 #pragma HLS PIPELINE II=2
@@ -493,14 +494,17 @@ void average_pool(act_reshp in_feature_map[fm_width*fm_height*nbands/RESHP_FACTO
 
 							tmp_out = (quant_act)avg.range(3,0);
 							out_idx = (i/2)*nbands*output_height+ (j/2)*nbands + z;
-							if(out_idx % RESHP_FACTOR == 0) out_feature_map[out_idx/RESHP_FACTOR].range(3,0) = tmp_out;
-							else if(out_idx % RESHP_FACTOR == 1) out_feature_map[out_idx/RESHP_FACTOR].range(7,4) = tmp_out;
-							else if(out_idx % RESHP_FACTOR == 2) out_feature_map[out_idx/RESHP_FACTOR].range(11,8) = tmp_out;
-							else if(out_idx % RESHP_FACTOR == 3) out_feature_map[out_idx/RESHP_FACTOR].range(15,12) = tmp_out;
-							else if(out_idx % RESHP_FACTOR == 4) out_feature_map[out_idx/RESHP_FACTOR].range(19,16) = tmp_out;
-							else if(out_idx % RESHP_FACTOR == 5) out_feature_map[out_idx/RESHP_FACTOR].range(23,20) = tmp_out;
-							else if(out_idx % RESHP_FACTOR == 6) out_feature_map[out_idx/RESHP_FACTOR].range(27,24) = tmp_out;
-							else if(out_idx % RESHP_FACTOR == 7) out_feature_map[out_idx/RESHP_FACTOR].range(31,28) = tmp_out;
+							if(out_idx % RESHP_FACTOR == 0) tmp_out_word.range(3,0) = tmp_out;
+							else if(out_idx % RESHP_FACTOR == 1) tmp_out_word.range(7,4) = tmp_out;
+							else if(out_idx % RESHP_FACTOR == 2) tmp_out_word.range(11,8) = tmp_out;
+							else if(out_idx % RESHP_FACTOR == 3) tmp_out_word.range(15,12) = tmp_out;
+							else if(out_idx % RESHP_FACTOR == 4) tmp_out_word.range(19,16) = tmp_out;
+							else if(out_idx % RESHP_FACTOR == 5) tmp_out_word.range(23,20) = tmp_out;
+							else if(out_idx % RESHP_FACTOR == 6) tmp_out_word.range(27,24) = tmp_out;
+							else if(out_idx % RESHP_FACTOR == 7) {
+								tmp_out_word.range(31,28) = tmp_out;
+								out_feature_map[out_idx/RESHP_FACTOR] = tmp_out_word;
+							}
 							accum = 0;
 						}
 					}
@@ -518,10 +522,11 @@ void average_pool_unsigned(act_reshp in_feature_map[fm_width*fm_height*nbands/RE
 	ap_uint<3> div = kernel_size*kernel_size;
 	int in_idx = 0, out_idx = 0;
 	quant_uact pixel = 0, tmp_out = 0;
+	act_reshp tmp_out_word = 0;
 
-	for(int z = 0; z < nbands; z++){
-		for (int i = 0; i < fm_width-1; i+=2) {
-			for (int j = 0; j < fm_height-1; j+=2) {
+	for (int i = 0; i < fm_width-1; i+=2) {
+		for (int j = 0; j < fm_height-1; j+=2) {
+			for(int z = 0; z < nbands; z++){
 				for(int k = 0; k < kernel_size; k++){
 					for(int l = 0; l < kernel_size; l++){
 #pragma HLS PIPELINE II=2
@@ -534,7 +539,7 @@ void average_pool_unsigned(act_reshp in_feature_map[fm_width*fm_height*nbands/RE
 						else if(in_idx % RESHP_FACTOR == 4) pixel = (quant_uact)in_feature_map[in_idx/RESHP_FACTOR].range(19,16);
 						else if(in_idx % RESHP_FACTOR == 5) pixel = (quant_uact)in_feature_map[in_idx/RESHP_FACTOR].range(23,20);
 						else if(in_idx % RESHP_FACTOR == 6) pixel = (quant_uact)in_feature_map[in_idx/RESHP_FACTOR].range(27,24);
-						else if(in_idx % RESHP_FACTOR == 7) pixel = (quant_uact)in_feature_map[in_idx/RESHP_FACTOR].range(31,28);
+						else if(in_idx % RESHP_FACTOR == 7) pixel = (quant_act)in_feature_map[in_idx/RESHP_FACTOR].range(31,28);
 //						printf("pixel: %d\n", (int)pixel);
 						accum += pixel;
 //						printf("accum: %d\n", (int)accum);
@@ -548,14 +553,17 @@ void average_pool_unsigned(act_reshp in_feature_map[fm_width*fm_height*nbands/RE
 
 							tmp_out = (quant_uact)avg.range(3,0);
 							out_idx = (i/2)*nbands*output_height+ (j/2)*nbands + z;
-							if(out_idx % RESHP_FACTOR == 0) out_feature_map[out_idx/RESHP_FACTOR].range(3,0) = tmp_out;
-							else if(out_idx % RESHP_FACTOR == 1) out_feature_map[out_idx/RESHP_FACTOR].range(7,4) = tmp_out;
-							else if(out_idx % RESHP_FACTOR == 2) out_feature_map[out_idx/RESHP_FACTOR].range(11,8) = tmp_out;
-							else if(out_idx % RESHP_FACTOR == 3) out_feature_map[out_idx/RESHP_FACTOR].range(15,12) = tmp_out;
-							else if(out_idx % RESHP_FACTOR == 4) out_feature_map[out_idx/RESHP_FACTOR].range(19,16) = tmp_out;
-							else if(out_idx % RESHP_FACTOR == 5) out_feature_map[out_idx/RESHP_FACTOR].range(23,20) = tmp_out;
-							else if(out_idx % RESHP_FACTOR == 6) out_feature_map[out_idx/RESHP_FACTOR].range(27,24) = tmp_out;
-							else if(out_idx % RESHP_FACTOR == 7) out_feature_map[out_idx/RESHP_FACTOR].range(31,28) = tmp_out;
+							if(out_idx % RESHP_FACTOR == 0) tmp_out_word.range(3,0) = tmp_out;
+							else if(out_idx % RESHP_FACTOR == 1) tmp_out_word.range(7,4) = tmp_out;
+							else if(out_idx % RESHP_FACTOR == 2) tmp_out_word.range(11,8) = tmp_out;
+							else if(out_idx % RESHP_FACTOR == 3) tmp_out_word.range(15,12) = tmp_out;
+							else if(out_idx % RESHP_FACTOR == 4) tmp_out_word.range(19,16) = tmp_out;
+							else if(out_idx % RESHP_FACTOR == 5) tmp_out_word.range(23,20) = tmp_out;
+							else if(out_idx % RESHP_FACTOR == 6) tmp_out_word.range(27,24) = tmp_out;
+							else if(out_idx % RESHP_FACTOR == 7) {
+								tmp_out_word.range(31,28) = tmp_out;
+								out_feature_map[out_idx/RESHP_FACTOR] = tmp_out_word;
+							}
 							accum = 0;
 						}
 					}
