@@ -257,14 +257,14 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 
 //	print_fm_single_val(X1, Y1, Z1, in_feature_map);
 
-	conv_layer_k1<X1,Y1,Z1,NF1,SFEI1,SFEW1,SFEO1, weights_l1,8,false> (in_feature_map, l1_fm);
+	conv_layer_k1<X1,Y1,Z1,NF1,SFEI1,SFEW1,SFEO1, weights_l1,32,false> (in_feature_map, l1_fm);
 
 
 	gen_shortcut<X1,X2,NF1>(l1_fm, in_blk1_fm, shortcut_1_fm);
 
 	conv_layer_k1<X2,Y2,Z2,NF2,SFEI2,SFEW2,SFEO2, weights_l2,8,true> (in_blk1_fm, l2_fm);
 	conv_layer_k1_unsigned<X3,Y3,Z3,NF3,SFEI3,SFEW3,SFEO3, weights_l3,8,true> (l2_fm, l3_fm);
-	conv_layer_k1_unsigned<X4,Y4,Z4,NF4,SFEI4,SFEW4,SFEO4, weights_l4,8,false> (l3_fm, l4_fm);
+	conv_layer_k1_unsigned<X4,Y4,Z4,NF4,SFEI4,SFEW4,SFEO4, weights_l4,32,false> (l3_fm, l4_fm);
 
 
 	add_shortcut<X4,Y4,NF4,Z2,SFEO4,SFEI2,SFEBLK1>(l4_fm, shortcut_1_fm, sum_1);
@@ -272,18 +272,18 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 
 //	print_fm_single_val(X4, Y4, NF4, sum_1);
 
-	conv_layer_k1<X5,Y5,Z5,NF5,SFEI5,SFEW5,SFEO5, weights_l5,16,true> (in_blk2_fm, l5_fm);
+	conv_layer_k1<X5,Y5,Z5,NF5,SFEI5,SFEW5,SFEO5, weights_l5,32,true> (in_blk2_fm, l5_fm);
 	conv_layer_k1_unsigned<X6,Y6,Z6,NF6,SFEI6,SFEW6,SFEO6, weights_l6,8,true> (l5_fm, l6_fm);
-	conv_layer_k1_unsigned<X7,Y7,Z7,NF7,SFEI7,SFEW7,SFEO7, weights_l7,16,false> (l6_fm, l7_fm);
+	conv_layer_k1_unsigned<X7,Y7,Z7,NF7,SFEI7,SFEW7,SFEO7, weights_l7,32,false> (l6_fm, l7_fm);
 
 	add_shortcut<X7,Y7,NF7,Z5,SFEO7,SFEI5,SFEBLK2>(l7_fm, shortcut_2_fm, sum_2);
 	gen_shortcut<X7,Y7,NF7>(sum_2, in_blk3_fm, shortcut_3_fm);
 
 //	print_fm_single_val(X7, Y7, NF7, sum_2);
 
-	conv_layer_k1<X8,Y8,Z8,NF8,SFEI8,SFEW8,SFEO8, weights_l8,16,true> (in_blk3_fm, l8_fm);
-	conv_layer_k1_unsigned<X9,Y9,Z9,NF9,SFEI9,SFEW9,SFEO9, weights_l9,8,true> (l8_fm, l9_fm);
-	conv_layer_k1_unsigned<X10,Y10,Z10,NF10,SFEI10,SFEW10,SFEO10, weights_l10,24,false> (l9_fm, l10_fm);
+	conv_layer_k1<X8,Y8,Z8,NF8,SFEI8,SFEW8,SFEO8, weights_l8,32,true> (in_blk3_fm, l8_fm);
+	conv_layer_k1_unsigned<X9,Y9,Z9,NF9,SFEI9,SFEW9,SFEO9, weights_l9,16,true> (l8_fm, l9_fm);
+	conv_layer_k1_unsigned<X10,Y10,Z10,NF10,SFEI10,SFEW10,SFEO10, weights_l10,40,false> (l9_fm, l10_fm);
 
 
 	add_shortcut<X10,Y10,NF10,Z8,SFEO10,SFEI8,SFEBLK3>(l10_fm, shortcut_3_fm, sum_3);
@@ -302,9 +302,9 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 
 
 //
-	conv_layer_k1_b4k2_x9<X11,Y11,Z11,NF11,SFEI11,SFEW11,SFEO11, weights_l11, 24, true> (in_blk4_fm, l11_fm);
+	conv_layer_k1_b4k2_x9<X11,Y11,Z11,NF11,SFEI11,SFEW11,SFEO11, weights_l11, 32, true> (in_blk4_fm, l11_fm);
 	conv_layer_k2<X12-1,Y12-1,Z12,NF12,X13,SFEI12,SFEW12,SFEO12, weights_l12, 8, true> (l11_fm, l12_fm);
-	conv_layer_k1_unsigned<X13,Y13,Z13,NF13,SFEI13,SFEW13,SFEO13, weights_l13,8,false> (l12_fm, l13_fm);
+	conv_layer_k1_unsigned<X13,Y13,Z13,NF13,SFEI13,SFEW13,SFEO13, weights_l13,16,false> (l12_fm, l13_fm);
 
 	add_shortcut<X13,Y13,NF13,Z11,SFEO13,SFEDS1,SFEBLK4>(l13_fm, ds_1_fm, sum_4);
 	gen_shortcut<X13,Y13,NF13>(sum_4, in_blk5_fm, shortcut_5_fm);
@@ -312,18 +312,18 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 //	print_fm_single_val(X13, Y13, NF13, sum_4);
 
 
-	conv_layer_k1<X14,Y14,Z14,NF14,SFEI14,SFEW14,SFEO14, weights_l14,8,true> (in_blk5_fm, l14_fm);
+	conv_layer_k1<X14,Y14,Z14,NF14,SFEI14,SFEW14,SFEO14, weights_l14,24,true> (in_blk5_fm, l14_fm);
 	conv_layer_k1_unsigned<X15,Y15,Z15,NF15,SFEI15,SFEW15,SFEO15, weights_l15,8,true> (l14_fm, l15_fm);
-	conv_layer_k1_unsigned<X16,Y16,Z16,NF16,SFEI16,SFEW16,SFEO16, weights_l16,8,false> (l15_fm, l16_fm);
+	conv_layer_k1_unsigned<X16,Y16,Z16,NF16,SFEI16,SFEW16,SFEO16, weights_l16,32,false> (l15_fm, l16_fm);
 
 	add_shortcut<X16,Y16,NF16,Z14,SFEO16,SFEI14,SFEBLK5>(l16_fm, shortcut_5_fm, sum_5);
 	gen_shortcut<X16,Y16,NF16>(sum_5, in_blk6_fm, shortcut_6_fm);
 
 //	print_fm_single_val(X16, Y16, NF16, sum_5);
 
-	conv_layer_k1<X17,Y17,Z17,NF17,SFEI17,SFEW17,SFEO17, weights_l17,16,true> (in_blk6_fm, l17_fm);
+	conv_layer_k1<X17,Y17,Z17,NF17,SFEI17,SFEW17,SFEO17, weights_l17,32,true> (in_blk6_fm, l17_fm);
 	conv_layer_k1_unsigned<X18,Y18,Z18,NF18,SFEI18,SFEW18,SFEO18, weights_l18,8,true> (l17_fm, l18_fm);
-	conv_layer_k1_unsigned<X19,Y19,Z19,NF19,SFEI19,SFEW19,SFEO19, weights_l19,16,false> (l18_fm, l19_fm);
+	conv_layer_k1_unsigned<X19,Y19,Z19,NF19,SFEI19,SFEW19,SFEO19, weights_l19,32,false> (l18_fm, l19_fm);
 
 	add_shortcut<X19,Y19,NF19,Z17,SFEO19,SFEI17,SFEBLK6>(l19_fm, shortcut_6_fm, sum_6);
 	gen_shortcut<X19,Y19,NF19>(sum_6, in_blk7_fm, shortcut_7_fm);
@@ -332,25 +332,25 @@ void simple_conv(hls::stream<strmi_t> &strm_in, hls::stream<strmo_t> &strm_out) 
 	average_pool<X19,Y19,XDS2,YDS2,NF19,KDS2,SFEBLK6,SFEDS2>(shortcut_7_fm, ds_2_fm);
 
 
-	conv_layer_k1_b4k2_x4<X20,Y20,Z20,NF20,SFEI20,SFEW20,SFEO20, weights_l20, 16, true> (in_blk7_fm, l20_fm);
+	conv_layer_k1_b4k2_x4<X20,Y20,Z20,NF20,SFEI20,SFEW20,SFEO20, weights_l20, 32, true> (in_blk7_fm, l20_fm);
 	conv_layer_k2<X21,Y21,Z21,NF21,X22,SFEI21,SFEW21,SFEO21, weights_l21, 8, true> (l20_fm, l21_fm);
-	conv_layer_k1_unsigned<X22,Y22,Z22,NF22,SFEI22,SFEW22,SFEO22, weights_l22,8,false> (l21_fm, l22_fm);
+	conv_layer_k1_unsigned<X22,Y22,Z22,NF22,SFEI22,SFEW22,SFEO22, weights_l22,16,false> (l21_fm, l22_fm);
 
 	add_shortcut<X22,Y22,NF22,Z20,SFEO22,SFEI20,SFEBLK7>(l22_fm, ds_2_fm, sum_7);
 	gen_shortcut<X22,Y22,NF22>(sum_7, in_blk8_fm, shortcut_8_fm);
 
 //	print_fm_single_val(X22, Y22, NF22, sum_7);
 
-	conv_layer_k1<X23,Y23,Z23,NF23,SFEI23,SFEW23,SFEO23, weights_l23,8,true> (in_blk8_fm, l23_fm);
+	conv_layer_k1<X23,Y23,Z23,NF23,SFEI23,SFEW23,SFEO23, weights_l23,16,true> (in_blk8_fm, l23_fm);
 	conv_layer_k1_unsigned<X24,Y24,Z24,NF24,SFEI24,SFEW24,SFEO24, weights_l24,8,true> (l23_fm, l24_fm);
-	conv_layer_k1_unsigned<X25,Y25,Z25,NF25,SFEI25,SFEW25,SFEO25, weights_l25,8,false> (l24_fm, l25_fm);
+	conv_layer_k1_unsigned<X25,Y25,Z25,NF25,SFEI25,SFEW25,SFEO25, weights_l25,16,false> (l24_fm, l25_fm);
 
 	add_shortcut<X25,Y25,NF25,Z23,SFEO25,SFEI23,SFEBLK8>(l25_fm, shortcut_8_fm, sum_8);
 	gen_shortcut<X25,Y25,NF25>(sum_8, in_blk9_fm, shortcut_9_fm);
 
-	conv_layer_k1<X26,Y26,Z26,NF26,SFEI26,SFEW26,SFEO26, weights_l26,8,true> (in_blk9_fm, l26_fm);
+	conv_layer_k1<X26,Y26,Z26,NF26,SFEI26,SFEW26,SFEO26, weights_l26,16,true> (in_blk9_fm, l26_fm);
 	conv_layer_k1_unsigned<X27,Y27,Z27,NF27,SFEI27,SFEW27,SFEO27, weights_l27,8,true> (l26_fm, l27_fm);
-	conv_layer_k1_unsigned<X28,Y28,Z28,NF28,SFEI28,SFEW28,SFEO28, weights_l28,8,false> (l27_fm, l28_fm);
+	conv_layer_k1_unsigned<X28,Y28,Z28,NF28,SFEI28,SFEW28,SFEO28, weights_l28,16,false> (l27_fm, l28_fm);
 
 	add_shortcut<X28,Y28,NF28,Z26,SFEO28,SFEI26,SFEBLK9>(l28_fm, shortcut_9_fm, sum_9);
 

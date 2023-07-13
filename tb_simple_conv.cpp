@@ -80,10 +80,10 @@ int main() {
 
 
     for(int i = 0; i < NPATCHES; i++){
-		for(int j = 0; j < INPUT1_MEM_SIZE/RESHP_FACTOR; j++){
-			printf("%d ", (int) reshp_image_in[i*INPUT1_MEM_SIZE/RESHP_FACTOR + j]);
-		}
-		printf("\n");
+//		for(int j = 0; j < INPUT1_MEM_SIZE/RESHP_FACTOR; j++){
+//			printf("%d ", (int) reshp_image_in[i*INPUT1_MEM_SIZE/RESHP_FACTOR + j]);
+//		}
+//		printf("\n");
 
 		if(i == NPATCHES-1) vin.data = 1;
 		else vin.data = 0;

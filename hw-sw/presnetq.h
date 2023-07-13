@@ -7,7 +7,7 @@
 
 
 /* ========================== START OF TEST SET CONFIGURATION ========================== */
-#define NPATCHES 1
+#define NPATCHES 3
 #define NCLASSES 16                 /* number of possible classes */
 #define RESHAPE_FACTOR 8
 
@@ -28,13 +28,15 @@
     )
 
 /* Size in bytes of reserved memory regions */
-/* 8100B for each image = 48600B for all 6 images*/
-#define MEM_BIN_IMAGES 0x0000BDD8
+/* 8100B + 4B for last flag for each image = 48624B for all 6 images*/
+#define MEM_BIN_IMAGES 0x0000C000
 #define MEM_CH_IMAGES ALIGN(  \
     NPATCHES *                \
     INPUT_SIZE *              \
     sizeof(unsigned char)     \
     )
+
+#define MEM_BIN_SINGLE_IMAGE 0x00001FA8
 
 #define MEM_BASE_ADDR 0x10000000
 
@@ -50,8 +52,6 @@ int init_XAxiDma_SimplePollMode();
 
 double xilGetMilliseconds();
 
-int hw_execution(unsigned int *input, float *output);
-
-
+int hw_execution();
 
 
